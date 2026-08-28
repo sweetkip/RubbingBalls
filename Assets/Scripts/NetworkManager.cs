@@ -104,6 +104,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             direction.x += 1;
         NetworkInputData data = new NetworkInputData();
         data.Direction = direction;
+        data.Buttons.Set((int)InputButton.Fire, Input.GetKey(KeyCode.Space));
         input.Set(data);
     }
 
