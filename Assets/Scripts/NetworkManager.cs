@@ -2,7 +2,12 @@ using Fusion;
 using Fusion.Sockets;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+
+//{}
 
 public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 {
@@ -14,29 +19,58 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         runner.AddCallbacks(this);
     }
 
-    public async void StartGameHost()
+    public async void StartGameHost(string sessionName)
     {
         runner.ProvideInput = true;
+
         await runner.StartGame(new StartGameArgs()
         {
             GameMode = GameMode.Host,
-            SessionName = "Partida01"
+            SessionName = sessionName,
+            PlayerCount = 4,
+            IsOpen = true,      //No se puede unir == falso     int playerCount = runner.ActivePlayers.Count();     if (playerCount >= 4)    Runner.SessionInfo.IsOpen = false;
+            IsVisible = true,    //Partida privada == falso      if PlayerCount == 4     Runner.SessionInfo.IsVisible = false;
+            MatchmakingMode = Photon.Realtime.MatchmakingMode.FillRoom,      //El mejor modo, llena una sala después pasa a la siguiente. Random es random y la serial une por orden de sala de a un jugador.
+            SceneManager = GetComponent<NetworkSceneManagerDefault>()
         });
         Debug.Log("Se unio el crack");
     }
 
-    public async void StartGameClient()
+    public async void StartGameClient(string sessionName)
     {
         runner.ProvideInput = true;
+
         await runner.StartGame(new StartGameArgs()
         {
             GameMode = GameMode.Client,
-            SessionName = "Partida01"
+            SessionName = sessionName,
+            SceneManager = GetComponent<NetworkSceneManagerDefault>()
         });
         Debug.Log("Se unio un wachin");
     }
 
-    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
+
+
+    public async void QuickPlay()
+    {
+        runner.ProvideInput = true;
+
+        await runner.StartGame(new StartGameArgs()
+        {
+            GameMode = GameMode.AutoHostOrClient
+        });
+    }
+    
+    public async void JoinLobby()
+    {
+        var result = await runner.JoinSessionLobby(SessionLobby.ClientServer);
+        if (!result.Ok)
+        {
+            Debug.LogError(result.ShutdownReason);
+        }
+    }
+
+public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
     {
         //throw new NotImplementedException();
     }
@@ -48,22 +82,34 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        if(runner.IsServer)
+        if (runner.IsServer)
         {
-            Vector3 spawnPos = new Vector3(0,0,0);
-            runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
+            int playerCount = runner.ActivePlayers.Count();
+
+            if (playerCount >= 2)
+            {
+                runner.LoadScene(SceneRef.FromIndex(1), LoadSceneMode.Single);
+            }
         }
     }
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
-        //throw new NotImplementedException();
+        if (runner.IsServer)
+        {
+            NetworkObject playerObject = runner.GetPlayerObject(player);
+
+            if (playerObject != null)
+            {
+                runner.Despawn(playerObject);
+            }
+        }
     }
 
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
+        SceneManager.LoadScene("Lobby");
         Debug.Log("Se apago?");
-        ////throw new NotImplementedException();
     }
 
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
@@ -120,7 +166,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
     {
-        //throw new NotImplementedException();
+        foreach (SessionInfo session in sessionList)
+        {
+            Debug.Log(session.Name + " - " + session.PlayerCount + "/" + session.MaxPlayers);
+        }
     }
 
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data)
@@ -135,11 +184,23 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnSceneLoadDone(NetworkRunner runner)
     {
-        //throw new NotImplementedException();
+        if (!runner.IsServer)
+            return;
+
+        foreach(PlayerRef player in runner.ActivePlayers)
+        {
+            NetworkObject newPlayer = runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, player);
+            runner.SetPlayerObject(player, newPlayer);
+        }
     }
 
     public void OnSceneLoadStart(NetworkRunner runner)
     {
         //throw new NotImplementedException();
+    }
+
+    public async Task Disconect()
+    {
+        await runner.Shutdown();
     }
 }
