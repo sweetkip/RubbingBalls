@@ -114,7 +114,7 @@ public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef p
 
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
     {
-        //throw new NotImplementedException();
+        throw new NotImplementedException();
     }
 
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token)
@@ -161,7 +161,7 @@ public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef p
 
     public void OnConnectedToServer(NetworkRunner runner)
     {
-        //throw new NotImplementedException();
+        throw new NotImplementedException();
     }
 
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
@@ -199,7 +199,7 @@ public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef p
         //throw new NotImplementedException();
     }
 
-    public async Task Disconect()
+    public async void Disconect()
     {
         await runner.Shutdown();
     }

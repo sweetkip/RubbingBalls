@@ -3,9 +3,9 @@ using UnityEngine;
 public class DisconnectBtn : MonoBehaviour
 {
     NetworkManager networkManager;
-    public void Disconnect()
+    public void DisconnectFromGame()
     {
         networkManager = FindAnyObjectByType<NetworkManager>();
-        networkManager.Disconnect();
+        networkManager.Disconect();
     }
 }
