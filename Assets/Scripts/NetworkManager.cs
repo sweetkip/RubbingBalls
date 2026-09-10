@@ -1,5 +1,6 @@
 using Fusion;
 using Fusion.Sockets;
+using Photon.Realtime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,8 +35,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             MatchmakingMode = Photon.Realtime.MatchmakingMode.FillRoom,      //El mejor modo, llena una sala después pasa a la siguiente. Random es random y la serial une por orden de sala de a un jugador.
             SceneManager = GetComponent<NetworkSceneManagerDefault>()
         });
-        SceneManager.LoadScene("Lobby");
-        Debug.Log("Se unio el crack");
+        await runner.LoadScene("Lobby");
+        
     }
 
     public async void StartGameClient(string sessionName)
@@ -48,8 +49,6 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             SessionName = sessionName,
             SceneManager = GetComponent<NetworkSceneManagerDefault>()
         });
-        SceneManager.LoadScene("Lobby");
-        Debug.Log("Se unio un wachin");
     }
 
 
@@ -88,12 +87,14 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (runner.IsServer)
         {
-            int playerCount = runner.ActivePlayers.Count();
+            //int playerCount = runner.ActivePlayers.Count();
 
-            if (playerCount >= 2)
-            {
-                runner.LoadScene(SceneRef.FromIndex(1), LoadSceneMode.Single);
-            }
+            //if (playerCount >= 2)
+            //{
+            //    runner.LoadScene(SceneRef.FromIndex(1), LoadSceneMode.Single);
+            //}
+
+            runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, player);
         }
     }
 
@@ -179,12 +180,14 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (!runner.IsServer)
             return;
+        Debug.Log("Cargamos una escena");
 
-        foreach(PlayerRef player in runner.ActivePlayers)
-        {
-            NetworkObject newPlayer = runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, player);
-            runner.SetPlayerObject(player, newPlayer);
-        }
+        //foreach(PlayerRef player in runner.ActivePlayers)
+        //{
+        //   NetworkObject newPlayer = runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, player);
+        
+        //runner.SetPlayerObject(player, newPlayer);
+       // }
     }
 
     public void OnSceneLoadStart(NetworkRunner runner)

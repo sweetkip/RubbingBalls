@@ -1,5 +1,4 @@
 using Fusion;
-using TreeEditor;
 using UnityEngine;
 
 public class Ball : NetworkBehaviour
@@ -37,20 +36,24 @@ public class Ball : NetworkBehaviour
     }
     public override void FixedUpdateNetwork()
     {
+        Debug.Log("Me llaman cada tick");
         if (GetInput(out NetworkInputData data))
         {
             if (data.Buttons.IsSet((int)InputButton.Fire))
             {
+                Debug.Log("Le dieron al boton y yo me entere");
                 if (!Object.HasStateAuthority)
                     return;
                 if(!wasPressed)
                 {
+                    Debug.Log("Se le dio al boton y no estaba apretado");
                     ButtonPressed();
                 }
                 else
                 {
                     if(canShoot)
                     {
+                        Debug.Log("Puedo disparar");
                         Drag();
                     }
                 }
@@ -61,9 +64,12 @@ public class Ball : NetworkBehaviour
                 {
                     if(canShoot)
                     {
+                        Debug.Log("Solte");
                         Throw();
                     }
+                    Debug.Log("Solte peron no puedo disparar");
                 }
+                Debug.Log("Solte y nunca aprete");
             }
         }
     }
