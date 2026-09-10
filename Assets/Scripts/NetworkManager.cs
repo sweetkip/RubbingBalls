@@ -34,6 +34,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             MatchmakingMode = Photon.Realtime.MatchmakingMode.FillRoom,      //El mejor modo, llena una sala después pasa a la siguiente. Random es random y la serial une por orden de sala de a un jugador.
             SceneManager = GetComponent<NetworkSceneManagerDefault>()
         });
+        SceneManager.LoadScene("Lobby");
         Debug.Log("Se unio el crack");
     }
 
@@ -47,6 +48,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             SessionName = sessionName,
             SceneManager = GetComponent<NetworkSceneManagerDefault>()
         });
+        SceneManager.LoadScene("Lobby");
         Debug.Log("Se unio un wachin");
     }
 
@@ -54,6 +56,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public async void QuickPlay()
     {
+        Debug.Log("RIBOMBEEEE");
         runner.ProvideInput = true;
 
         await runner.StartGame(new StartGameArgs()
