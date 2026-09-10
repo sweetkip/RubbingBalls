@@ -177,7 +177,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkManager
   runner: {fileID: 18934366}
   playerPrefab:
-    RawGuidValue: 2a2a9e56339a7454a90fb9fb9cf0cb07
+    RawGuidValue: 212dac1ff037c544eaa3879faab994fd
 --- !u!4 &18934368
 Transform:
   m_ObjectHideFlags: 0
@@ -2132,7 +2132,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1418183210
 MonoBehaviour:
   m_ObjectHideFlags: 0

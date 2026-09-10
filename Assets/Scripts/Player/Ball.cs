@@ -1,7 +1,8 @@
+using Fusion;
 using TreeEditor;
 using UnityEngine;
 
-public class Ball : MonoBehaviour
+public class Ball : NetworkBehaviour
 {
     [SerializeField] private float force;
     [SerializeField] private float maxDistance;
@@ -20,6 +21,7 @@ public class Ball : MonoBehaviour
     private Vector2 clampedPosition;
     private bool canShoot;
     private Color originalColor;
+    private bool wasPressed;
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -31,11 +33,46 @@ public class Ball : MonoBehaviour
         lr = GetComponent<LineRenderer>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         originalColor = spriteRenderer.color;
+        wasPressed = false;
+    }
+    public override void FixedUpdateNetwork()
+    {
+        if (GetInput(out NetworkInputData data))
+        {
+            if (data.Buttons.IsSet((int)InputButton.Fire))
+            {
+                if (!Object.HasStateAuthority)
+                    return;
+                if(!wasPressed)
+                {
+                    ButtonPressed();
+                }
+                else
+                {
+                    if(canShoot)
+                    {
+                        Drag();
+                    }
+                }
+            }
+            else
+            {
+                if(wasPressed)
+                {
+                    if(canShoot)
+                    {
+                        Throw();
+                    }
+                }
+            }
+        }
     }
 
-    private void OnMouseDown()
+
+    private void ButtonPressed()
     {
-        if(shootsLeft > 0)
+        wasPressed = true;
+        if (shootsLeft > 0)
         {
             rb.gravityScale = slowGS;
             canShoot = true;
@@ -44,13 +81,6 @@ public class Ball : MonoBehaviour
         {
             canShoot = false;
         }
-    }
-
-    private void OnMouseDrag()
-    {
-        if(!canShoot)
-            return;
-        Drag();
     }
 
     private void Drag()
@@ -68,15 +98,9 @@ public class Ball : MonoBehaviour
         ShowTrajectory();
     }
 
-    private void OnMouseUp()
-    {
-        if(!canShoot)
-            return;
-        Throw();
-    }
-
     private void Throw()
     {
+        wasPressed = false;
         trajectoryLr.enabled = false;
         rb.gravityScale = originalGS;
         Vector2 actualPos = transform.position;

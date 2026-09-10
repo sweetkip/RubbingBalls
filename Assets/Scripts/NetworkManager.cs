@@ -13,6 +13,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 {
     [SerializeField] private NetworkRunner runner;
     [SerializeField] private NetworkPrefabRef playerPrefab;
+    private int shootsLeft;
 
     private void Awake()
     {
@@ -60,7 +61,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             GameMode = GameMode.AutoHostOrClient
         });
     }
-    
+
     public async void JoinLobby()
     {
         var result = await runner.JoinSessionLobby(SessionLobby.ClientServer);
@@ -70,7 +71,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
-public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
+    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
     {
         //throw new NotImplementedException();
     }
@@ -109,7 +110,6 @@ public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef p
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
         SceneManager.LoadScene("Lobby");
-        Debug.Log("Se apago?");
     }
 
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
@@ -139,18 +139,8 @@ public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef p
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
-        Vector2 direction = Vector2.zero;
-        if(Input.GetKey(KeyCode.W))
-            direction.y += 1;
-        if (Input.GetKey(KeyCode.S))
-            direction.y -= 1;
-        if (Input.GetKey(KeyCode.A))
-            direction.x -= 1;
-        if (Input.GetKey(KeyCode.D))
-            direction.x += 1;
         NetworkInputData data = new NetworkInputData();
-        data.Direction = direction;
-        data.Buttons.Set((int)InputButton.Fire, Input.GetKey(KeyCode.Space));
+        data.Buttons.Set((int)InputButton.Fire, Input.GetMouseButton(0));
         input.Set(data);
     }
 

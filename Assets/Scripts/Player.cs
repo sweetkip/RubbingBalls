@@ -9,8 +9,8 @@ public class Player : NetworkBehaviour
     {
         if(GetInput(out NetworkInputData data))
         {
-            Vector3 movement = new Vector3(data.Direction.x, data.Direction.y, 0);
-            transform.Translate(movement * speed * Runner.DeltaTime);
+            /*Vector3 movement = new Vector3(data.Direction.x, data.Direction.y, 0);
+            transform.Translate(movement * speed * Runner.DeltaTime);*/
             if(data.Buttons.IsSet((int)InputButton.Fire))
             {
                 if(Object.HasStateAuthority)
