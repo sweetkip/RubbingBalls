@@ -1,4 +1,4 @@
-using Fusion;
+﻿using Fusion;
 using UnityEngine;
 
 public class Ball : NetworkBehaviour
@@ -36,40 +36,30 @@ public class Ball : NetworkBehaviour
     }
     public override void FixedUpdateNetwork()
     {
-        Debug.Log("Me llaman cada tick");
         if (GetInput(out NetworkInputData data))
         {
             if (data.Buttons.IsSet((int)InputButton.Fire))
             {
-                Debug.Log("Le dieron al boton y yo me entere");
-                if (!Object.HasStateAuthority)
-                    return;
-                if(!wasPressed)
+                if (!wasPressed)
                 {
-                    Debug.Log("Se le dio al boton y no estaba apretado");
                     ButtonPressed();
                 }
                 else
                 {
-                    if(canShoot)
+                    if (canShoot)
                     {
-                        Debug.Log("Puedo disparar");
-                        Drag();
+                        Drag(data.AimWorldPosition);
                     }
                 }
             }
             else
             {
-                if(wasPressed)
+                if (wasPressed && canShoot)
                 {
-                    if(canShoot)
-                    {
-                        Debug.Log("Solte");
-                        Throw();
-                    }
-                    Debug.Log("Solte peron no puedo disparar");
+                    Throw();
                 }
-                Debug.Log("Solte y nunca aprete");
+                wasPressed = false;
+                trajectoryLr.enabled = false;
             }
         }
     }
@@ -80,8 +70,11 @@ public class Ball : NetworkBehaviour
         wasPressed = true;
         if (shootsLeft > 0)
         {
-            rb.gravityScale = slowGS;
             canShoot = true;
+            if (Object.HasStateAuthority)
+            {
+                rb.gravityScale = slowGS;
+            }
         }
         else
         {
@@ -89,9 +82,9 @@ public class Ball : NetworkBehaviour
         }
     }
 
-    private void Drag()
+    private void Drag(Vector2 aimWorldPosition)
     {
-        Vector2 dragPosition = cam.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 dragPosition = aimWorldPosition;
         clampedPosition = dragPosition;
         float dragDistance = Vector2.Distance(transform.position, dragPosition);
         Vector2 actualPos = transform.position;
@@ -108,6 +101,12 @@ public class Ball : NetworkBehaviour
     {
         wasPressed = false;
         trajectoryLr.enabled = false;
+        lr.SetPosition(0, Vector2.zero);
+        lr.SetPosition(1, Vector2.zero);
+
+        if (!Object.HasStateAuthority)
+            return; // solo el host aplica la física real
+
         rb.gravityScale = originalGS;
         Vector2 actualPos = transform.position;
         Vector2 throwVector = actualPos - clampedPosition;
@@ -116,8 +115,6 @@ public class Ball : NetworkBehaviour
         rb.AddForce(throwVector * force);
         shootsLeft--;
         spriteRenderer.color = new Color(spriteRenderer.color.r * 0.75f, spriteRenderer.color.g * 0.75f, spriteRenderer.color.b * 0.75f, spriteRenderer.color.a);
-        lr.SetPosition(0, Vector2.zero);
-        lr.SetPosition(1, Vector2.zero);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)

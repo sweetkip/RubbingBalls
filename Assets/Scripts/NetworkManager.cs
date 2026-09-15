@@ -145,6 +145,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         NetworkInputData data = new NetworkInputData();
         data.Buttons.Set((int)InputButton.Fire, Input.GetMouseButton(0));
+        data.AimWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         input.Set(data);
     }
 
