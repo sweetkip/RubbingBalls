@@ -337,6 +337,7 @@ GameObject:
   m_Component:
   - component: {fileID: 198453809}
   - component: {fileID: 198453808}
+  - component: {fileID: 198453810}
   m_Layer: 0
   m_Name: MenuManager
   m_TagString: Untagged
@@ -373,6 +374,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &198453810
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 198453807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7e5e678c7bb8574b96187d9b9e22e9e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoomListUI
+  manager: {fileID: 1731808433}
 --- !u!1 &303467826
 GameObject:
   m_ObjectHideFlags: 0
@@ -1317,50 +1331,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 986437262}
   m_CullTransparentMesh: 1
---- !u!1 &1064015986
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1064015988}
-  - component: {fileID: 1064015987}
-  m_Layer: 0
-  m_Name: RibombeManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1064015987
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1064015986}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a21afaeb0346ac34d8cf5994fd02793e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RIBOMBEEE
---- !u!4 &1064015988
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1064015986}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 933.67535, y: 540.59735, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1102493318
 GameObject:
   m_ObjectHideFlags: 0
@@ -1920,9 +1890,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1731808433}
-        m_TargetAssemblyTypeName: NetworkManager, Assembly-CSharp
-        m_MethodName: JoinLobby
+      - m_Target: {fileID: 198453808}
+        m_TargetAssemblyTypeName: MenuUI, Assembly-CSharp
+        m_MethodName: RoomList
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2679,6 +2649,10 @@ MonoBehaviour:
   runner: {fileID: 1731808432}
   playerPrefab:
     RawGuidValue: 2a2a9e56339a7454a90fb9fb9cf0cb07
+  presetRooms:
+  - Red Room
+  - Chuck Room
+  - Bomb Room
 --- !u!4 &1731808434
 Transform:
   m_ObjectHideFlags: 0
@@ -3460,5 +3434,4 @@ SceneRoots:
   - {fileID: 198453809}
   - {fileID: 1249724097}
   - {fileID: 1731808434}
-  - {fileID: 1064015988}
   - {fileID: 1320699689}
