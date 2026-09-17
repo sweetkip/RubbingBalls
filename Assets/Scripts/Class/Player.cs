@@ -3,7 +3,7 @@ using Fusion;
 
 public class Player : NetworkBehaviour
 {
-    [SerializeField] private float speed = 10f;
+    //[SerializeField] private float speed = 10f;
     [SerializeField] private NetworkPrefabRef bullet;
     public override void FixedUpdateNetwork()
     {
