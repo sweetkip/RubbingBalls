@@ -1,10 +1,8 @@
 using Fusion;
 using Fusion.Sockets;
-using Photon.Realtime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,10 +14,31 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     [SerializeField] private NetworkPrefabRef playerPrefab;
     private int shootsLeft;
 
+    //<3
+    [SerializeField] private string[] presetRooms = new string[] { "Red Room", "Chuck Room", "Bomb Room" };
+
+    public static NetworkManager Instance { get; private set; }
+    public event Action<List<SessionInfo>> OnSessionListChanged;
+    private List<SessionInfo> lastSessionList = new List<SessionInfo>();
+    public string[] PresetRooms => presetRooms;
+
+    //<3
+
+
     private void Awake()
     {
+        Instance = this;    //<3
         runner.AddCallbacks(this);
     }
+    //<3
+    private async void Start()
+    {
+        //Se tiene que unir al lobby ni bien comienza para poder recibir OnSessionListUpdated
+        await JoinLobby();
+    }
+
+    /*
+    //Tiene sentido este comentado más adelante :P
 
     public async void StartGameHost(string sessionName)
     {
@@ -50,28 +69,88 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             SceneManager = GetComponent<NetworkSceneManagerDefault>()
         });
     }
+    */
+    //<3
 
-
-
-    public async void QuickPlay()
-    {
-        Debug.Log("RIBOMBEEEE");
-        runner.ProvideInput = true;
-
-        await runner.StartGame(new StartGameArgs()
-        {
-            GameMode = GameMode.AutoHostOrClient
-        });
-    }
-
-    public async void JoinLobby()
+    public async System.Threading.Tasks.Task JoinLobby()
     {
         var result = await runner.JoinSessionLobby(SessionLobby.ClientServer);
         if (!result.Ok)
         {
-            Debug.LogError(result.ShutdownReason);
+            Debug.LogError("No se pudo unir al lobby: " + result.ShutdownReason);
         }
     }
+
+    //<3
+    //Acá voy a tratar de unir el crear salas como host y unirse a ellas como clientes
+    //Quizás Ale me quiera matar jsksj, pero es para poder usar estos métodos para el quick play y la lista :P
+    public async void JoinOrCreateSession(string sessionName)
+    {
+        if (string.IsNullOrWhiteSpace(sessionName)) return;
+
+        runner.ProvideInput = true;
+
+        var result = await runner.StartGame(new StartGameArgs()
+        {
+            GameMode = GameMode.AutoHostOrClient,
+            SessionName = sessionName,
+            PlayerCount = 4,
+            IsOpen = true,
+            IsVisible = true,
+            MatchmakingMode = Photon.Realtime.MatchmakingMode.FillRoom,
+            SceneManager = GetComponent<NetworkSceneManagerDefault>()
+        });
+
+        if (!result.Ok)
+        {
+            await runner.LoadScene("Lobby");
+        }
+        else
+        {
+            Debug.LogError("Error al unirse / crear sala: " + result.ShutdownReason);
+        }
+    }
+    //<3
+
+    //<3
+    //Acá está el porque las comenté antes.
+    //El creado es básicamente el mismo de estas dos, solo cambiando si son host o client
+    //Para no repetir código entonces utilizan el método de arriba y listo
+    public void StartGameHost(string sessionName) => JoinOrCreateSession(sessionName);
+    public void StartGameClient(string sessionName) => JoinOrCreateSession(sessionName);
+    //<3
+
+    //<3
+    public async void QuickPlay()
+    {
+        SessionInfo best = lastSessionList
+            .Where(s => s.IsValid && s.IsOpen && s.PlayerCount < s.MaxPlayers)
+            .OrderByDescending(s => s.PlayerCount)
+            .FirstOrDefault();
+
+        if (best != null)
+        {
+            JoinOrCreateSession(best.Name);
+        }
+        else
+        {
+            string randomName = "Sala " + GenerateRandomCode(6);
+            JoinOrCreateSession(randomName);
+        }
+    }
+    //<3
+
+    //<3
+    private string GenerateRandomCode(int length)
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var result = new char[length];
+        for (int i = 0; i < length; i++)
+            result[i] = chars[UnityEngine.Random.Range(0, chars.Length)];
+        return new string(result);
+    }
+    //<3
+
 
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
     {
