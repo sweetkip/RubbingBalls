@@ -204,6 +204,8 @@ GameObject:
   - component: {fileID: 6461361740102551697}
   - component: {fileID: 5527471294328752519}
   - component: {fileID: 4609549843655980551}
+  - component: {fileID: 3364371015584382175}
+  - component: {fileID: -774008284748766507}
   m_Layer: 0
   m_Name: Ball
   m_TagString: Untagged
@@ -508,6 +510,8 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 4609549843655980551}
   - {fileID: 4090428102142124648}
+  - {fileID: 3364371015584382175}
+  - {fileID: -774008284748766507}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &4609549843655980551
 MonoBehaviour:
@@ -549,3 +553,29 @@ MonoBehaviour:
     MinImpactfulCollisionAlignment: 0.3
     ImpactStartCorrectionTime: 0.1
     ImpactCorrectionTimeComplete: 0.3
+--- !u!114 &3364371015584382175
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7954781137594083428}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1221838739451f469b9cabae8784871, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthController
+  _Health: 0
+  maxHealth: 10
+--- !u!114 &-774008284748766507
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7954781137594083428}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d9d8de9114ad194d980c9722d4d376e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BallCollition
