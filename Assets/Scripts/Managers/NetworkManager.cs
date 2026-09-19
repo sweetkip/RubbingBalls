@@ -27,17 +27,19 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     private void Awake()
     {
-        Instance = this;    //<3
+        //Instance = this;    //<3
         runner.AddCallbacks(this);
     }
+    /*
     //<3
     private async void Start()
     {
         //Se tiene que unir al lobby ni bien comienza para poder recibir OnSessionListUpdated
         await JoinLobby();
     }
+    */
 
-    /*
+    
     //Tiene sentido este comentado más adelante :P
 
     public async void StartGameHost(string sessionName)
@@ -69,10 +71,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             SceneManager = GetComponent<NetworkSceneManagerDefault>()
         });
     }
-    */
+    
     //<3
 
-    public async System.Threading.Tasks.Task JoinLobby()
+    public async /*System.Threading.Tasks.Task*/ void JoinLobby()
     {
         var result = await runner.JoinSessionLobby(SessionLobby.ClientServer);
         if (!result.Ok)
@@ -81,6 +83,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
+    /*
     //<3
     //Acá voy a tratar de unir el crear salas como host y unirse a ellas como clientes
     //Quizás Ale me quiera matar jsksj, pero es para poder usar estos métodos para el quick play y la lista :P
@@ -119,10 +122,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public void StartGameHost(string sessionName) => JoinOrCreateSession(sessionName);
     public void StartGameClient(string sessionName) => JoinOrCreateSession(sessionName);
     //<3
-
+    */
     //<3
     public async void QuickPlay()
-    {
+    {/*
         SessionInfo best = lastSessionList
             .Where(s => s.IsValid && s.IsOpen && s.PlayerCount < s.MaxPlayers)
             .OrderByDescending(s => s.PlayerCount)
@@ -136,10 +139,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         {
             string randomName = "Sala " + GenerateRandomCode(6);
             JoinOrCreateSession(randomName);
-        }
+        }*/
     }
     //<3
-
+    
     //<3
     private string GenerateRandomCode(int length)
     {
