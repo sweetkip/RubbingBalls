@@ -21,6 +21,7 @@ public class Ball : NetworkBehaviour
     private bool canShoot;
     private Color originalColor;
     private bool wasPressed;
+    private HealthController health;
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -33,6 +34,7 @@ public class Ball : NetworkBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         originalColor = spriteRenderer.color;
         wasPressed = false;
+        health = GetComponent<HealthController>();
     }
     public override void FixedUpdateNetwork()
     {
@@ -156,5 +158,18 @@ public class Ball : NetworkBehaviour
             points[i] = pos;
         }
         trajectoryLr.SetPositions(points);
+    }
+
+    public void Respawn()
+    {
+        if (!Object.HasStateAuthority)
+            return;
+        rb.simulated = false;
+        rb.linearVelocity = Vector2.zero;
+        transform.position = Vector3.zero;
+        shootsLeft = maxShoots;
+        spriteRenderer.color = originalColor;
+        health.ResetHealth();
+        rb.simulated = true;
     }
 }

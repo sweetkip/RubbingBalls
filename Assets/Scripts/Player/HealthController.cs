@@ -5,16 +5,16 @@ public class HealthController : NetworkBehaviour
 {
     [Networked, OnChangedRender(nameof(OnHealthChanged))] 
     public float Health { get; set; }
+    [Networked] private int id {  get; set; }
     [SerializeField] private int initialHealth = 1;
-    private int id;
 
     public override void Spawned()
     {
-        if(Object.HasStateAuthority)
+        if (Object.HasStateAuthority)
         {
-            Health = 1;
-            id = UIManager.Instance.IJoined();
+            Health = initialHealth;
         }
+        id = UIManager.Instance.IJoined();
     }
 
     public void TakeDamage(float amount)
@@ -33,6 +33,12 @@ public class HealthController : NetworkBehaviour
     private void OnHealthChanged()
     {
         UIManager.Instance.ChangeHealth(Health, id);
-        Debug.Log("Health cambio: " +  Health);
+    }
+
+    public void ResetHealth()
+    {
+        if (!Object.HasStateAuthority)
+            return;
+        Health = initialHealth;
     }
 }

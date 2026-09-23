@@ -565,7 +565,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1221838739451f469b9cabae8784871, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HealthController
-  _Health: 0
+  _Health: 10
   initialHealth: 1
 --- !u!114 &-774008284748766507
 MonoBehaviour:
@@ -579,8 +579,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d9d8de9114ad194d980c9722d4d376e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BallCollition
-  _speed: 0
-  baseBounce: 10
-  minE: 0
-  maxE: 1
-  previousVelocity: {x: 0, y: 0}
+  _speed: {x: 0, y: 0}
