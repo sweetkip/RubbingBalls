@@ -279,7 +279,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
-  m_Color: {r: 0, g: 0.96387434, b: 1, a: 1}
+  m_Color: {r: 0, g: 0.98076606, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -566,7 +566,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HealthController
   _Health: 0
-  maxHealth: 10
+  initialHealth: 1
 --- !u!114 &-774008284748766507
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -579,3 +579,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d9d8de9114ad194d980c9722d4d376e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BallCollition
+  _speed: 0
+  baseBounce: 10
+  minE: 0
+  maxE: 1
+  previousVelocity: {x: 0, y: 0}

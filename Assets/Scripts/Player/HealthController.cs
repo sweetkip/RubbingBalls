@@ -4,31 +4,31 @@ using Fusion;
 public class HealthController : NetworkBehaviour
 {
     [Networked, OnChangedRender(nameof(OnHealthChanged))] 
-    public int Health { get; set; }
-    [SerializeField] private int maxHealth = 10;
+    public float Health { get; set; }
+    [SerializeField] private int initialHealth = 1;
     private int id;
 
     public override void Spawned()
     {
         if(Object.HasStateAuthority)
         {
-            Health = maxHealth;
+            Health = 1;
             id = UIManager.Instance.IJoined();
         }
     }
 
-    public void TakeDamage(int amount)
+    public void TakeDamage(float amount)
     {
         if (!Object.HasStateAuthority)
             return;
 
-        Health -= amount;
+        Health += amount;
     }
 
-    public void Heal(int amount)
+    public void Heal(float amount)
     {
         if (!Object.HasStateAuthority) return;
-        Health += amount;
+        Health -= amount;
     }
     private void OnHealthChanged()
     {

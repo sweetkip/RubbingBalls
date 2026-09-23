@@ -36,7 +36,7 @@ public class UIManager : NetworkBehaviour
         return id;
     }
 
-    public void ChangeHealth(int health, int id)
+    public void ChangeHealth(float health, int id)
     {
         playerHealth[id].text = "Player" + (id + 1) + " Health: " + health;
     }

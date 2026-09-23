@@ -3,27 +3,53 @@ using UnityEngine;
 
 public class BallCollition : NetworkBehaviour
 {
-    private int damage = 1;
+    [Networked] public Vector2 speed {get; set;}
+    private float damage = 0.01f;
     private Rigidbody2D rb;
+    private HealthController myHealth;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        myHealth = this.gameObject.GetComponent<HealthController>();
+        
     }
+
+    public override void FixedUpdateNetwork()
+    {
+        if(rb != null)
+        {
+            speed = rb.linearVelocity;
+        }
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (!Object.HasStateAuthority)
             return;
+
         HealthController otherHealth = collision.gameObject.GetComponent<HealthController>();
-        Rigidbody2D otherRb2D = collision.gameObject.GetComponent<Rigidbody2D>();
-        if (otherHealth != null && otherRb2D != null)
+        BallCollition otherCollition = collision.gameObject.GetComponent<BallCollition>();
+        if (otherHealth != null && otherCollition != null)
         {
-            float mySpeed = rb.linearVelocity.magnitude;
-            float otherSpeed = otherRb2D.linearVelocity.magnitude;
-            if (mySpeed <= otherSpeed)
+            Vector2 otherSpeed = otherCollition.speed;
+            if (speed.magnitude > 5f)
             {
-                Debug.Log("Mi velocidad era de: " + mySpeed + " Su velocidad era de: " + otherSpeed);
-                otherHealth.TakeDamage(damage);
+                otherHealth.TakeDamage(damage * speed.magnitude);
+                otherCollition.EnemyPush(speed.normalized);
+            }
+            if (otherSpeed.magnitude > 5f)
+            {
+                myHealth.TakeDamage(damage * otherSpeed.magnitude);
+                EnemyPush(otherSpeed.normalized);
             }
         }
+    }
+
+    public void EnemyPush(Vector2 dir)
+    {
+        if (!Object.HasStateAuthority)
+            return;
+        rb.AddForce(dir.normalized * dir.magnitude * myHealth.Health, ForceMode2D.Impulse);
     }
 }
