@@ -363,6 +363,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bbf2ccca98069414698243980f1a3106, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Ball
+  _id: 0
+  _ColorIndex: 0
+  _ShootsLeft: 0
   force: 300
   maxDistance: 3
   maxShoots: 2
@@ -371,6 +374,13 @@ MonoBehaviour:
   trajectoryLr: {fileID: 1262822484831137163}
   WallLayer: 3
   trajectoryResolution: 30
+  playerColors:
+  - {r: 1, g: 0, b: 0, a: 1}
+  - {r: 0, g: 1, b: 0, a: 1}
+  - {r: 0, g: 0, b: 1, a: 1}
+  - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - {r: 0, g: 1, b: 1, a: 1}
+  - {r: 1, g: 0, b: 1, a: 1}
 --- !u!120 &6461361740102551697
 LineRenderer:
   serializedVersion: 3

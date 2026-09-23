@@ -802,9 +802,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ColorSelector
   colors:
   - {r: 1, g: 0, b: 0, a: 1}
-  - {r: 0, g: 1, b: 0.90482306, a: 1}
-  - {r: 0.13372612, g: 0, b: 1, a: 1}
-  - {r: 0.8564048, g: 0, b: 1, a: 1}
+  - {r: 0, g: 1, b: 0, a: 1}
+  - {r: 0, g: 0, b: 1, a: 1}
+  - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - {r: 0, g: 1, b: 1, a: 1}
+  - {r: 1, g: 0, b: 1, a: 1}
   preview: {fileID: 513272159}
 --- !u!114 &513272159
 MonoBehaviour:
