@@ -167,7 +167,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 best = session;
         }
 
-        if (best == null)
+        if (best != null)
         {
             StartGameClient(best.Name);
         }
