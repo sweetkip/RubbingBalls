@@ -2,51 +2,54 @@ using Fusion;
 using Fusion.Sockets;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-//{}
 
 public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 {
     [SerializeField] private NetworkRunner runner;
     [SerializeField] private NetworkPrefabRef playerPrefab;
+    [SerializeField] private int sceneIndex = 1;
+
     private int shootsLeft;
 
-    //<3
-    [SerializeField] private string[] presetRooms = new string[] { "Red Room", "Chuck Room", "Bomb Room" };
-
     public static NetworkManager Instance { get; private set; }
+    
     public event Action<List<SessionInfo>> OnSessionListChanged;
-    private List<SessionInfo> lastSessionList = new List<SessionInfo>();
-    public string[] PresetRooms => presetRooms;
-
-    //<3
+    public event Action OnJoinFailed;
+    public event Action OnJoinSucceeded;
 
 
     private void Awake()
     {
-        //Instance = this;    //<3
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        
+
+        if (runner == null)
+        {
+            runner = GetComponent<NetworkRunner>();
+        }
         runner.AddCallbacks(this);
     }
-    /*
-    //<3
-    private async void Start()
-    {
-        //Se tiene que unir al lobby ni bien comienza para poder recibir OnSessionListUpdated
-        await JoinLobby();
-    }
-    */
 
-    
-    //Tiene sentido este comentado más adelante :P
 
     public async void StartGameHost(string sessionName)
     {
+        if (string.IsNullOrWhiteSpace(sessionName))
+        {
+            OnJoinFailed?.Invoke();
+            return;
+        }
+
         runner.ProvideInput = true;
 
-        await runner.StartGame(new StartGameArgs()
+        var result = await runner.StartGame(new StartGameArgs()
         {
             GameMode = GameMode.Host,
             SessionName = sessionName,
@@ -56,132 +59,102 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             MatchmakingMode = Photon.Realtime.MatchmakingMode.FillRoom,      //El mejor modo, llena una sala después pasa a la siguiente. Random es random y la serial une por orden de sala de a un jugador.
             SceneManager = GetComponent<NetworkSceneManagerDefault>()
         });
+
+        if (!result.Ok)
+        {
+            Debug.LogError("Couldn't create room: " + result.ShutdownReason);
+            OnJoinFailed?.Invoke();
+            return;
+        }
+
+        OnJoinSucceeded?.Invoke();
         await runner.LoadScene("Lobby");
         
     }
 
     public async void StartGameClient(string sessionName)
     {
-        runner.ProvideInput = true;
-
-        await runner.StartGame(new StartGameArgs()
+        if (string.IsNullOrWhiteSpace(sessionName))
         {
-            GameMode = GameMode.Client,
-            SessionName = sessionName,
-            SceneManager = GetComponent<NetworkSceneManagerDefault>()
-        });
-    }
-    
-    //<3
-
-    public async /*System.Threading.Tasks.Task*/ void JoinLobby()
-    {
-        var result = await runner.JoinSessionLobby(SessionLobby.ClientServer);
-        if (!result.Ok)
-        {
-            Debug.LogError("No se pudo unir al lobby: " + result.ShutdownReason);
+            OnJoinFailed?.Invoke();
+            return;
         }
-    }
-
-    /*
-    //<3
-    //Acá voy a tratar de unir el crear salas como host y unirse a ellas como clientes
-    //Quizás Ale me quiera matar jsksj, pero es para poder usar estos métodos para el quick play y la lista :P
-    public async void JoinOrCreateSession(string sessionName)
-    {
-        if (string.IsNullOrWhiteSpace(sessionName)) return;
 
         runner.ProvideInput = true;
 
         var result = await runner.StartGame(new StartGameArgs()
         {
-            GameMode = GameMode.AutoHostOrClient,
+            GameMode = GameMode.Client,
             SessionName = sessionName,
-            PlayerCount = 4,
-            IsOpen = true,
-            IsVisible = true,
-            MatchmakingMode = Photon.Realtime.MatchmakingMode.FillRoom,
             SceneManager = GetComponent<NetworkSceneManagerDefault>()
         });
 
         if (!result.Ok)
         {
-            await runner.LoadScene("Lobby");
-        }
-        else
-        {
-            Debug.LogError("Error al unirse / crear sala: " + result.ShutdownReason);
+            Debug.LogWarning($"No se pudo unir a '{sessionName}': {result.ShutdownReason}");
+            OnJoinFailed?.Invoke();
+            return;
         }
     }
-    //<3
 
-    //<3
-    //Acá está el porque las comenté antes.
-    //El creado es básicamente el mismo de estas dos, solo cambiando si son host o client
-    //Para no repetir código entonces utilizan el método de arriba y listo
-    public void StartGameHost(string sessionName) => JoinOrCreateSession(sessionName);
-    public void StartGameClient(string sessionName) => JoinOrCreateSession(sessionName);
-    //<3
-    */
-    //<3
+    public async void JoinLobby()
+    {
+        var result = await runner.JoinSessionLobby(SessionLobby.ClientServer);
+        if (!result.Ok)
+        {
+            Debug.LogError("Couldn't join the lobby: " + result.ShutdownReason);
+        }
+    }
+
+
     public async void QuickPlay()
-    {/*
-        SessionInfo best = lastSessionList
-            .Where(s => s.IsValid && s.IsOpen && s.PlayerCount < s.MaxPlayers)
-            .OrderByDescending(s => s.PlayerCount)
-            .FirstOrDefault();
+    {
+        runner.ProvideInput = true;
 
-        if (best != null)
+        var result = await runner.StartGame(new StartGameArgs()
         {
-            JoinOrCreateSession(best.Name);
+            GameMode = GameMode.AutoHostOrClient,
+            PlayerCount = 4,
+            MatchmakingMode = Photon.Realtime.MatchmakingMode.FillRoom,
+            Scene = SceneRef.FromIndex(sceneIndex),
+            SceneManager = GetComponent<NetworkSceneManagerDefault>()
+        });
+
+        if (!result.Ok)
+        {
+            Debug.LogError("QuickPlay failed: " + result.ShutdownReason);
+            OnJoinFailed?.Invoke();
+            return;
         }
-        else
-        {
-            string randomName = "Sala " + GenerateRandomCode(6);
-            JoinOrCreateSession(randomName);
-        }*/
+
+        OnJoinSucceeded?.Invoke();
     }
-    //<3
-    
-    //<3
-    private string GenerateRandomCode(int length)
-    {
-        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        var result = new char[length];
-        for (int i = 0; i < length; i++)
-            result[i] = chars[UnityEngine.Random.Range(0, chars.Length)];
-        return new string(result);
-    }
-    //<3
 
 
-    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
+    public async void Disconnect()
     {
-        //throw new NotImplementedException();
+        await runner.Shutdown();
     }
 
-    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
-    {
-        //throw new NotImplementedException();
-    }
+
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
+        /*
         if (runner.IsServer)
         {
-            //int playerCount = runner.ActivePlayers.Count();
-
-            //if (playerCount >= 2)
-            //{
-            //    runner.LoadScene(SceneRef.FromIndex(1), LoadSceneMode.Single);
-            //}
-
             runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, player);
-        }
+        }*/
+
+        if (!runner.IsServer) return;
+
+        NetworkObject obj = runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, player);
+        runner.SetPlayerObject(player, obj);
     }
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
+        /*
         if (runner.IsServer)
         {
             NetworkObject playerObject = runner.GetPlayerObject(player);
@@ -190,6 +163,14 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             {
                 runner.Despawn(playerObject);
             }
+        }*/
+
+        if (!runner.IsServer) return;
+
+        NetworkObject playerObject = runner.GetPlayerObject(player);
+        if (playerObject != null)
+        {
+            runner.Despawn(playerObject);
         }
     }
 
@@ -200,27 +181,25 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
     {
-        throw new NotImplementedException();
-    }
-
-    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token)
-    {
         //throw new NotImplementedException();
+        Debug.LogWarning("Disconnected from server: " + reason);
+        OnJoinFailed?.Invoke();
     }
 
     public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)
     {
-        //throw new NotImplementedException();
+        Debug.LogWarning("Failed connection: " + reason);
+        OnJoinFailed?.Invoke();
     }
 
-    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ReadOnlySpan<byte> data)
+    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
     {
-        //throw new NotImplementedException();
-    }
-
-    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress)
-    {
-        //throw new NotImplementedException();
+        /*
+        foreach (SessionInfo session in sessionList)
+        {
+            Debug.Log(session.Name + " - " + session.PlayerCount + "/" + session.MaxPlayers);
+        }*/
+        OnSessionListChanged?.Invoke(sessionList);
     }
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
@@ -241,42 +220,22 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         Debug.Log("Nos conectamos al sever");
     }
 
-    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
-    {
-        foreach (SessionInfo session in sessionList)
-        {
-            Debug.Log(session.Name + " - " + session.PlayerCount + "/" + session.MaxPlayers);
-        }
-    }
-
-    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data)
-    {
-        //throw new NotImplementedException();
-    }
-
-    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken)
-    {
-        //throw new NotImplementedException();
-    }
-
     public void OnSceneLoadDone(NetworkRunner runner)
     {
-        if (!runner.IsServer)
-            return;
+        if (!runner.IsServer) return;
         Debug.Log("Cargamos una escena");
-
-        //foreach(PlayerRef player in runner.ActivePlayers)
-        //{
-        //   NetworkObject newPlayer = runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, player);
-        
-        //runner.SetPlayerObject(player, newPlayer);
-       // }
     }
 
-    public void OnSceneLoadStart(NetworkRunner runner)
-    {
-        //throw new NotImplementedException();
-    }
+
+    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
+    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ReadOnlySpan<byte> data) { }
+    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
+    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
+    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
+    public void OnSceneLoadStart(NetworkRunner runner) { }
+
 
     public async void Disconect()
     {
