@@ -4,6 +4,13 @@ using UnityEngine;
 public class Ball : NetworkBehaviour
 {
     [Networked] public int id { get; private set; }
+
+    [Networked, OnChangedRender(nameof(UpdateBallColor))]
+    public byte ColorIndex { get; private set; }
+
+    [Networked, OnChangedRender(nameof(UpdateBallColor))]
+    public int ShootsLeft { get; private set; }
+
     [SerializeField] private float force;
     [SerializeField] private float maxDistance;
     [SerializeField] private int maxShoots;
@@ -12,39 +19,74 @@ public class Ball : NetworkBehaviour
     [SerializeField] private LineRenderer trajectoryLr;
     [SerializeField] private int WallLayer;
     [SerializeField] private int trajectoryResolution = 30;
+    [SerializeField] private Color[] playerColors;
 
-    NetworkTransform netTransform;
+    private NetworkTransform netTransform;
     private SpriteRenderer spriteRenderer;
-    private int shootsLeft;
     private Rigidbody2D rb;
     private Camera cam;
     private float originalGS;
     private float slowGS;
     private Vector2 clampedPosition;
     private bool canShoot;
-    private Color originalColor;
     private bool wasPressed;
     private HealthController health;
-    private void Start()
+
+    private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        cam = Camera.main;
-        originalGS = rb.gravityScale;
-        slowGS = originalGS / 10;
-        shootsLeft = maxShoots;
-        canShoot = true;
-        lr = GetComponent<LineRenderer>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        originalColor = spriteRenderer.color;
-        wasPressed = false;
         health = GetComponent<HealthController>();
-        netTransform = this.GetComponent<NetworkTransform>();
+        netTransform = GetComponent<NetworkTransform>();
+
+        if (lr == null)
+            lr = GetComponent<LineRenderer>();
+
+        originalGS = rb.gravityScale;
+        slowGS = originalGS / 10f;
+    }
+
+    private void Start()
+    {
+        cam = Camera.main;
+        canShoot = true;
+        wasPressed = false;
     }
 
     public override void Spawned()
     {
-        id = GameManager.Instance.IJoined();
+        if (Object.HasStateAuthority)
+        {
+            id = GameManager.Instance.IJoined();
+            ShootsLeft = maxShoots;
+        }
+
+        UpdateBallColor();
+
+        if (Object.HasInputAuthority)
+        {
+            byte selectedColor = 0;
+
+            if (playerColors != null && playerColors.Length > 0)
+            {
+                selectedColor = (byte)Mathf.Clamp(
+                    PlayerLocalData.SelectedColor,
+                    0,
+                    playerColors.Length - 1
+                );
+            }
+
+            if (Object.HasStateAuthority)
+            {
+                SetColor(selectedColor);
+            }
+            else
+            {
+                RPC_SetColor(selectedColor);
+            }
+        }
     }
+
     public override void FixedUpdateNetwork()
     {
         if (GetInput(out NetworkInputData data))
@@ -69,18 +111,42 @@ public class Ball : NetworkBehaviour
                 {
                     Throw();
                 }
+
                 wasPressed = false;
                 trajectoryLr.enabled = false;
             }
         }
     }
 
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_SetColor(byte newColor)
+    {
+        SetColor(newColor);
+    }
+
+    private void SetColor(byte newColor)
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        if (playerColors == null || playerColors.Length == 0)
+            return;
+
+        if (newColor >= playerColors.Length)
+            return;
+
+        ColorIndex = newColor;
+        UpdateBallColor();
+    }
+
     private void ButtonPressed()
     {
         wasPressed = true;
-        if (shootsLeft > 0)
+
+        if (ShootsLeft > 0)
         {
             canShoot = true;
+
             if (Object.HasStateAuthority)
             {
                 rb.gravityScale = slowGS;
@@ -96,14 +162,20 @@ public class Ball : NetworkBehaviour
     {
         Vector2 dragPosition = aimWorldPosition;
         clampedPosition = dragPosition;
+
         float dragDistance = Vector2.Distance(transform.position, dragPosition);
         Vector2 actualPos = transform.position;
+
         if (dragDistance > maxDistance)
         {
-            clampedPosition = actualPos + (dragPosition - actualPos).normalized * maxDistance;
+            clampedPosition =
+                actualPos +
+                (dragPosition - actualPos).normalized * maxDistance;
         }
+
         lr.SetPosition(0, transform.position);
         lr.SetPosition(1, clampedPosition);
+
         ShowTrajectory();
     }
 
@@ -111,37 +183,53 @@ public class Ball : NetworkBehaviour
     {
         wasPressed = false;
         trajectoryLr.enabled = false;
+
         lr.SetPosition(0, Vector2.zero);
         lr.SetPosition(1, Vector2.zero);
 
         if (!Object.HasStateAuthority)
-            return; // solo el host aplica la física real
+            return;
 
         rb.gravityScale = originalGS;
+
         Vector2 actualPos = transform.position;
         Vector2 throwVector = actualPos - clampedPosition;
+
         float distance = Vector2.Distance(actualPos, clampedPosition);
-        force = Mathf.Clamp(distance / maxDistance, 0, 1) * maxForce;
+
+        force = Mathf.Clamp(distance / maxDistance, 0f, 1f) * maxForce;
+
         rb.AddForce(throwVector * force);
-        shootsLeft--;
-        spriteRenderer.color = new Color(spriteRenderer.color.r * 0.75f, spriteRenderer.color.g * 0.75f, spriteRenderer.color.b * 0.75f, spriteRenderer.color.a);
+
+        ShootsLeft = Mathf.Max(0, ShootsLeft - 1);
+
+        UpdateBallColor();
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if(collision != null && collision.gameObject.layer == WallLayer)
+        if (!Object.HasStateAuthority)
+            return;
+
+        if (collision != null && collision.gameObject.layer == WallLayer)
         {
-            spriteRenderer.color = originalColor;
-            shootsLeft = maxShoots;
+            ShootsLeft = maxShoots;
+            UpdateBallColor();
         }
     }
 
     private void OnCollisionStay2D(Collision2D collision)
     {
+        if (!Object.HasStateAuthority)
+            return;
+
         if (collision != null && collision.gameObject.layer == WallLayer)
         {
-            spriteRenderer.color = originalColor;
-            shootsLeft = maxShoots;
+            if (ShootsLeft != maxShoots)
+            {
+                ShootsLeft = maxShoots;
+                UpdateBallColor();
+            }
         }
     }
 
@@ -154,30 +242,75 @@ public class Ball : NetworkBehaviour
 
         Vector2 actualPos = transform.position;
         Vector2 throwVector = actualPos - clampedPosition;
-        float distance = Vector2.Distance(actualPos, clampedPosition);
-        force = Mathf.Clamp(distance / maxDistance, 0, 1) * maxForce;
-        Vector2 velocity = (throwVector * force) / 50;
 
+        float distance = Vector2.Distance(actualPos, clampedPosition);
+
+        force = Mathf.Clamp(distance / maxDistance, 0f, 1f) * maxForce;
+
+        Vector2 velocity = (throwVector * force) / 50f;
         Vector2 startPos = transform.position;
+
         for (int i = 0; i < trajectoryResolution; i++)
         {
             float t = i * Time.fixedDeltaTime;
-            Vector2 pos = startPos + velocity * t + 0.5f * Physics2D.gravity * t * t;
+
+            Vector2 pos =
+                startPos +
+                velocity * t +
+                0.5f * Physics2D.gravity * t * t;
+
             points[i] = pos;
         }
+
         trajectoryLr.SetPositions(points);
+    }
+
+    private void UpdateBallColor()
+    {
+        if (spriteRenderer == null)
+            return;
+
+        if (playerColors == null || playerColors.Length == 0)
+            return;
+
+        if (ColorIndex >= playerColors.Length)
+            return;
+
+        Color baseColor = playerColors[ColorIndex];
+
+        int usedShoots = Mathf.Clamp(
+            maxShoots - ShootsLeft,
+            0,
+            maxShoots
+        );
+
+        float darkness = Mathf.Pow(0.75f, usedShoots);
+
+        spriteRenderer.color = new Color(
+            baseColor.r * darkness,
+            baseColor.g * darkness,
+            baseColor.b * darkness,
+            baseColor.a
+        );
     }
 
     public void Respawn()
     {
         if (!Object.HasStateAuthority)
             return;
+
         rb.simulated = false;
         rb.linearVelocity = Vector2.zero;
+        rb.gravityScale = originalGS;
+
         netTransform.Teleport(Vector3.zero);
-        shootsLeft = maxShoots;
-        spriteRenderer.color = originalColor;
+
+        ShootsLeft = maxShoots;
+
         health.ResetHealth();
+
         rb.simulated = true;
+
+        UpdateBallColor();
     }
 }
