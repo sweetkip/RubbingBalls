@@ -2,6 +2,7 @@ using Fusion;
 using Fusion.Sockets;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -19,6 +20,12 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public event Action<List<SessionInfo>> OnSessionListChanged;
     public event Action OnJoinFailed;
     public event Action OnJoinSucceeded;
+
+    //<3
+    private const string RoomCodeChars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    private const int RoomCodeLenght = 5;
+    private TaskCompletionSource<List<SessionInfo>> quickSessionTcs;
+    //<3
 
 
     private void Awake()
@@ -109,6 +116,9 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public async void QuickPlay()
     {
+        /*
+        //ESTE CÓDIGO ES EL VIEJO, EL QUE FUNCIONA COMO UN QUICK DE FOTON REAL
+        //LO TUVE QUE CAMBIAR PORQUE SINO GENERABA UNA LISTA LAARGA DE CARACTERES COMO NOMBRE DE LA ROOM
         runner.ProvideInput = true;
 
         var result = await runner.StartGame(new StartGameArgs()
@@ -128,8 +138,53 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         }
 
         OnJoinSucceeded?.Invoke();
+        */
+
+        quickSessionTcs = new TaskCompletionSource<List<SessionInfo>>();
+
+        var lobbyResult = await runner.JoinSessionLobby(SessionLobby.ClientServer);
+        if (!lobbyResult.Ok)
+        {
+            Debug.LogError("QuickPlay: couldn't join the lobby - " + lobbyResult.ShutdownReason);
+            quickSessionTcs = null;
+            OnJoinFailed?.Invoke();
+            return;
+        }
+
+        var listTask = quickSessionTcs.Task;
+        var timeoutTask = Task.Delay(5000);
+        var finishedTask = await Task.WhenAny(listTask, timeoutTask);
+        quickSessionTcs = null;
+
+        List<SessionInfo> sessions = finishedTask == listTask ? listTask.Result : new List<SessionInfo>();
+
+        SessionInfo best = null;
+        foreach (SessionInfo session in sessions)
+        {
+            if (!session.IsOpen || !session.IsVisible) continue;
+            if (session.PlayerCount >= session.MaxPlayers) continue;
+            if (best == null || session.PlayerCount > best.PlayerCount)
+                best = session;
+        }
+
+        if (best == null)
+        {
+            StartGameClient(best.Name);
+        }
+        else
+        {
+            StartGameHost(GenerateRoomCode());
+        }
     }
 
+    private string GenerateRoomCode()
+    {
+        var chars = new char[RoomCodeLenght];
+        for (int i = 0; i < RoomCodeLenght; i++)
+            chars[i] = RoomCodeChars[UnityEngine.Random.Range(0, RoomCodeChars.Length)];
+        
+        return new string(chars);
+    }
 
     public async void Disconnect()
     {
@@ -200,6 +255,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             Debug.Log(session.Name + " - " + session.PlayerCount + "/" + session.MaxPlayers);
         }*/
         OnSessionListChanged?.Invoke(sessionList);
+        quickSessionTcs?.TrySetResult(sessionList);
     }
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
