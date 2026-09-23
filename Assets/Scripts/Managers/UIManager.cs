@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class UIManager : NetworkBehaviour
 {
-    [Networked] public int lastPlayerJoined {  get; set; }
     public static UIManager Instance;
     [SerializeField] private List<TextMeshProUGUI> playerHealth;
 
@@ -19,29 +18,9 @@ public class UIManager : NetworkBehaviour
         Instance = this;
     }
 
-    public override void Spawned()
+    public void PlayerJoined(int totalPlayers)
     {
-        lastPlayerJoined = 0;
-    }
-
-    public int IJoined()
-    {
-        int id = lastPlayerJoined;
-        if (lastPlayerJoined + 1 < playerHealth.Count)
-        {
-            lastPlayerJoined++;
-        }
-        else
-        {
-            Debug.Log("No more players can Join");
-        }
-        PlayerJoined();
-        return id;
-    }
-
-    public void PlayerJoined()
-    {
-        for(int i = 0; i < lastPlayerJoined; i++)
+        for(int i = 0; i < totalPlayers; i++)
         {
             playerHealth[i].gameObject.SetActive(true);
         }
@@ -50,8 +29,11 @@ public class UIManager : NetworkBehaviour
     public void ChangeHealth(float health, int id)
     {
         //if (!Object.HasStateAuthority) return;
-        playerHealth[id].text = "P" + (id + 1) + " Damage Received: " + health.ToString("F2") + " - Lives Left: 3";
+        playerHealth[id].text = "P" + (id + 1) + " Damage Received: " + health.ToString("F2") + " - Lives Left: " + GameManager.Instance.GetPlayerLives(id); 
     }
 
-
+    public void PlayerLost(int id)
+    {
+        playerHealth[id].text = "P" + (id + 1) + " PERDIO";
+    }
 }

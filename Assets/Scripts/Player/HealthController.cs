@@ -5,8 +5,9 @@ public class HealthController : NetworkBehaviour
 {
     [Networked, OnChangedRender(nameof(OnHealthChanged))] 
     public float Health { get; set; }
-    [Networked] private int id {  get; set; }
     [SerializeField] private int initialHealth = 1;
+    private int id;
+    private Ball ball;
 
     public override void Spawned()
     {
@@ -14,7 +15,11 @@ public class HealthController : NetworkBehaviour
         {
             Health = initialHealth;
         }
-        id = UIManager.Instance.IJoined();
+        ball = GetComponent<Ball>();
+        if (ball != null)
+        {
+            id = ball.id;
+        }
     }
 
     public void TakeDamage(float amount)

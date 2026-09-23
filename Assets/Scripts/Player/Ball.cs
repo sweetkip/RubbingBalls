@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class Ball : NetworkBehaviour
 {
+    [Networked] public int id { get; private set; }
     [SerializeField] private float force;
     [SerializeField] private float maxDistance;
     [SerializeField] private int maxShoots;
@@ -11,6 +12,8 @@ public class Ball : NetworkBehaviour
     [SerializeField] private LineRenderer trajectoryLr;
     [SerializeField] private int WallLayer;
     [SerializeField] private int trajectoryResolution = 30;
+
+    NetworkTransform netTransform;
     private SpriteRenderer spriteRenderer;
     private int shootsLeft;
     private Rigidbody2D rb;
@@ -35,6 +38,12 @@ public class Ball : NetworkBehaviour
         originalColor = spriteRenderer.color;
         wasPressed = false;
         health = GetComponent<HealthController>();
+        netTransform = this.GetComponent<NetworkTransform>();
+    }
+
+    public override void Spawned()
+    {
+        id = GameManager.Instance.IJoined();
     }
     public override void FixedUpdateNetwork()
     {
@@ -65,7 +74,6 @@ public class Ball : NetworkBehaviour
             }
         }
     }
-
 
     private void ButtonPressed()
     {
@@ -166,7 +174,7 @@ public class Ball : NetworkBehaviour
             return;
         rb.simulated = false;
         rb.linearVelocity = Vector2.zero;
-        transform.position = Vector3.zero;
+        netTransform.Teleport(Vector3.zero);
         shootsLeft = maxShoots;
         spriteRenderer.color = originalColor;
         health.ResetHealth();
