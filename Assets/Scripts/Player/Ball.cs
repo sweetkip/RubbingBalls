@@ -55,9 +55,9 @@ public class Ball : NetworkBehaviour
 
     public override void Spawned()
     {
+        id = GameManager.Instance.IJoined(Object.InputAuthority);
         if (Object.HasStateAuthority)
         {
-            id = GameManager.Instance.IJoined();
             ShootsLeft = maxShoots;
         }
 
@@ -191,6 +191,7 @@ public class Ball : NetworkBehaviour
             return;
 
         rb.gravityScale = originalGS;
+        rb.linearVelocity = Vector2.zero;
 
         Vector2 actualPos = transform.position;
         Vector2 throwVector = actualPos - clampedPosition;
@@ -294,10 +295,16 @@ public class Ball : NetworkBehaviour
         );
     }
 
+    public int GetLives()
+    {
+        return health.Lives;
+    }
+
     public void Respawn()
     {
         if (!Object.HasStateAuthority)
             return;
+        health.Lives -= 1;
 
         rb.simulated = false;
         rb.linearVelocity = Vector2.zero;

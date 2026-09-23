@@ -1,32 +1,46 @@
-using UnityEngine;
 using Fusion;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class GameManager : NetworkBehaviour
 {
-    [Networked, Capacity(4)]
-    public NetworkArray<int> playersLives { get; }
     [Networked] public int totalPlayers { get; set; }
+    [Networked] public int alivePlayers { get; set; }
     public static GameManager Instance;
-    [SerializeField] private int maxLives;
     [SerializeField] private int maxPlayers;
+
+    private List<int> aliveIds = new List<int>();
+    private List<PlayerRef> alivePlayerRefs = new List<PlayerRef>();
+
+    [Networked, OnChangedRender(nameof(OnWinnerChanged))]
+    public int WinnerId { get; set; } = -1;
+
+    [Networked, OnChangedRender(nameof(OnWinnerChanged))]
+    public PlayerRef WinnerPlayer { get; set; }
 
     public override void Spawned()
     {
         totalPlayers = 0;
+        alivePlayers = 0;
+        WinnerId = -1;
+        WinnerPlayer = PlayerRef.None;
+        aliveIds.Clear();
+        alivePlayerRefs.Clear();
     }
-    public int IJoined()
+    public int IJoined(PlayerRef playerRef)
     {
         int id = totalPlayers;
-        Debug.Log("Someone joinded: " + id);
         if (totalPlayers + 1 < maxPlayers)
         {
             totalPlayers++;
+            alivePlayers++;
+            aliveIds.Add(id);
+            alivePlayerRefs.Add(playerRef);
         }
         else
         {
             Debug.Log("No more players can Join");
         }
-        playersLives.Set(id, maxLives);
         UIManager.Instance.PlayerJoined(totalPlayers);
         return id;
     }
@@ -43,22 +57,49 @@ public class GameManager : NetworkBehaviour
 
     public void PlayerOut(int id, Ball player)
     {
-        int currentLives = playersLives.Get(id);
-        playersLives.Set(id, currentLives - 1);
-        if (playersLives.Get(id) <= 0)
+        int playerLives = player.GetLives();
+        if (playerLives - 1 <= 0)
         {
             UIManager.Instance.PlayerLost(id);
+
+            int index = aliveIds.IndexOf(id);
+
             Runner.Despawn(player.gameObject.GetComponent<NetworkObject>());
+            alivePlayers--;
+            aliveIds.Remove(id);
+            if (index >= 0) alivePlayerRefs.RemoveAt(index);
+            if (alivePlayers <= 1)
+            {
+                if (aliveIds.Count == 1)
+                {
+                    WinnerId = aliveIds[0];
+                    WinnerPlayer = alivePlayerRefs[0];
+                }
+                else
+                {
+                    WinnerId = -1;
+                    WinnerPlayer = PlayerRef.None;
+                }
+
+            }
         }
         else
         {
             player.Respawn();
-            UIManager.Instance.ChangeHealth(player.GetComponent<HealthController>().Health, id);
         }
     }
 
-    public int GetPlayerLives(int id)
+    public void ShowResults()
     {
-        return playersLives.Get(id);
+        UIManager.Instance.GameIsOver(true);
+    }
+
+    private void OnWinnerChanged()
+    {
+        if (WinnerPlayer == PlayerRef.None)
+            return;
+
+        bool won = WinnerPlayer == Runner.LocalPlayer;
+        UIManager.Instance.GameIsOver(won);
     }
 }
