@@ -23,7 +23,7 @@ public class UIManager : NetworkBehaviour
 
     public void PlayerJoined(int totalPlayers)
     {
-        for(int i = 0; i < totalPlayers; i++)
+        for (int i = 0; i < totalPlayers; i++)
         {
             playerHealth[i].gameObject.SetActive(true);
         }
@@ -38,6 +38,13 @@ public class UIManager : NetworkBehaviour
     public void PlayerLost(int id)
     {
         playerHealth[id].text = "P" + (id + 1) + " PERDIO";
+    }
+
+    // NUEVO: lo llama el RPC del GameManager en todas las PCs
+    public void PlayerDisconnected(int id)
+    {
+        if (id < 0 || id >= playerHealth.Count) return;
+        playerHealth[id].text = "P" + (id + 1) + " SE DESCONECTÓ";
     }
 
     public void GameIsOver(bool won)

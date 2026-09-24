@@ -28,6 +28,15 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public event Action OnJoinFailed;
     public event Action OnJoinSucceeded;
 
+    // NUEVO: avisa a la UI cada vez que cambia el estado de la conexión (mensaje, ¿es un error?)
+    public event Action<string, bool> OnStatusChanged;
+
+    // NUEVO: datos para saber qué pasó cuando se corta la conexión
+    private bool isInSession;        // true cuando StartGame salió bien (ya estoy en una partida)
+    private bool leftOnPurpose;      // true cuando el jugador tocó "Salir"
+    private bool goingToMenu;        // evita volver al menú dos veces
+    private string currentSessionName = "";
+
     private const string RoomCodeChars =
         "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 
@@ -66,10 +75,12 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (string.IsNullOrWhiteSpace(sessionName))
         {
+            SetStatus("Escribí un nombre para la partida.", true);   // NUEVO
             OnJoinFailed?.Invoke();
             return;
         }
 
+        SetStatus("Creando la partida \"" + sessionName + "\"...");   // NUEVO
         runner.ProvideInput = true;
 
         inPreGame = true;
@@ -101,15 +112,21 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         if (!result.Ok)
         {
-            Debug.LogError(
+            Debug.LogWarning(
                 "Couldn't create room: " +
                 result.ShutdownReason
             );
 
             OnJoinFailed?.Invoke();
+            GoToMenu(ReasonToText(result.ShutdownReason), true);   // NUEVO: muestro el motivo real
 
             return;
         }
+
+        // NUEVO: ya estoy en una partida
+        isInSession = true;
+        currentSessionName = sessionName;
+        SetStatus("Partida \"" + sessionName + "\" creada. Entrando a la sala...");
 
         OnJoinSucceeded?.Invoke();
     }
@@ -118,10 +135,12 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (string.IsNullOrWhiteSpace(sessionName))
         {
+            SetStatus("Escribí el nombre de la partida a la que querés entrar.", true);   // NUEVO
             OnJoinFailed?.Invoke();
             return;
         }
 
+        SetStatus("Uniéndote a \"" + sessionName + "\"...");   // NUEVO
         runner.ProvideInput = true;
 
         inPreGame = true;
@@ -148,15 +167,23 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             );
 
             OnJoinFailed?.Invoke();
+            GoToMenu(ReasonToText(result.ShutdownReason), true);   // NUEVO: muestro el motivo real
 
             return;
         }
+
+        // NUEVO: ya estoy en una partida
+        isInSession = true;
+        currentSessionName = sessionName;
+        SetStatus("¡Conectado a \"" + sessionName + "\"! Entrando a la sala...");
 
         OnJoinSucceeded?.Invoke();
     }
 
     public async void JoinLobby()
     {
+        SetStatus("Buscando partidas...");   // NUEVO
+
         var result =
             await runner.JoinSessionLobby(
                 SessionLobby.ClientServer
@@ -168,6 +195,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 "Couldn't join the lobby: " +
                 result.ShutdownReason
             );
+
+            GoToMenu(ReasonToText(result.ShutdownReason), true);   // NUEVO
         }
     }
 
@@ -178,6 +207,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         inPreGame = true;
         startingGame = false;
         gamePlayersSpawned = false;
+
+        SetStatus("Buscando una partida libre...");   // NUEVO
 
         quickSessionTcs =
             new TaskCompletionSource<List<SessionInfo>>();
@@ -197,6 +228,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             quickSessionTcs = null;
 
             OnJoinFailed?.Invoke();
+            GoToMenu(ReasonToText(lobbyResult.ShutdownReason), true);   // NUEVO
 
             return;
         }
@@ -276,6 +308,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         if (runner == null)
             return;
 
+        leftOnPurpose = true;   // NUEVO: me voy yo, no es un error
+
         await runner.Shutdown();
     }
 
@@ -307,6 +341,13 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (runner.IsServer)
         {
+            // NUEVO: si se fue en plena partida, aviso al GameManager
+            // para que actualice los vivos y chequee si alguien ganó por abandono
+            if (!inPreGame && GameManager.Instance != null)
+            {
+                GameManager.Instance.PlayerDisconnected(player);
+            }
+
             if (runner.TryGetPlayerObject(
                     player,
                     out NetworkObject playerObject))
@@ -603,22 +644,21 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         NetworkRunner runner,
         ShutdownReason shutdownReason)
     {
-        if (Instance == this)
+        // CAMBIO: siempre vuelvo al menú, pero ahora explicando qué pasó
+        if (leftOnPurpose)
         {
-            Instance = null;
+            GoToMenu("Saliste de la partida.", false);
         }
-
-        string sceneToLoad =
-            mainMenuSceneName;
-
-        Destroy(gameObject);
-
-        if (SceneManager.GetActiveScene().name !=
-            sceneToLoad)
+        else if (isInSession)
         {
-            SceneManager.LoadScene(
-                sceneToLoad
-            );
+            // Estaba en una partida y se cortó: guardo el nombre para poder reintentar
+            ConnectionMessage.RejoinSession = currentSessionName;
+            GoToMenu("Se cortó la conexión con la partida (el host se fue o falló internet).", true);
+        }
+        else
+        {
+            // Nunca llegué a entrar: fue un error al crear o al unirse
+            GoToMenu(ReasonToText(shutdownReason), true);
         }
     }
 
@@ -658,6 +698,19 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         quickSessionTcs?.TrySetResult(
             sessionList
         );
+
+        // NUEVO: le cuento al jugador cuántas partidas hay
+        if (!isInSession)
+        {
+            int visibles = 0;
+            foreach (SessionInfo session in sessionList)
+            {
+                if (session.IsVisible) visibles++;
+            }
+
+            if (visibles == 0) SetStatus("No hay partidas abiertas. ¡Creá una!");
+            else SetStatus("Partidas encontradas: " + visibles);
+        }
     }
 
     public void OnInputMissing(
@@ -673,6 +726,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         Debug.Log(
             "Nos conectamos al servidor"
         );
+
+        SetStatus("Conectado al host.");   // NUEVO
     }
 
     public void OnObjectExitAOI(
@@ -727,5 +782,66 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public void OnSceneLoadStart(
         NetworkRunner runner)
     {
+    }
+
+    // ===================== NUEVO: estado de conexión y errores =====================
+
+    // Manda un mensaje a la UI (ConnectionStatusUI lo muestra en pantalla)
+    private void SetStatus(string message, bool isError = false)
+    {
+        Debug.Log("[Estado de conexión] " + message);
+        OnStatusChanged?.Invoke(message, isError);
+    }
+
+    // Vuelve al menú mostrando un mensaje. Se usa para TODOS los cortes y errores.
+    // Siempre recarga el MainMenu: un NetworkRunner apagado no se puede reusar,
+    // y el menú recargado trae un NetworkManager nuevo con su Runner.
+    private void GoToMenu(string message, bool isError)
+    {
+        if (goingToMenu) return;   // si ya estoy volviendo, no lo hago dos veces
+        goingToMenu = true;
+
+        ConnectionMessage.Set(message, isError);   // lo guardo: sobrevive al cambio de escena
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
+        if (this != null)   // por si Fusion ya destruyó este objeto
+        {
+            Destroy(gameObject);
+        }
+
+        SceneManager.LoadScene(mainMenuSceneName);
+    }
+
+    // Traduce el motivo técnico de Fusion a un mensaje que entienda el jugador
+    private string ReasonToText(ShutdownReason reason)
+    {
+        switch (reason)
+        {
+            case ShutdownReason.GameNotFound:
+                return "No existe una partida con ese nombre.";
+            case ShutdownReason.GameIsFull:
+                return "La partida está llena.";
+            case ShutdownReason.GameClosed:
+                return "La partida está cerrada (ya empezó).";
+            case ShutdownReason.GameIdAlreadyExists:
+            case ShutdownReason.ServerInRoom:
+                return "Ya existe una partida con ese nombre. Probá con otro.";
+            case ShutdownReason.MaxCcuReached:
+                return "Photon llegó al límite de jugadores conectados. Probá más tarde.";
+            case ShutdownReason.PhotonCloudTimeout:
+            case ShutdownReason.ConnectionTimeout:
+            case ShutdownReason.ConnectionRefused:
+            case ShutdownReason.OperationTimeout:
+                return "No se pudo conectar. Revisá tu conexión a internet.";
+            case ShutdownReason.InvalidRegion:
+            case ShutdownReason.InvalidAuthentication:
+                return "Error de configuración de Photon (AppId o región).";
+            default:
+                return "Error de conexión: " + reason;
+        }
     }
 }
