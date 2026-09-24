@@ -20,9 +20,9 @@ public class LobbyPlayerSlot : MonoBehaviour
         if (playerText != null)
         {
             if (isLocalPlayer)
-                playerText.text = $"Jugador {player.PlayerId} (Tú)";
+                playerText.text = $"Player {player.PlayerId} (You)";
             else
-                playerText.text = $"Jugador {player.PlayerId}";
+                playerText.text = $"Player {player.PlayerId}";
         }
 
         if (colorImage != null && palette != null)
@@ -33,8 +33,8 @@ public class LobbyPlayerSlot : MonoBehaviour
         if (readyText != null)
         {
             readyText.text = lobbyPlayer.IsReady
-                ? "LISTO"
-                : "ESPERANDO";
+                ? "READY"
+                : "CHOOSING";
         }
     }
 

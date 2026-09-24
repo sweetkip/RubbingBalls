@@ -31,7 +31,7 @@ public class GameManager : NetworkBehaviour
     public int IJoined(PlayerRef playerRef)
     {
         int id = totalPlayers;
-        if (totalPlayers < maxPlayers)   // ARREGLO: antes era "totalPlayers + 1 < maxPlayers" y el 4° jugador no se contaba
+        if (totalPlayers < maxPlayers)
         {
             totalPlayers++;
             alivePlayers++;
@@ -71,7 +71,7 @@ public class GameManager : NetworkBehaviour
             alivePlayers--;
             aliveIds.Remove(id);
             if (index >= 0) alivePlayerRefs.RemoveAt(index);
-            CheckWinner();   // CAMBIO: el chequeo de ganador se movió a un método para reusarlo
+            CheckWinner();
         }
         else
         {
@@ -79,24 +79,22 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    // NUEVO: lo llama el NetworkManager (solo en el Host) cuando un jugador se desconecta
     public void PlayerDisconnected(PlayerRef playerRef)
     {
         if (!HasStateAuthority) return;
 
         int index = alivePlayerRefs.IndexOf(playerRef);
-        if (index < 0) return;   // ya había perdido antes de irse: no hay nada que actualizar
+        if (index < 0) return;   
 
         int id = aliveIds[index];
         aliveIds.RemoveAt(index);
         alivePlayerRefs.RemoveAt(index);
         alivePlayers--;
 
-        RPC_PlayerDisconnected(id);   // aviso a todos para que lo muestren en pantalla
-        CheckWinner();                // si quedó uno solo, gana por abandono
+        RPC_PlayerDisconnected(id);   
+        CheckWinner();                
     }
 
-    // NUEVO: RPC del Host a todas las PCs para mostrar "P2 SE DESCONECTÓ"
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_PlayerDisconnected(int id)
     {
@@ -113,11 +111,10 @@ public class GameManager : NetworkBehaviour
     }
 
 
-    // NUEVO: si queda un solo jugador vivo, es el ganador (lo usan PlayerOut y PlayerDisconnected)
     private void CheckWinner()
     {
-        if (alivePlayers > 1) return;                   // todavía hay partida
-        if (WinnerPlayer != PlayerRef.None) return;     // ya había ganador
+        if (alivePlayers > 1) return;                 
+        if (WinnerPlayer != PlayerRef.None) return;  
 
         if (aliveIds.Count == 1)
         {

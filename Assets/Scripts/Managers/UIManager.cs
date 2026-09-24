@@ -40,7 +40,6 @@ public class UIManager : NetworkBehaviour
         playerHealth[id].text = "P" + (id + 1) + " PERDIO";
     }
 
-    // NUEVO: lo llama el RPC del GameManager en todas las PCs
     public void PlayerDisconnected(int id)
     {
         if (id < 0 || id >= playerHealth.Count) return;
