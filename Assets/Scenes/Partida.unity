@@ -2473,6 +2473,8 @@ MonoBehaviour:
   _totalPlayers: 0
   _alivePlayers: 0
   maxPlayers: 4
+  explosionPrefab:
+    RawGuidValue: b7ca01a3e8782304cb159c0ebd894c0f
   _WinnerId: -1
 --- !u!4 &616907679
 Transform:

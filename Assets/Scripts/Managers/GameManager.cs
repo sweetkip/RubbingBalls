@@ -8,6 +8,7 @@ public class GameManager : NetworkBehaviour
     [Networked] public int alivePlayers { get; set; }
     public static GameManager Instance;
     [SerializeField] private int maxPlayers;
+    [SerializeField] private NetworkPrefabRef explosionPrefab;
 
     private List<int> aliveIds = new List<int>();
     private List<PlayerRef> alivePlayerRefs = new List<PlayerRef>();
@@ -57,6 +58,8 @@ public class GameManager : NetworkBehaviour
 
     public void PlayerOut(int id, Ball player)
     {
+        Vector3 deathPosition = player.transform.position;
+        RPC_SpawnExplosion(deathPosition);
         int playerLives = player.GetLives();
         if (playerLives - 1 <= 0)
         {
@@ -99,6 +102,16 @@ public class GameManager : NetworkBehaviour
     {
         UIManager.Instance.PlayerDisconnected(id);
     }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_SpawnExplosion(Vector3 position)
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        Runner.Spawn(explosionPrefab, position, Quaternion.identity);
+    }
+
 
     // NUEVO: si queda un solo jugador vivo, es el ganador (lo usan PlayerOut y PlayerDisconnected)
     private void CheckWinner()
