@@ -3931,9 +3931,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkManager
   runner: {fileID: 1731808432}
-  playerPrefab:
+  lobbyPlayerPrefab:
+    RawGuidValue: 1e556cd81344ab84b813b44f8dab1210
+  ballPrefab:
     RawGuidValue: 2a2a9e56339a7454a90fb9fb9cf0cb07
-  sceneIndex: 1
+  preGameSceneIndex: 1
+  gameSceneIndex: 2
+  mainMenuSceneName: MainMenu
+  maxPlayers: 4
 --- !u!4 &1731808434
 Transform:
   m_ObjectHideFlags: 0

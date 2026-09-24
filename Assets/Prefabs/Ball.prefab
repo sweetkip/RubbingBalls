@@ -366,6 +366,7 @@ MonoBehaviour:
   _id: 0
   _ColorIndex: 0
   _ShootsLeft: 0
+  palette: {fileID: 11400000, guid: fc6e9a45d96834344bc00f279d7e7dc2, type: 2}
   force: 300
   maxDistance: 3
   maxShoots: 2
@@ -374,13 +375,6 @@ MonoBehaviour:
   trajectoryLr: {fileID: 1262822484831137163}
   WallLayer: 3
   trajectoryResolution: 30
-  playerColors:
-  - {r: 1, g: 0, b: 0, a: 1}
-  - {r: 0, g: 1, b: 0, a: 1}
-  - {r: 0, g: 0, b: 1, a: 1}
-  - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  - {r: 0, g: 1, b: 1, a: 1}
-  - {r: 1, g: 0, b: 1, a: 1}
 --- !u!120 &6461361740102551697
 LineRenderer:
   serializedVersion: 3
