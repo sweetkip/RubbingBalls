@@ -73,13 +73,10 @@ public class Ball : NetworkBehaviour
 
     public override void Spawned()
     {
+        id = GameManager.Instance.IJoined(Object.InputAuthority);
         if (Object.HasStateAuthority)
         {
-            id =
-                GameManager.Instance.IJoined();
-
-            ShootsLeft =
-                maxShoots;
+ShootsLeft = maxShoots;
         }
 
         UpdateBallColor();
@@ -235,8 +232,8 @@ public class Ball : NetworkBehaviour
         if (!Object.HasStateAuthority)
             return;
 
-        rb.gravityScale =
-            originalGS;
+rb.gravityScale = originalGS;
+rb.linearVelocity = Vector2.zero;
 
         Vector2 actualPos =
             transform.position;
@@ -422,10 +419,16 @@ public class Ball : NetworkBehaviour
             );
     }
 
+    public int GetLives()
+    {
+        return health.Lives;
+    }
+
     public void Respawn()
     {
         if (!Object.HasStateAuthority)
             return;
+        health.Lives -= 1;
 
         rb.simulated =
             false;

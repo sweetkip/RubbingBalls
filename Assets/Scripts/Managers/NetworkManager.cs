@@ -2,6 +2,7 @@ using Fusion;
 using Fusion.Sockets;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -27,12 +28,17 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public event Action OnJoinFailed;
     public event Action OnJoinSucceeded;
 
-    private Dictionary<PlayerRef, byte> playerColors =
-        new Dictionary<PlayerRef, byte>();
+//<3
+private const string RoomCodeChars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+private const int RoomCodeLenght = 5;
+private TaskCompletionSource<List<SessionInfo>> quickSessionTcs;
+//<3
 
-    private bool inPreGame;
-    private bool startingGame;
-    private bool gamePlayersSpawned;
+private Dictionary<PlayerRef, byte> playerColors = new Dictionary<PlayerRef, byte>();
+
+private bool inPreGame;
+private bool startingGame;
+private bool gamePlayersSpawned;
 
     private void Awake()
     {
@@ -141,13 +147,67 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
             OnJoinFailed?.Invoke();
 
+public async void JoinLobby()
+{
+    var result = await runner.JoinSessionLobby(SessionLobby.ClientServer);
+    if (!result.Ok)
+    {
+        Debug.LogError("Couldn't join the lobby: " + result.ShutdownReason);
+    }
+}
             return;
         }
 
         OnJoinSucceeded?.Invoke();
+        */
+
+        quickSessionTcs = new TaskCompletionSource<List<SessionInfo>>();
+
+        var lobbyResult = await runner.JoinSessionLobby(SessionLobby.ClientServer);
+        if (!lobbyResult.Ok)
+        {
+            Debug.LogError("QuickPlay: couldn't join the lobby - " + lobbyResult.ShutdownReason);
+            quickSessionTcs = null;
+            OnJoinFailed?.Invoke();
+            return;
+        }
+
+        var listTask = quickSessionTcs.Task;
+        var timeoutTask = Task.Delay(5000);
+        var finishedTask = await Task.WhenAny(listTask, timeoutTask);
+        quickSessionTcs = null;
+
+        List<SessionInfo> sessions = finishedTask == listTask ? listTask.Result : new List<SessionInfo>();
+
+        SessionInfo best = null;
+        foreach (SessionInfo session in sessions)
+        {
+            if (!session.IsOpen || !session.IsVisible) continue;
+            if (session.PlayerCount >= session.MaxPlayers) continue;
+            if (best == null || session.PlayerCount > best.PlayerCount)
+                best = session;
+        }
+
+        if (best != null)
+        {
+            StartGameClient(best.Name);
+        }
+        else
+        {
+            StartGameHost(GenerateRoomCode());
+        }
     }
 
-    public async void QuickPlay()
+private string GenerateRoomCode()
+{
+    var chars = new char[RoomCodeLenght];
+    for (int i = 0; i < RoomCodeLenght; i++)
+        chars[i] = RoomCodeChars[UnityEngine.Random.Range(0, RoomCodeChars.Length)];
+    
+    return new string(chars);
+}
+
+public async void QuickPlay()
     {
         runner.ProvideInput = true;
 
@@ -223,13 +283,15 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (runner.IsServer && inPreGame && !startingGame)
         {
-            SpawnLobbyPlayerIfNeeded(
-                runner,
-                player
-            );
-        }
+SpawnLobbyPlayerIfNeeded(
+    runner,
+    player
+);
+}
 
-        PreGameLobbyUI.Instance?.RefreshLobby();
+PreGameLobbyUI.Instance?.RefreshLobby();
+OnSessionListChanged?.Invoke(sessionList);
+quickSessionTcs?.TrySetResult(sessionList);
     }
 
     public void OnPlayerLeft(

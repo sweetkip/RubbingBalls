@@ -7,6 +7,9 @@ public class UIManager : NetworkBehaviour
 {
     public static UIManager Instance;
     [SerializeField] private List<TextMeshProUGUI> playerHealth;
+    [SerializeField] private GameObject winPanel;
+    [SerializeField] private GameObject losePanel;
+
 
     private void Awake()
     {
@@ -26,14 +29,20 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    public void ChangeHealth(float health, int id)
+    public void ChangeHealth(float health, int id, int lives)
     {
-        //if (!Object.HasStateAuthority) return;
-        playerHealth[id].text = "P" + (id + 1) + " Damage Received: " + health.ToString("F2") + " - Lives Left: " + GameManager.Instance.GetPlayerLives(id); 
+        playerHealth[id].text = "P" + (id + 1) + " Damage Received: " + health.ToString("F2") + " - Lives Left: " + lives;
     }
+
 
     public void PlayerLost(int id)
     {
         playerHealth[id].text = "P" + (id + 1) + " PERDIO";
+    }
+
+    public void GameIsOver(bool won)
+    {
+        winPanel.SetActive(won);
+        losePanel.SetActive(!won);
     }
 }
