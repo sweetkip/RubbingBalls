@@ -51,6 +51,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     private bool startingGame;
     private bool gamePlayersSpawned;
 
+    private bool inputEnabled = true;   //<3
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -395,10 +397,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 player
             );
 
-        runner.SetPlayerObject(
-            player,
-            lobbyPlayer
-        );
+        runner.SetPlayerObject(player,lobbyPlayer);
     }
 
     private void EnsureLobbyPlayersExist()
@@ -408,10 +407,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         foreach (PlayerRef player in runner.ActivePlayers)
         {
-            SpawnLobbyPlayerIfNeeded(
-                runner,
-                player
-            );
+            SpawnLobbyPlayerIfNeeded(runner,player);
         }
     }
 
@@ -478,11 +474,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         gamePlayersSpawned = false;
 
-        await runner.LoadScene(
-            SceneRef.FromIndex(
-                gameSceneIndex
-            )
-        );
+        await runner.LoadScene(SceneRef.FromIndex(gameSceneIndex));
     }
 
     private void SaveLobbyPlayerData()
@@ -586,24 +578,30 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    public void OnInput(
-        NetworkRunner runner,
-        NetworkInput input)
+    public void SetInputEnabled(bool enabled)
     {
-        NetworkInputData data =
-            new NetworkInputData();
+        inputEnabled = enabled;
+    }
 
-        data.Buttons.Set(
-            (int)InputButton.Fire,
-            Input.GetMouseButton(0)
-        );
+    public void OnInput(NetworkRunner runner, NetworkInput input)
+    {
+        NetworkInputData data = new NetworkInputData();
 
+        //<3 Hice esto para que el player pueda interactuar con los btns de victoria/derrota <3
+        
+        /*data.Buttons.Set((int)InputButton.Fire,Input.GetMouseButton(0));
         if (Camera.main != null)
         {
-            data.AimWorldPosition =
-                Camera.main.ScreenToWorldPoint(
-                    Input.mousePosition
-                );
+            data.AimWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        }*/
+
+        if (inputEnabled)
+        {
+            data.Buttons.Set((int)InputButton.Fire, Input.GetMouseButton(0));
+            if (Camera.main != null)
+            {
+                data.AimWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            }
         }
 
         input.Set(data);
@@ -674,30 +672,17 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         OnJoinFailed?.Invoke();
     }
 
-    public void OnConnectFailed(
-        NetworkRunner runner,
-        NetAddress remoteAddress,
-        NetConnectFailedReason reason)
+    public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)
     {
-        Debug.LogWarning(
-            "Failed connection: " +
-            reason
-        );
-
+        Debug.LogWarning("Failed connection: " + reason);
         OnJoinFailed?.Invoke();
     }
 
-    public void OnSessionListUpdated(
-        NetworkRunner runner,
-        List<SessionInfo> sessionList)
+    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
     {
-        OnSessionListChanged?.Invoke(
-            sessionList
-        );
+        OnSessionListChanged?.Invoke(sessionList);
 
-        quickSessionTcs?.TrySetResult(
-            sessionList
-        );
+        quickSessionTcs?.TrySetResult(sessionList);
 
         // NUEVO: le cuento al jugador cuántas partidas hay
         if (!isInSession)
@@ -713,76 +698,25 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    public void OnInputMissing(
-        NetworkRunner runner,
-        PlayerRef player,
-        NetworkInput input)
+    public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input)
     {
+        Debug.Log("Input missing, runner: " + runner + " player: " + player + ". Input is: " + input);
     }
 
-    public void OnConnectedToServer(
-        NetworkRunner runner)
+    public void OnConnectedToServer(NetworkRunner runner)
     {
-        Debug.Log(
-            "Nos conectamos al servidor"
-        );
-
+        Debug.Log("Nos conectamos al servidor");
         SetStatus("Conectado al host.");   // NUEVO
     }
 
-    public void OnObjectExitAOI(
-        NetworkRunner runner,
-        NetworkObject obj,
-        PlayerRef player)
-    {
-    }
-
-    public void OnObjectEnterAOI(
-        NetworkRunner runner,
-        NetworkObject obj,
-        PlayerRef player)
-    {
-    }
-
-    public void OnConnectRequest(
-        NetworkRunner runner,
-        NetworkRunnerCallbackArgs.ConnectRequest request,
-        byte[] token)
-    {
-    }
-
-    public void OnReliableDataReceived(
-        NetworkRunner runner,
-        PlayerRef player,
-        ReliableKey key,
-        ReadOnlySpan<byte> data)
-    {
-    }
-
-    public void OnReliableDataProgress(
-        NetworkRunner runner,
-        PlayerRef player,
-        ReliableKey key,
-        float progress)
-    {
-    }
-
-    public void OnCustomAuthenticationResponse(
-        NetworkRunner runner,
-        Dictionary<string, object> data)
-    {
-    }
-
-    public void OnHostMigration(
-        NetworkRunner runner,
-        HostMigrationToken hostMigrationToken)
-    {
-    }
-
-    public void OnSceneLoadStart(
-        NetworkRunner runner)
-    {
-    }
+    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
+    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ReadOnlySpan<byte> data) { }
+    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
+    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
+    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
+    public void OnSceneLoadStart(NetworkRunner runner) { }
 
     // ===================== NUEVO: estado de conexión y errores =====================
 
