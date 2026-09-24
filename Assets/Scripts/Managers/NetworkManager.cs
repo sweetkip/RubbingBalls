@@ -822,11 +822,18 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             PreGameLobbyUI.Instance?.RefreshLobby();
         }
 
-        if (sceneIndex ==
-            gameSceneIndex)
+        if (sceneIndex == gameSceneIndex)
         {
-            inPreGame =
-                false;
+            inPreGame = false;
+
+            int playerCount = 0;
+
+            foreach (PlayerRef player in runner.ActivePlayers)
+            {
+                playerCount++;
+            }
+
+            UIManager.Instance?.PlayerJoined(playerCount);
 
             if (runner.IsServer)
             {
