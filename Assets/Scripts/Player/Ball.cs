@@ -140,12 +140,11 @@ public class Ball : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        if (GetInput(
-                out NetworkInputData data))
+        if (GetInput(out NetworkInputData data))
         {
-            if (data.Buttons.IsSet(
-                    (int)InputButton.Fire))
+            if (data.Buttons.IsSet((int)InputButton.Fire))
             {
+                NetworkManager.Instance?.RegisterLastInput(Object.InputAuthority, data);
                 if (!wasPressed)
                 {
                     ButtonPressed();
@@ -154,16 +153,13 @@ public class Ball : NetworkBehaviour
                 {
                     if (canShoot)
                     {
-                        Drag(
-                            data.AimWorldPosition
-                        );
+                        Drag(data.AimWorldPosition);
                     }
                 }
             }
             else
             {
-                if (wasPressed &&
-                    canShoot)
+                if (wasPressed && canShoot)
                 {
                     Throw();
                 }

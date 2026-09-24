@@ -44,6 +44,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     private Dictionary<PlayerRef, byte> playerColors =
         new Dictionary<PlayerRef, byte>();
+    private readonly Dictionary<PlayerRef, NetworkInputData> lastValidInput = new Dictionary<PlayerRef, NetworkInputData>();
 
     private bool inPreGame;
     private bool startingGame;
@@ -417,9 +418,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 }
             }
 
-            playerColors.Remove(
-                player
-            );
+            playerColors.Remove(player);
+            lastValidInput.Remove(player);
 
             if (inPreGame &&
                 !startingGame)
@@ -941,19 +941,20 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    public void OnInputMissing(
-        NetworkRunner runner,
-        PlayerRef player,
-        NetworkInput input)
+    public void RegisterLastInput(PlayerRef player, NetworkInputData data)
     {
-        Debug.Log(
-            "Input missing, runner: " +
-            runner +
-            " player: " +
-            player +
-            ". Input is: " +
-            input
-        );
+        lastValidInput[player] = data;
+    }
+
+    public void OnInputMissing(NetworkRunner runner, PlayerRef player,NetworkInput input)
+    {
+        Debug.Log("Input missing, runner: " + runner + " player: " + player + ". Input is: " + input);
+        NetworkInputData fallback = default;
+        if (lastValidInput.TryGetValue(player, out NetworkInputData cached))
+        {
+            fallback = cached;
+        }
+        input.Set(fallback);
     }
 
     public void OnConnectedToServer(
