@@ -63,7 +63,7 @@ public class GameManager : NetworkBehaviour
         int playerLives = player.GetLives();
         if (playerLives - 1 <= 0)
         {
-            UIManager.Instance.PlayerLost(id);
+            RPC_PlayerLost(id);
 
             int index = aliveIds.IndexOf(id);
 
@@ -99,6 +99,12 @@ public class GameManager : NetworkBehaviour
     private void RPC_PlayerDisconnected(int id)
     {
         UIManager.Instance.PlayerDisconnected(id);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayerLost(int id)
+    {
+        UIManager.Instance.PlayerLost(id);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
