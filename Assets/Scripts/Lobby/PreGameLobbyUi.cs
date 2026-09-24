@@ -184,8 +184,8 @@ public class PreGameLobbyUI : MonoBehaviour
         {
             readyButtonText.text =
                 ready
-                ? "CANCELAR LISTO"
-                : "LISTO";
+                ? "Cancel"
+                : "Ready";
         }
     }
 
