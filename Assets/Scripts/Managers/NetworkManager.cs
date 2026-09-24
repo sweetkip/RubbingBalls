@@ -1,4 +1,4 @@
-using Fusion;
+ï»¿using Fusion;
 using Fusion.Sockets;
 using System;
 using System.Collections.Generic;
@@ -28,13 +28,11 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public event Action OnJoinFailed;
     public event Action OnJoinSucceeded;
 
-    // NUEVO: avisa a la UI cada vez que cambia el estado de la conexión (mensaje, ¿es un error?)
     public event Action<string, bool> OnStatusChanged;
 
-    // NUEVO: datos para saber qué pasó cuando se corta la conexión
-    private bool isInSession;        // true cuando StartGame salió bien (ya estoy en una partida)
-    private bool leftOnPurpose;      // true cuando el jugador tocó "Salir"
-    private bool goingToMenu;        // evita volver al menú dos veces
+    private bool isInSession;
+    private bool leftOnPurpose;
+    private bool goingToMenu;
     private string currentSessionName = "";
 
     private const string RoomCodeChars =
@@ -51,7 +49,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     private bool startingGame;
     private bool gamePlayersSpawned;
 
-    private bool inputEnabled = true;   //<3
+    private bool inputEnabled = true;
 
     private void Awake()
     {
@@ -77,12 +75,22 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (string.IsNullOrWhiteSpace(sessionName))
         {
-            SetStatus("Escribí un nombre para la partida.", true);   // NUEVO
+            SetStatus(
+                "EscribÃ­ un nombre para la partida.",
+                true
+            );
+
             OnJoinFailed?.Invoke();
+
             return;
         }
 
-        SetStatus("Creando la partida \"" + sessionName + "\"...");   // NUEVO
+        SetStatus(
+            "Creando la partida \"" +
+            sessionName +
+            "\"..."
+        );
+
         runner.ProvideInput = true;
 
         inPreGame = true;
@@ -120,15 +128,25 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             );
 
             OnJoinFailed?.Invoke();
-            GoToMenu(ReasonToText(result.ShutdownReason), true);   // NUEVO: muestro el motivo real
+
+            GoToMenu(
+                ReasonToText(result.ShutdownReason),
+                true
+            );
 
             return;
         }
 
-        // NUEVO: ya estoy en una partida
         isInSession = true;
-        currentSessionName = sessionName;
-        SetStatus("Partida \"" + sessionName + "\" creada. Entrando a la sala...");
+
+        currentSessionName =
+            sessionName;
+
+        SetStatus(
+            "Partida \"" +
+            sessionName +
+            "\" creada. Entrando a la sala..."
+        );
 
         OnJoinSucceeded?.Invoke();
     }
@@ -137,12 +155,22 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (string.IsNullOrWhiteSpace(sessionName))
         {
-            SetStatus("Escribí el nombre de la partida a la que querés entrar.", true);   // NUEVO
+            SetStatus(
+                "EscribÃ­ el nombre de la partida a la que querÃ©s entrar.",
+                true
+            );
+
             OnJoinFailed?.Invoke();
+
             return;
         }
 
-        SetStatus("Uniéndote a \"" + sessionName + "\"...");   // NUEVO
+        SetStatus(
+            "UniÃ©ndote a \"" +
+            sessionName +
+            "\"..."
+        );
+
         runner.ProvideInput = true;
 
         inPreGame = true;
@@ -169,22 +197,34 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             );
 
             OnJoinFailed?.Invoke();
-            GoToMenu(ReasonToText(result.ShutdownReason), true);   // NUEVO: muestro el motivo real
+
+            GoToMenu(
+                ReasonToText(result.ShutdownReason),
+                true
+            );
 
             return;
         }
 
-        // NUEVO: ya estoy en una partida
         isInSession = true;
-        currentSessionName = sessionName;
-        SetStatus("¡Conectado a \"" + sessionName + "\"! Entrando a la sala...");
+
+        currentSessionName =
+            sessionName;
+
+        SetStatus(
+            "Â¡Conectado a \"" +
+            sessionName +
+            "\"! Entrando a la sala..."
+        );
 
         OnJoinSucceeded?.Invoke();
     }
 
     public async void JoinLobby()
     {
-        SetStatus("Buscando partidas...");   // NUEVO
+        SetStatus(
+            "Buscando partidas..."
+        );
 
         var result =
             await runner.JoinSessionLobby(
@@ -198,7 +238,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 result.ShutdownReason
             );
 
-            GoToMenu(ReasonToText(result.ShutdownReason), true);   // NUEVO
+            GoToMenu(
+                ReasonToText(result.ShutdownReason),
+                true
+            );
         }
     }
 
@@ -210,7 +253,9 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         startingGame = false;
         gamePlayersSpawned = false;
 
-        SetStatus("Buscando una partida libre...");   // NUEVO
+        SetStatus(
+            "Buscando una partida libre..."
+        );
 
         quickSessionTcs =
             new TaskCompletionSource<List<SessionInfo>>();
@@ -230,7 +275,11 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             quickSessionTcs = null;
 
             OnJoinFailed?.Invoke();
-            GoToMenu(ReasonToText(lobbyResult.ShutdownReason), true);   // NUEVO
+
+            GoToMenu(
+                ReasonToText(lobbyResult.ShutdownReason),
+                true
+            );
 
             return;
         }
@@ -276,7 +325,9 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         if (best != null)
         {
-            StartGameClient(best.Name);
+            StartGameClient(
+                best.Name
+            );
         }
         else
         {
@@ -291,7 +342,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         char[] chars =
             new char[RoomCodeLength];
 
-        for (int i = 0; i < RoomCodeLength; i++)
+        for (
+            int i = 0;
+            i < RoomCodeLength;
+            i++)
         {
             chars[i] =
                 RoomCodeChars[
@@ -310,7 +364,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         if (runner == null)
             return;
 
-        leftOnPurpose = true;   // NUEVO: me voy yo, no es un error
+        leftOnPurpose = true;
 
         await runner.Shutdown();
     }
@@ -343,11 +397,12 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (runner.IsServer)
         {
-            // NUEVO: si se fue en plena partida, aviso al GameManager
-            // para que actualice los vivos y chequee si alguien ganó por abandono
-            if (!inPreGame && GameManager.Instance != null)
+            if (!inPreGame &&
+                GameManager.Instance != null)
             {
-                GameManager.Instance.PlayerDisconnected(player);
+                GameManager.Instance.PlayerDisconnected(
+                    player
+                );
             }
 
             if (runner.TryGetPlayerObject(
@@ -362,7 +417,9 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 }
             }
 
-            playerColors.Remove(player);
+            playerColors.Remove(
+                player
+            );
 
             if (inPreGame &&
                 !startingGame)
@@ -397,7 +454,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 player
             );
 
-        runner.SetPlayerObject(player,lobbyPlayer);
+        runner.SetPlayerObject(
+            player,
+            lobbyPlayer
+        );
     }
 
     private void EnsureLobbyPlayersExist()
@@ -405,9 +465,14 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         if (!runner.IsServer)
             return;
 
-        foreach (PlayerRef player in runner.ActivePlayers)
+        foreach (
+            PlayerRef player
+            in runner.ActivePlayers)
         {
-            SpawnLobbyPlayerIfNeeded(runner,player);
+            SpawnLobbyPlayerIfNeeded(
+                runner,
+                player
+            );
         }
     }
 
@@ -424,7 +489,9 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         int playerCount = 0;
 
-        foreach (PlayerRef player in runner.ActivePlayers)
+        foreach (
+            PlayerRef player
+            in runner.ActivePlayers)
         {
             playerCount++;
 
@@ -445,7 +512,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 return;
         }
 
-        if (playerCount == 0)
+        if (playerCount < 2)
             return;
 
         StartMatch();
@@ -464,24 +531,34 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         if (runner.SessionInfo.IsValid)
         {
-            runner.SessionInfo.IsOpen = false;
-            runner.SessionInfo.IsVisible = false;
+            runner.SessionInfo.IsOpen =
+                false;
+
+            runner.SessionInfo.IsVisible =
+                false;
         }
 
         SaveLobbyPlayerData();
 
         DespawnLobbyPlayers();
 
-        gamePlayersSpawned = false;
+        gamePlayersSpawned =
+            false;
 
-        await runner.LoadScene(SceneRef.FromIndex(gameSceneIndex));
+        await runner.LoadScene(
+            SceneRef.FromIndex(
+                gameSceneIndex
+            )
+        );
     }
 
     private void SaveLobbyPlayerData()
     {
         playerColors.Clear();
 
-        foreach (PlayerRef player in runner.ActivePlayers)
+        foreach (
+            PlayerRef player
+            in runner.ActivePlayers)
         {
             if (!runner.TryGetPlayerObject(
                     player,
@@ -506,7 +583,9 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         List<NetworkObject> objectsToDespawn =
             new List<NetworkObject>();
 
-        foreach (PlayerRef player in runner.ActivePlayers)
+        foreach (
+            PlayerRef player
+            in runner.ActivePlayers)
         {
             if (!runner.TryGetPlayerObject(
                     player,
@@ -526,9 +605,13 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             );
         }
 
-        foreach (NetworkObject obj in objectsToDespawn)
+        foreach (
+            NetworkObject obj
+            in objectsToDespawn)
         {
-            runner.Despawn(obj);
+            runner.Despawn(
+                obj
+            );
         }
     }
 
@@ -540,14 +623,106 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         if (gamePlayersSpawned)
             return;
 
-        gamePlayersSpawned = true;
+        PlayerSpawnPoints spawnPointManager =
+            FindFirstObjectByType<PlayerSpawnPoints>();
 
-        foreach (PlayerRef player in runner.ActivePlayers)
+        if (spawnPointManager == null)
         {
+            Debug.LogError(
+                "No se encontrÃ³ ningÃºn PlayerSpawnPoints en la escena Game."
+            );
+
+            return;
+        }
+
+        List<PlayerRef> players =
+            new List<PlayerRef>();
+
+        foreach (
+            PlayerRef player
+            in runner.ActivePlayers)
+        {
+            players.Add(
+                player
+            );
+        }
+
+        players.Sort(
+            (a, b) =>
+                a.PlayerId.CompareTo(
+                    b.PlayerId
+                )
+        );
+
+        int playerCount =
+            players.Count;
+
+        Transform[] spawnPoints =
+            spawnPointManager.GetSpawnPoints(
+                playerCount
+            );
+
+        if (spawnPoints == null)
+        {
+            Debug.LogError(
+                "No hay una distribuciÃ³n de spawn configurada para " +
+                playerCount +
+                " jugadores."
+            );
+
+            return;
+        }
+
+        if (spawnPoints.Length < playerCount)
+        {
+            Debug.LogError(
+                "La distribuciÃ³n para " +
+                playerCount +
+                " jugadores tiene solamente " +
+                spawnPoints.Length +
+                " puntos de spawn."
+            );
+
+            return;
+        }
+
+        for (
+            int i = 0;
+            i < playerCount;
+            i++)
+        {
+            if (spawnPoints[i] == null)
+            {
+                Debug.LogError(
+                    "El Spawn " +
+                    i +
+                    " para " +
+                    playerCount +
+                    " jugadores no estÃ¡ asignado."
+                );
+
+                return;
+            }
+        }
+
+        gamePlayersSpawned =
+            true;
+
+        for (
+            int i = 0;
+            i < playerCount;
+            i++)
+        {
+            PlayerRef player =
+                players[i];
+
+            Transform spawnPoint =
+                spawnPoints[i];
+
             NetworkObject ballObject =
                 runner.Spawn(
                     ballPrefab,
-                    Vector3.zero,
+                    spawnPoint.position,
                     Quaternion.identity,
                     player
                 );
@@ -561,7 +736,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                     player,
                     out byte savedColor))
             {
-                colorIndex = savedColor;
+                colorIndex =
+                    savedColor;
             }
 
             if (ball != null)
@@ -575,36 +751,51 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 player,
                 ballObject
             );
+
+            Debug.Log(
+                "Player " +
+                player.PlayerId +
+                " spawneado en " +
+                spawnPoint.name +
+                " - PosiciÃ³n: " +
+                spawnPoint.position
+            );
         }
     }
 
-    public void SetInputEnabled(bool enabled)
+    public void SetInputEnabled(
+        bool enabled)
     {
-        inputEnabled = enabled;
+        inputEnabled =
+            enabled;
     }
 
-    public void OnInput(NetworkRunner runner, NetworkInput input)
+    public void OnInput(
+        NetworkRunner runner,
+        NetworkInput input)
     {
-        NetworkInputData data = new NetworkInputData();
-
-        //<3 Hice esto para que el player pueda interactuar con los btns de victoria/derrota <3
-        
-        /*data.Buttons.Set((int)InputButton.Fire,Input.GetMouseButton(0));
-        if (Camera.main != null)
-        {
-            data.AimWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        }*/
+        NetworkInputData data =
+            new NetworkInputData();
 
         if (inputEnabled)
         {
-            data.Buttons.Set((int)InputButton.Fire, Input.GetMouseButton(0));
+            data.Buttons.Set(
+                (int)InputButton.Fire,
+                Input.GetMouseButton(0)
+            );
+
             if (Camera.main != null)
             {
-                data.AimWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                data.AimWorldPosition =
+                    Camera.main.ScreenToWorldPoint(
+                        Input.mousePosition
+                    );
             }
         }
 
-        input.Set(data);
+        input.Set(
+            data
+        );
     }
 
     public void OnSceneLoadDone(
@@ -613,11 +804,15 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         int sceneIndex =
             SceneManager.GetActiveScene().buildIndex;
 
-        if (sceneIndex == preGameSceneIndex)
+        if (sceneIndex ==
+            preGameSceneIndex)
         {
             inPreGame = true;
+
             startingGame = false;
-            gamePlayersSpawned = false;
+
+            gamePlayersSpawned =
+                false;
 
             if (runner.IsServer)
             {
@@ -627,9 +822,11 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             PreGameLobbyUI.Instance?.RefreshLobby();
         }
 
-        if (sceneIndex == gameSceneIndex)
+        if (sceneIndex ==
+            gameSceneIndex)
         {
-            inPreGame = false;
+            inPreGame =
+                false;
 
             if (runner.IsServer)
             {
@@ -642,21 +839,31 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         NetworkRunner runner,
         ShutdownReason shutdownReason)
     {
-        // CAMBIO: siempre vuelvo al menú, pero ahora explicando qué pasó
         if (leftOnPurpose)
         {
-            GoToMenu("Saliste de la partida.", false);
+            GoToMenu(
+                "Saliste de la partida.",
+                false
+            );
         }
         else if (isInSession)
         {
-            // Estaba en una partida y se cortó: guardo el nombre para poder reintentar
-            ConnectionMessage.RejoinSession = currentSessionName;
-            GoToMenu("Se cortó la conexión con la partida (el host se fue o falló internet).", true);
+            ConnectionMessage.RejoinSession =
+                currentSessionName;
+
+            GoToMenu(
+                "Se cortÃ³ la conexiÃ³n con la partida (el host se fue o fallÃ³ internet).",
+                true
+            );
         }
         else
         {
-            // Nunca llegué a entrar: fue un error al crear o al unirse
-            GoToMenu(ReasonToText(shutdownReason), true);
+            GoToMenu(
+                ReasonToText(
+                    shutdownReason
+                ),
+                true
+            );
         }
     }
 
@@ -672,110 +879,224 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         OnJoinFailed?.Invoke();
     }
 
-    public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)
+    public void OnConnectFailed(
+        NetworkRunner runner,
+        NetAddress remoteAddress,
+        NetConnectFailedReason reason)
     {
-        Debug.LogWarning("Failed connection: " + reason);
+        Debug.LogWarning(
+            "Failed connection: " +
+            reason
+        );
+
         OnJoinFailed?.Invoke();
     }
 
-    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
+    public void OnSessionListUpdated(
+        NetworkRunner runner,
+        List<SessionInfo> sessionList)
     {
-        OnSessionListChanged?.Invoke(sessionList);
+        OnSessionListChanged?.Invoke(
+            sessionList
+        );
 
-        quickSessionTcs?.TrySetResult(sessionList);
+        quickSessionTcs?.TrySetResult(
+            sessionList
+        );
 
-        // NUEVO: le cuento al jugador cuántas partidas hay
         if (!isInSession)
         {
             int visibles = 0;
-            foreach (SessionInfo session in sessionList)
+
+            foreach (
+                SessionInfo session
+                in sessionList)
             {
-                if (session.IsVisible) visibles++;
+                if (session.IsVisible)
+                {
+                    visibles++;
+                }
             }
 
-            if (visibles == 0) SetStatus("No hay partidas abiertas. ¡Creá una!");
-            else SetStatus("Partidas encontradas: " + visibles);
+            if (visibles == 0)
+            {
+                SetStatus(
+                    "No hay partidas abiertas. Â¡CreÃ¡ una!"
+                );
+            }
+            else
+            {
+                SetStatus(
+                    "Partidas encontradas: " +
+                    visibles
+                );
+            }
         }
     }
 
-    public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input)
+    public void OnInputMissing(
+        NetworkRunner runner,
+        PlayerRef player,
+        NetworkInput input)
     {
-        Debug.Log("Input missing, runner: " + runner + " player: " + player + ". Input is: " + input);
+        Debug.Log(
+            "Input missing, runner: " +
+            runner +
+            " player: " +
+            player +
+            ". Input is: " +
+            input
+        );
     }
 
-    public void OnConnectedToServer(NetworkRunner runner)
+    public void OnConnectedToServer(
+        NetworkRunner runner)
     {
-        Debug.Log("Nos conectamos al servidor");
-        SetStatus("Conectado al host.");   // NUEVO
+        Debug.Log(
+            "Nos conectamos al servidor"
+        );
+
+        SetStatus(
+            "Conectado al host."
+        );
     }
 
-    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
-    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
-    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
-    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ReadOnlySpan<byte> data) { }
-    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
-    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
-    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
-    public void OnSceneLoadStart(NetworkRunner runner) { }
-
-    // ===================== NUEVO: estado de conexión y errores =====================
-
-    // Manda un mensaje a la UI (ConnectionStatusUI lo muestra en pantalla)
-    private void SetStatus(string message, bool isError = false)
+    public void OnObjectExitAOI(
+        NetworkRunner runner,
+        NetworkObject obj,
+        PlayerRef player)
     {
-        Debug.Log("[Estado de conexión] " + message);
-        OnStatusChanged?.Invoke(message, isError);
     }
 
-    // Vuelve al menú mostrando un mensaje. Se usa para TODOS los cortes y errores.
-    // Siempre recarga el MainMenu: un NetworkRunner apagado no se puede reusar,
-    // y el menú recargado trae un NetworkManager nuevo con su Runner.
-    private void GoToMenu(string message, bool isError)
+    public void OnObjectEnterAOI(
+        NetworkRunner runner,
+        NetworkObject obj,
+        PlayerRef player)
     {
-        if (goingToMenu) return;   // si ya estoy volviendo, no lo hago dos veces
-        goingToMenu = true;
+    }
 
-        ConnectionMessage.Set(message, isError);   // lo guardo: sobrevive al cambio de escena
+    public void OnConnectRequest(
+        NetworkRunner runner,
+        NetworkRunnerCallbackArgs.ConnectRequest request,
+        byte[] token)
+    {
+    }
+
+    public void OnReliableDataReceived(
+        NetworkRunner runner,
+        PlayerRef player,
+        ReliableKey key,
+        ReadOnlySpan<byte> data)
+    {
+    }
+
+    public void OnReliableDataProgress(
+        NetworkRunner runner,
+        PlayerRef player,
+        ReliableKey key,
+        float progress)
+    {
+    }
+
+    public void OnCustomAuthenticationResponse(
+        NetworkRunner runner,
+        Dictionary<string, object> data)
+    {
+    }
+
+    public void OnHostMigration(
+        NetworkRunner runner,
+        HostMigrationToken hostMigrationToken)
+    {
+    }
+
+    public void OnSceneLoadStart(
+        NetworkRunner runner)
+    {
+    }
+
+    private void SetStatus(
+        string message,
+        bool isError = false)
+    {
+        Debug.Log(
+            "[Estado de conexiÃ³n] " +
+            message
+        );
+
+        OnStatusChanged?.Invoke(
+            message,
+            isError
+        );
+    }
+
+    private void GoToMenu(
+        string message,
+        bool isError)
+    {
+        if (goingToMenu)
+            return;
+
+        goingToMenu =
+            true;
+
+        ConnectionMessage.Set(
+            message,
+            isError
+        );
 
         if (Instance == this)
         {
-            Instance = null;
+            Instance =
+                null;
         }
 
-        if (this != null)   // por si Fusion ya destruyó este objeto
+        if (this != null)
         {
-            Destroy(gameObject);
+            Destroy(
+                gameObject
+            );
         }
 
-        SceneManager.LoadScene(mainMenuSceneName);
+        SceneManager.LoadScene(
+            mainMenuSceneName
+        );
     }
 
-    // Traduce el motivo técnico de Fusion a un mensaje que entienda el jugador
-    private string ReasonToText(ShutdownReason reason)
+    private string ReasonToText(
+        ShutdownReason reason)
     {
         switch (reason)
         {
             case ShutdownReason.GameNotFound:
                 return "No existe una partida con ese nombre.";
+
             case ShutdownReason.GameIsFull:
-                return "La partida está llena.";
+                return "La partida estÃ¡ llena.";
+
             case ShutdownReason.GameClosed:
-                return "La partida está cerrada (ya empezó).";
+                return "La partida estÃ¡ cerrada (ya empezÃ³).";
+
             case ShutdownReason.GameIdAlreadyExists:
             case ShutdownReason.ServerInRoom:
-                return "Ya existe una partida con ese nombre. Probá con otro.";
+                return "Ya existe una partida con ese nombre. ProbÃ¡ con otro.";
+
             case ShutdownReason.MaxCcuReached:
-                return "Photon llegó al límite de jugadores conectados. Probá más tarde.";
+                return "Photon llegÃ³ al lÃ­mite de jugadores conectados. ProbÃ¡ mÃ¡s tarde.";
+
             case ShutdownReason.PhotonCloudTimeout:
             case ShutdownReason.ConnectionTimeout:
             case ShutdownReason.ConnectionRefused:
             case ShutdownReason.OperationTimeout:
-                return "No se pudo conectar. Revisá tu conexión a internet.";
+                return "No se pudo conectar. RevisÃ¡ tu conexiÃ³n a internet.";
+
             case ShutdownReason.InvalidRegion:
             case ShutdownReason.InvalidAuthentication:
-                return "Error de configuración de Photon (AppId o región).";
+                return "Error de configuraciÃ³n de Photon (AppId o regiÃ³n).";
+
             default:
-                return "Error de conexión: " + reason;
+                return "Error de conexiÃ³n: " +
+                       reason;
         }
     }
 }

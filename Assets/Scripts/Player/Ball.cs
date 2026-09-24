@@ -25,6 +25,13 @@ public class Ball : NetworkBehaviour
     [SerializeField] private int WallLayer;
     [SerializeField] private int trajectoryResolution = 30;
 
+
+    [SerializeField] private GameObject localIndicator;
+    [SerializeField] private KeyCode toggleIndicatorKey = KeyCode.Tab;
+
+    private bool localIndicatorEnabled = true;
+
+
     private NetworkTransform netTransform;
     private SpriteRenderer spriteRenderer;
     private Rigidbody2D rb;
@@ -73,14 +80,45 @@ public class Ball : NetworkBehaviour
 
     public override void Spawned()
     {
-        id = GameManager.Instance.IJoined(Object.InputAuthority);
         if (Object.HasStateAuthority)
         {
-ShootsLeft = maxShoots;
+            id = GameManager.Instance.IJoined(
+                Object.InputAuthority
+            );
+
+            ShootsLeft = maxShoots;
         }
 
         UpdateBallColor();
+        UpdateLocalIndicator();
     }
+
+    private void Update()
+    {
+        if (Object == null)
+            return;
+
+        if (!Object.HasInputAuthority)
+            return;
+
+        if (Input.GetKeyDown(toggleIndicatorKey))
+        {
+            localIndicatorEnabled = !localIndicatorEnabled;
+            UpdateLocalIndicator();
+        }
+    }
+
+    private void UpdateLocalIndicator()
+    {
+        if (localIndicator == null)
+            return;
+
+        localIndicator.SetActive(
+            Object.HasInputAuthority &&
+            localIndicatorEnabled
+        );
+    }
+
 
     public void SetInitialColor(
         byte colorIndex)
