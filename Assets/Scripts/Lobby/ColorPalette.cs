@@ -1,9 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(
-    fileName = "PlayerColorPalette",
-    menuName = "Game/Player Color Palette"
-)]
+[CreateAssetMenu(fileName = "PlayerColorPalette", menuName = "Game/Player Color Palette")]
 public class PlayerColorPalette : ScriptableObject
 {
     public Color[] colors;
@@ -31,4 +28,24 @@ public class PlayerColorPalette : ScriptableObject
 
         return color;
     }
+
+    //<3
+    public int NextIndex(int current)
+    {
+        if (Count == 0)
+            return 0;
+
+        int next = current + 1;
+        return next >= Count ? 0 : next;
+    }
+    //<3
+    public int PreviousIndex(int current)
+    {
+        if (Count == 0)
+            return 0;
+
+        int prev = current - 1;
+        return prev < 0 ? Count - 1 : prev;
+    }
+    //<3
 }

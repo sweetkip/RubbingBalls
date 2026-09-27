@@ -40,42 +40,36 @@ public class PreGameLobbyUI : MonoBehaviour
     {
         LobbyPlayer player = GetLocalLobbyPlayer();
 
-        if (player == null)
-            return;
-
-        if (player.IsReady)
+        if (player == null || player.IsReady)
             return;
 
         if (palette == null || palette.Count == 0)
             return;
 
-        int nextColor = player.ColorIndex + 1;
+        player.SelectColor((byte)palette.NextIndex(player.ColorIndex));
 
+        /*int nextColor = player.ColorIndex + 1;
         if (nextColor >= palette.Count)
             nextColor = 0;
-
-        player.SelectColor((byte)nextColor);
+        player.SelectColor((byte)nextColor);*/
     }
 
     public void PreviousColor()
     {
         LobbyPlayer player = GetLocalLobbyPlayer();
 
-        if (player == null)
-            return;
-
-        if (player.IsReady)
+        if (player == null || player.IsReady)
             return;
 
         if (palette == null || palette.Count == 0)
             return;
 
-        int previousColor = player.ColorIndex - 1;
+        player.SelectColor((byte)palette.PreviousIndex(player.ColorIndex));
 
+        /*int previousColor = player.ColorIndex - 1;
         if (previousColor < 0)
             previousColor = palette.Count - 1;
-
-        player.SelectColor((byte)previousColor);
+        player.SelectColor((byte)previousColor);*/
     }
 
     public void ToggleReady()
@@ -111,10 +105,7 @@ public class PreGameLobbyUI : MonoBehaviour
             players.Add(player);
         }
 
-        players.Sort(
-            (a, b) => a.PlayerId.CompareTo(b.PlayerId)
-        );
-
+        players.Sort((a, b) => a.PlayerId.CompareTo(b.PlayerId));
         int slotIndex = 0;
 
         foreach (PlayerRef player in players)
@@ -122,32 +113,21 @@ public class PreGameLobbyUI : MonoBehaviour
             if (slotIndex >= playerSlots.Length)
                 break;
 
-            if (!runner.TryGetPlayerObject(
-                    player,
-                    out NetworkObject playerObject))
+            if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject))
                 continue;
 
-            LobbyPlayer lobbyPlayer =
-                playerObject.GetComponent<LobbyPlayer>();
+            LobbyPlayer lobbyPlayer = playerObject.GetComponent<LobbyPlayer>();
 
             if (lobbyPlayer == null)
                 continue;
 
-            bool isLocalPlayer =
-                player == runner.LocalPlayer;
+            bool isLocalPlayer = player == runner.LocalPlayer;
 
-            playerSlots[slotIndex].Show(
-                player,
-                lobbyPlayer,
-                palette,
-                isLocalPlayer
-            );
-
+            playerSlots[slotIndex].Show(player, lobbyPlayer, palette, isLocalPlayer );
             slotIndex++;
         }
 
-        LobbyPlayer localPlayer =
-            GetLocalLobbyPlayer();
+        LobbyPlayer localPlayer = GetLocalLobbyPlayer();
 
         if (localPlayer == null)
         {
@@ -164,10 +144,7 @@ public class PreGameLobbyUI : MonoBehaviour
         }
 
         if (localColorPreview != null && palette != null)
-        {
-            localColorPreview.color =
-                palette.GetColor(localPlayer.ColorIndex);
-        }
+            localColorPreview.color = palette.GetColor(localPlayer.ColorIndex);
 
         bool ready = localPlayer.IsReady;
 
@@ -181,12 +158,7 @@ public class PreGameLobbyUI : MonoBehaviour
             readyButton.interactable = true;
 
         if (readyButtonText != null)
-        {
-            readyButtonText.text =
-                ready
-                ? "Cancel"
-                : "Ready";
-        }
+            readyButtonText.text = ready ? "Cancel" : "Ready";
     }
 
     private LobbyPlayer GetLocalLobbyPlayer()
@@ -194,15 +166,12 @@ public class PreGameLobbyUI : MonoBehaviour
         if (NetworkManager.Instance == null)
             return null;
 
-        NetworkRunner runner =
-            NetworkManager.Instance.Runner;
+        NetworkRunner runner = NetworkManager.Instance.Runner;
 
         if (runner == null)
             return null;
 
-        if (!runner.TryGetPlayerObject(
-                runner.LocalPlayer,
-                out NetworkObject playerObject))
+        if (!runner.TryGetPlayerObject(runner.LocalPlayer, out NetworkObject playerObject))
             return null;
 
         return playerObject.GetComponent<LobbyPlayer>();

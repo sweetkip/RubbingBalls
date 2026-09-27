@@ -7,13 +7,13 @@ public class ResultsBtn : MonoBehaviour
 
     public void BackToMenu()
     {
-        NetworkManager manager = FindAnyObjectByType<NetworkManager>();
+        NetworkManager manager = NetworkManager.Find();
         manager?.Disconect();
     }
 
     public void QuickRematch()
     {
-        NetworkManager manager = FindAnyObjectByType<NetworkManager>();
+        NetworkManager manager = NetworkManager.Find();
         if (manager == null) return;
 
         SceneManager.sceneLoaded += OnMenuSceneLoaded;
@@ -26,7 +26,7 @@ public class ResultsBtn : MonoBehaviour
 
         SceneManager.sceneLoaded -= OnMenuSceneLoaded;
 
-        NetworkManager manager = FindAnyObjectByType<NetworkManager>();
+        NetworkManager manager = NetworkManager.Find();
         manager?.QuickPlay();
     }
 

@@ -8,10 +8,14 @@ public class SessionInfoUI : MonoBehaviour
 
     private void Update()
     {
+        /*
         if (NetworkManager.Instance == null) return;
-
         NetworkRunner runner = NetworkManager.Instance.Runner;
         if (runner == null || !runner.IsRunning) return;
+        */
+
+        if (!NetworkManager.TryGetRunner(out NetworkRunner runner))
+            return;
 
         string ping;
         if (runner.IsServer)
@@ -24,12 +28,9 @@ public class SessionInfoUI : MonoBehaviour
             ping = "Ping: " + Mathf.RoundToInt((float)(rttSegundos * 1000)) + " ms";
         }
 
-        infoText.text = "Sala: " + runner.SessionInfo.Name
-            + "   Jugadores: " + runner.SessionInfo.PlayerCount + "/" + runner.SessionInfo.MaxPlayers
-            + "   " + ping;
-        if(runner.SessionInfo.PlayerCount <= 1)
-        {
+        infoText.text = "Sala: " + runner.SessionInfo.Name + "   Jugadores: " + runner.SessionInfo.PlayerCount + "/" + runner.SessionInfo.MaxPlayers + "   " + ping;
+
+        if (runner.SessionInfo.PlayerCount <= 1)
             infoText.text = infoText.text + " necesitamos un player mas para empezar";
-        }
     }
 }

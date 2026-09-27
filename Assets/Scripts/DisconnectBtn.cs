@@ -5,7 +5,7 @@ public class DisconnectBtn : MonoBehaviour
     NetworkManager networkManager;
     public void DisconnectFromGame()
     {
-        networkManager = FindAnyObjectByType<NetworkManager>();
+        networkManager = NetworkManager.Find();
         networkManager.Disconect();
     }
 }
