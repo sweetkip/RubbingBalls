@@ -1,7 +1,6 @@
 using TMPro;
 using UnityEngine;
 
-
 public static class ConnectionMessage
 {
     public static string Text = "";

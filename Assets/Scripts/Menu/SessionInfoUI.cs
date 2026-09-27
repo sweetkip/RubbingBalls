@@ -8,12 +8,6 @@ public class SessionInfoUI : MonoBehaviour
 
     private void Update()
     {
-        /*
-        if (NetworkManager.Instance == null) return;
-        NetworkRunner runner = NetworkManager.Instance.Runner;
-        if (runner == null || !runner.IsRunning) return;
-        */
-
         if (!NetworkManager.TryGetRunner(out NetworkRunner runner))
             return;
 

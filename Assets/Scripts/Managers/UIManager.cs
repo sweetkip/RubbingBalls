@@ -10,7 +10,6 @@ public class UIManager : NetworkBehaviour
     [SerializeField] private GameObject winPanel;
     [SerializeField] private GameObject losePanel;
 
-
     private void Awake()
     {
         if (Instance != null && Instance != this)

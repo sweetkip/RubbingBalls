@@ -5,11 +5,10 @@ public class LobbyPlayer : NetworkBehaviour
 {
     [SerializeField] private PlayerColorPalette palette;
 
-    [Networked, OnChangedRender(nameof(OnLobbyStateChanged))]
-    public byte ColorIndex { get; private set; }
+    [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public byte ColorIndex { get; private set; }
+    [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public NetworkBool IsReady { get; private set; }
+    [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public NetworkString<_32> Nickname { get; private set; }
 
-    [Networked, OnChangedRender(nameof(OnLobbyStateChanged))]
-    public NetworkBool IsReady { get; private set; }
 
     public override void Spawned()
     {
@@ -17,6 +16,12 @@ public class LobbyPlayer : NetworkBehaviour
         {
             ColorIndex = 0;
             IsReady = false;
+        }
+
+        if (Object.HasInputAuthority)
+        {
+            SelectColor((byte)PlayerLocalData.SelectedColor);
+            SetNick(PlayerLocalData.Nickname);
         }
 
         PreGameLobbyUI.Instance?.RefreshLobby();
@@ -36,6 +41,13 @@ public class LobbyPlayer : NetworkBehaviour
             return;
 
         RPC_SetReady(ready);
+    }
+
+    public void SetNick(string nick)
+    {
+        if (!Object.HasInputAuthority)
+            return;
+        RPC_SetNick(nick);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
@@ -63,6 +75,16 @@ public class LobbyPlayer : NetworkBehaviour
         PreGameLobbyUI.Instance?.RefreshLobby();
 
         NetworkManager.Instance?.CheckAllPlayersReady();
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_SetNick(string nick)
+    {
+        if (nick != null && nick.Length > 20)
+            nick = nick.Substring(0, 20);
+
+        Nickname = nick ?? "";
+        PreGameLobbyUI.Instance?.RefreshLobby();
     }
 
     private void OnLobbyStateChanged()

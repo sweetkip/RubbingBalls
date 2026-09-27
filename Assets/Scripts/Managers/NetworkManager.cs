@@ -27,7 +27,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public event Action<List<SessionInfo>> OnSessionListChanged;
     public event Action OnJoinFailed;
     public event Action OnJoinSucceeded;
-
+    public event Action<bool> OnLobbySearching;
     public event Action<string, bool> OnStatusChanged;
 
     private bool isInSession;
@@ -36,8 +36,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     private string currentSessionName = "";
 
     private const string RoomCodeChars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-
     private const int RoomCodeLength = 5;
+
+    private bool inLobby;
+    private List<SessionInfo> lastSessionList = new List<SessionInfo>();
 
     private TaskCompletionSource<List<SessionInfo>> quickSessionTcs;
 
@@ -50,12 +52,11 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     private bool inputEnabled = true;
 
-    //<3
     public static NetworkManager Find()
     {
         return Instance != null ? Instance : FindAnyObjectByType<NetworkManager>();
     }
-    //<3
+
     public static bool TryGetRunner(out NetworkRunner runner)
     {
         if (Instance != null && Instance.runner != null && Instance.runner.IsRunning)
@@ -66,7 +67,6 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         runner = null;
         return false;
     }
-    //<3
 
     private void Awake()
     {
@@ -172,53 +172,67 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public async void JoinLobby()
     {
-        SetStatus("Buscando partidas...");
+        if (inLobby)
+        {
+            OnSessionListChanged?.Invoke(lastSessionList);
+            SetStatus(StatusForSessionList(lastSessionList));
+            return;
+        }
 
+        SetStatus("Buscando partidas...");
+        OnLobbySearching?.Invoke(true);
         var result = await runner.JoinSessionLobby(SessionLobby.ClientServer);
+        OnLobbySearching?.Invoke(false);
 
         if (!result.Ok)
         {
             Debug.LogError("Couldn't join the lobby: " + result.ShutdownReason);
             GoToMenu(ReasonToText(result.ShutdownReason), true);
+            return;
         }
+
+        inLobby = true;
     }
 
     public async void QuickPlay()
     {
         runner.ProvideInput = true;
-
         inPreGame = true;
         startingGame = false;
         gamePlayersSpawned = false;
 
-        SetStatus("Buscando una partida libre...");
+        List<SessionInfo> sessions;
 
-        quickSessionTcs = new TaskCompletionSource<List<SessionInfo>>();
-
-        var lobbyResult = await runner.JoinSessionLobby(SessionLobby.ClientServer);
-
-        if (!lobbyResult.Ok)
+        if (inLobby)
+            sessions = lastSessionList;
+        else
         {
-            Debug.LogError("QuickPlay: couldn't join the lobby - " + lobbyResult.ShutdownReason);
-            quickSessionTcs = null;
-            OnJoinFailed?.Invoke();
-            GoToMenu(ReasonToText(lobbyResult.ShutdownReason), true);
+            SetStatus("Searching free lobby...");
+            OnLobbySearching?.Invoke(true);
 
-            return;
+            quickSessionTcs = new TaskCompletionSource<List<SessionInfo>>();
+            var lobbyResult = await runner.JoinSessionLobby(SessionLobby.ClientServer);
+
+            if (!lobbyResult.Ok)
+            {
+                Debug.LogError("QuickPlay: couldn't join the lobby - " + lobbyResult.ShutdownReason);
+                quickSessionTcs = null;
+                OnJoinFailed?.Invoke();
+                GoToMenu(ReasonToText(lobbyResult.ShutdownReason), true);
+
+                return;
+            }
+
+            inLobby = true;
+            var listTask = quickSessionTcs.Task;
+            var timeoutTask = Task.Delay(5000);
+            var finishedTask = await Task.WhenAny(listTask, timeoutTask);
+            sessions = finishedTask == listTask ? listTask.Result : new List<SessionInfo>();
+            quickSessionTcs = null;
+            OnLobbySearching?.Invoke(false);
         }
 
-        var listTask = quickSessionTcs.Task;
-
-        var timeoutTask = Task.Delay(5000);
-
-        var finishedTask = await Task.WhenAny(listTask, timeoutTask);
-
-        List<SessionInfo> sessions = finishedTask == listTask ? listTask.Result : new List<SessionInfo>();
-
-        quickSessionTcs = null;
-
         SessionInfo best = null;
-
         foreach (SessionInfo session in sessions)
         {
             if (!session.IsOpen)
@@ -236,7 +250,6 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         if (best != null)
             StartGameClient(best.Name);
-
         else
             StartGameHost(GenerateRoomCode());
     }
@@ -590,6 +603,19 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             else
                 SetStatus("Partidas encontradas: " + visibles);
         }
+    }
+
+    private string StatusForSessionList(List<SessionInfo> sessionList)
+    {
+        int visibles = 0;
+
+        foreach (SessionInfo session in sessionList)
+        {
+            if (session.IsVisible)
+                visibles++;
+        }
+
+        return visibles == 0 ? "No avalible lobbies. Create one!" : "Lobbies found: " + visibles;
     }
 
     public void RegisterLastInput(PlayerRef player, NetworkInputData data)

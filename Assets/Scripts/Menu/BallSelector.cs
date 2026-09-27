@@ -1,8 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using UnityEngine.InputSystem;
-using System.Threading;
 
 public static class PlayerLocalData
 {
@@ -10,7 +8,7 @@ public static class PlayerLocalData
     public static int SelectedTexture = 0;
     public static string Nickname = "";
 }
-//<>
+
 public class BallSelector : MonoBehaviour
 {
     private enum SelectionMode { Color, Texture }

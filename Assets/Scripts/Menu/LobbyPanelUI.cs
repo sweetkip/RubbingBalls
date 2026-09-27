@@ -37,4 +37,9 @@ public class LobbyPanelUI : MonoBehaviour
         isOpen = false;
         panel.Close();
     }
+    
+    public void Refresh()
+    {
+        manager.JoinLobby();
+    }
 }

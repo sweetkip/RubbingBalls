@@ -47,11 +47,6 @@ public class PreGameLobbyUI : MonoBehaviour
             return;
 
         player.SelectColor((byte)palette.NextIndex(player.ColorIndex));
-
-        /*int nextColor = player.ColorIndex + 1;
-        if (nextColor >= palette.Count)
-            nextColor = 0;
-        player.SelectColor((byte)nextColor);*/
     }
 
     public void PreviousColor()
@@ -65,11 +60,6 @@ public class PreGameLobbyUI : MonoBehaviour
             return;
 
         player.SelectColor((byte)palette.PreviousIndex(player.ColorIndex));
-
-        /*int previousColor = player.ColorIndex - 1;
-        if (previousColor < 0)
-            previousColor = palette.Count - 1;
-        player.SelectColor((byte)previousColor);*/
     }
 
     public void ToggleReady()

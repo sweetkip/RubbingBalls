@@ -11,7 +11,6 @@ public class PlayerColorPalette : ScriptableObject
         {
             if (colors == null)
                 return 0;
-
             return colors.Length;
         }
     }
@@ -29,7 +28,6 @@ public class PlayerColorPalette : ScriptableObject
         return color;
     }
 
-    //<3
     public int NextIndex(int current)
     {
         if (Count == 0)
@@ -38,7 +36,7 @@ public class PlayerColorPalette : ScriptableObject
         int next = current + 1;
         return next >= Count ? 0 : next;
     }
-    //<3
+
     public int PreviousIndex(int current)
     {
         if (Count == 0)
@@ -47,5 +45,4 @@ public class PlayerColorPalette : ScriptableObject
         int prev = current - 1;
         return prev < 0 ? Count - 1 : prev;
     }
-    //<3
 }

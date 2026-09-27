@@ -25,12 +25,10 @@ public class Ball : NetworkBehaviour
     [SerializeField] private int WallLayer;
     [SerializeField] private int trajectoryResolution = 30;
 
-
     [SerializeField] private GameObject localIndicator;
     [SerializeField] private KeyCode toggleIndicatorKey = KeyCode.Tab;
 
     private bool localIndicatorEnabled = true;
-
 
     private NetworkTransform netTransform;
     private SpriteRenderer spriteRenderer;
@@ -50,26 +48,18 @@ public class Ball : NetworkBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
 
-        spriteRenderer =
-            GetComponent<SpriteRenderer>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
 
-        health =
-            GetComponent<HealthController>();
+        health = GetComponent<HealthController>();
 
-        netTransform =
-            GetComponent<NetworkTransform>();
+        netTransform = GetComponent<NetworkTransform>();
 
         if (lr == null)
-        {
-            lr =
-                GetComponent<LineRenderer>();
-        }
+            lr = GetComponent<LineRenderer>();
 
-        originalGS =
-            rb.gravityScale;
+        originalGS = rb.gravityScale;
 
-        slowGS =
-            originalGS / 10f;
+        slowGS = originalGS / 10f;
     }
 
     private void Start()
@@ -82,10 +72,7 @@ public class Ball : NetworkBehaviour
     {
         if (Object.HasStateAuthority)
         {
-            id = GameManager.Instance.IJoined(
-                Object.InputAuthority
-            );
-
+            id = GameManager.Instance.IJoined(Object.InputAuthority);
             ShootsLeft = maxShoots;
         }
 
@@ -113,28 +100,22 @@ public class Ball : NetworkBehaviour
         if (localIndicator == null)
             return;
 
-        localIndicator.SetActive(
-            Object.HasInputAuthority &&
-            localIndicatorEnabled
-        );
+        localIndicator.SetActive(Object.HasInputAuthority && localIndicatorEnabled);
     }
 
 
-    public void SetInitialColor(
-        byte colorIndex)
+    public void SetInitialColor(byte colorIndex)
     {
         if (!Object.HasStateAuthority)
             return;
 
-        if (palette == null ||
-            palette.Count == 0)
+        if (palette == null || palette.Count == 0)
             return;
 
         if (colorIndex >= palette.Count)
             colorIndex = 0;
 
         ColorIndex = colorIndex;
-
         UpdateBallColor();
     }
 
@@ -146,31 +127,22 @@ public class Ball : NetworkBehaviour
             {
                 NetworkManager.Instance?.RegisterLastInput(Object.InputAuthority, data);
                 if (!wasPressed)
-                {
                     ButtonPressed();
-                }
                 else
                 {
                     if (canShoot)
-                    {
                         Drag(data.AimWorldPosition);
-                    }
                 }
             }
             else
             {
                 if (wasPressed && canShoot)
-                {
                     Throw();
-                }
 
                 wasPressed = false;
 
                 if (trajectoryLr != null)
-                {
-                    trajectoryLr.enabled =
-                        false;
-                }
+                    trajectoryLr.enabled = false;
             }
         }
     }
@@ -184,57 +156,29 @@ public class Ball : NetworkBehaviour
             canShoot = true;
 
             if (Object.HasStateAuthority)
-            {
-                rb.gravityScale =
-                    slowGS;
-            }
+                rb.gravityScale = slowGS;
         }
         else
-        {
             canShoot = false;
-        }
     }
 
-    private void Drag(
-        Vector2 aimWorldPosition)
+    private void Drag(Vector2 aimWorldPosition)
     {
-        Vector2 dragPosition =
-            aimWorldPosition;
+        Vector2 dragPosition = aimWorldPosition;
 
-        clampedPosition =
-            dragPosition;
+        clampedPosition = dragPosition;
 
-        float dragDistance =
-            Vector2.Distance(
-                transform.position,
-                dragPosition
-            );
+        float dragDistance = Vector2.Distance(transform.position, dragPosition);
 
-        Vector2 actualPos =
-            transform.position;
+        Vector2 actualPos = transform.position;
 
         if (dragDistance > maxDistance)
-        {
-            clampedPosition =
-                actualPos +
-                (
-                    dragPosition -
-                    actualPos
-                ).normalized *
-                maxDistance;
-        }
+            clampedPosition = actualPos + (dragPosition - actualPos).normalized * maxDistance;
 
         if (lr != null)
         {
-            lr.SetPosition(
-                0,
-                transform.position
-            );
-
-            lr.SetPosition(
-                1,
-                clampedPosition
-            );
+            lr.SetPosition(0, transform.position);
+            lr.SetPosition(1, clampedPosition);
         }
 
         ShowTrajectory();
@@ -245,22 +189,12 @@ public class Ball : NetworkBehaviour
         wasPressed = false;
 
         if (trajectoryLr != null)
-        {
-            trajectoryLr.enabled =
-                false;
-        }
+            trajectoryLr.enabled = false;
 
         if (lr != null)
         {
-            lr.SetPosition(
-                0,
-                Vector2.zero
-            );
-
-            lr.SetPosition(
-                1,
-                Vector2.zero
-            );
+            lr.SetPosition(0, Vector2.zero);
+            lr.SetPosition(1, Vector2.zero);
         }
 
         if (!Object.HasStateAuthority)
@@ -269,70 +203,39 @@ public class Ball : NetworkBehaviour
 rb.gravityScale = originalGS;
 rb.linearVelocity = Vector2.zero;
 
-        Vector2 actualPos =
-            transform.position;
+        Vector2 actualPos = transform.position;
+        Vector2 throwVector = actualPos - clampedPosition;
+        float distance = Vector2.Distance(actualPos, clampedPosition);
 
-        Vector2 throwVector =
-            actualPos -
-            clampedPosition;
-
-        float distance =
-            Vector2.Distance(
-                actualPos,
-                clampedPosition
-            );
-
-        force =
-            Mathf.Clamp(
-                distance / maxDistance,
-                0f,
-                1f
-            ) *
-            maxForce;
-
-        rb.AddForce(
-            throwVector * force
-        );
-
-        ShootsLeft =
-            Mathf.Max(
-                0,
-                ShootsLeft - 1
-            );
+        force = Mathf.Clamp(distance / maxDistance, 0f, 1f) * maxForce;
+        rb.AddForce(throwVector * force);
+        ShootsLeft = Mathf.Max(0, ShootsLeft - 1);
 
         UpdateBallColor();
     }
 
-    private void OnCollisionEnter2D(
-        Collision2D collision)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
         if (!Object.HasStateAuthority)
             return;
 
-        if (collision.gameObject.layer ==
-            WallLayer)
+        if (collision.gameObject.layer == WallLayer)
         {
-            ShootsLeft =
-                maxShoots;
-
+            ShootsLeft = maxShoots;
             UpdateBallColor();
         }
     }
 
-    private void OnCollisionStay2D(
-        Collision2D collision)
+    private void OnCollisionStay2D(Collision2D collision)
     {
         if (!Object.HasStateAuthority)
             return;
 
-        if (collision.gameObject.layer ==
-            WallLayer)
+        if (collision.gameObject.layer == WallLayer)
         {
             if (ShootsLeft != maxShoots)
             {
-                ShootsLeft =
-                    maxShoots;
-
+                ShootsLeft = maxShoots;
                 UpdateBallColor();
             }
         }
@@ -343,71 +246,29 @@ rb.linearVelocity = Vector2.zero;
         if (trajectoryLr == null)
             return;
 
-        trajectoryLr.enabled =
-            true;
+        trajectoryLr.enabled = true;
 
-        trajectoryLr.positionCount =
-            trajectoryResolution;
+        trajectoryLr.positionCount = trajectoryResolution;
 
-        Vector3[] points =
-            new Vector3[
-                trajectoryResolution
-            ];
+        Vector3[] points = new Vector3[trajectoryResolution];
+        Vector2 actualPos = transform.position;
+        Vector2 throwVector = actualPos - clampedPosition;
 
-        Vector2 actualPos =
-            transform.position;
+        float distance = Vector2.Distance(actualPos, clampedPosition);
 
-        Vector2 throwVector =
-            actualPos -
-            clampedPosition;
+        force = Mathf.Clamp(distance / maxDistance, 0f, 1f) * maxForce;
 
-        float distance =
-            Vector2.Distance(
-                actualPos,
-                clampedPosition
-            );
+        Vector2 velocity = (throwVector * force) / 50f;
+        Vector2 startPos = transform.position;
 
-        force =
-            Mathf.Clamp(
-                distance / maxDistance,
-                0f,
-                1f
-            ) *
-            maxForce;
-
-        Vector2 velocity =
-            (
-                throwVector *
-                force
-            ) /
-            50f;
-
-        Vector2 startPos =
-            transform.position;
-
-        for (
-            int i = 0;
-            i < trajectoryResolution;
-            i++)
+        for (int i = 0; i < trajectoryResolution; i++)
         {
-            float t =
-                i *
-                Time.fixedDeltaTime;
-
-            Vector2 pos =
-                startPos +
-                velocity * t +
-                0.5f *
-                Physics2D.gravity *
-                t *
-                t;
-
+            float t = i * Time.fixedDeltaTime;
+            Vector2 pos = startPos + velocity * t + 0.5f * Physics2D.gravity * t * t;
             points[i] = pos;
         }
 
-        trajectoryLr.SetPositions(
-            points
-        );
+        trajectoryLr.SetPositions(points);
     }
 
     private void UpdateBallColor()
@@ -415,31 +276,14 @@ rb.linearVelocity = Vector2.zero;
         if (spriteRenderer == null)
             return;
 
-        if (palette == null ||
-            palette.Count == 0)
+        if (palette == null || palette.Count == 0)
             return;
 
-        Color baseColor =
-            palette.GetColor(
-                ColorIndex
-            );
+        Color baseColor = palette.GetColor(ColorIndex);
+        int usedShoots = Mathf.Clamp(maxShoots - ShootsLeft, 0, maxShoots);
+        float darkness = Mathf.Pow(0.75f, usedShoots);
 
-        int usedShoots =
-            Mathf.Clamp(
-                maxShoots -
-                ShootsLeft,
-                0,
-                maxShoots
-            );
-
-        float darkness =
-            Mathf.Pow(
-                0.75f,
-                usedShoots
-            );
-
-        spriteRenderer.color =
-            new Color(
+        spriteRenderer.color =new Color(
                 baseColor.r *
                 darkness,
 
@@ -449,8 +293,7 @@ rb.linearVelocity = Vector2.zero;
                 baseColor.b *
                 darkness,
 
-                baseColor.a
-            );
+                baseColor.a);
     }
 
     public int GetLives()
@@ -462,29 +305,15 @@ rb.linearVelocity = Vector2.zero;
     {
         if (!Object.HasStateAuthority)
             return;
+
         health.Lives -= 1;
-
-        rb.simulated =
-            false;
-
-        rb.linearVelocity =
-            Vector2.zero;
-
-        rb.gravityScale =
-            originalGS;
-
-        netTransform.Teleport(
-            Vector3.zero
-        );
-
-        ShootsLeft =
-            maxShoots;
-
+        rb.simulated = false;
+        rb.linearVelocity = Vector2.zero;
+        rb.gravityScale = originalGS;
+        netTransform.Teleport(Vector3.zero);
+        ShootsLeft = maxShoots;
         health.ResetHealth();
-
-        rb.simulated =
-            true;
-
+        rb.simulated = true;
         UpdateBallColor();
     }
 }

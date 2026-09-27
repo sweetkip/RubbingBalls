@@ -12,15 +12,12 @@ public class BallCollition : NetworkBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         myHealth = this.gameObject.GetComponent<HealthController>();
-        
     }
 
     public override void FixedUpdateNetwork()
     {
         if(rb != null)
-        {
             speed = rb.linearVelocity;
-        }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)

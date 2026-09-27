@@ -28,6 +28,7 @@ public class GameManager : NetworkBehaviour
         aliveIds.Clear();
         alivePlayerRefs.Clear();
     }
+
     public int IJoined(PlayerRef playerRef)
     {
         int id = totalPlayers;

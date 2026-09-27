@@ -9,6 +9,7 @@ public class QuickBtn : MonoBehaviour
     private void OnEnable()
     {
         manager.OnJoinFailed += ReenableButton;
+        manager.OnLobbySearching += HandleSearching;
     }
 
     private void OnDisable()
@@ -25,5 +26,10 @@ public class QuickBtn : MonoBehaviour
     private void ReenableButton()
     {
         btn.interactable = true;
+    }
+
+    private void HandleSearching(bool searching)
+    {
+        btn.interactable = !searching;
     }
 }
