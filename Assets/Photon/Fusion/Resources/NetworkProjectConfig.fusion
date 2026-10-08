@@ -33,13 +33,13 @@
         "SimulationUpdateTimeMode": 0,
         "PlayerCount": 10,
         "TickRateSelection": {
-            "Client": 0,
-            "ClientSendInterval": 0,
-            "ServerTickInterval": 0,
-            "ServerSendInterval": 0,
-            "ClientSendIndex": 0,
-            "ServerIndex": 0,
-            "ServerSendIndex": 0
+            "Client": 32,
+            "ClientSendInterval": 1,
+            "ServerTickInterval": 1,
+            "ServerSendInterval": 1,
+            "ClientSendIndex": 1,
+            "ServerIndex": 1,
+            "ServerSendIndex": 1
         }
     },
     "TimeSync": {
@@ -93,7 +93,8 @@
     },
     "AssembliesToWeave": [
         "Assembly-CSharp",
-        "Assembly-CSharp-firstpass"
+        "Assembly-CSharp-firstpass",
+        "PhotonVoice.Fusion"
     ],
     "UseSerializableDictionary": true,
     "NullChecksForNetworkedProperties": true,
