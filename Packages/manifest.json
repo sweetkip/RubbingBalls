@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.photonengine.voice-fusion": "https://github.com/Photon-Server/Photon-UPM.git#fusion/v2/voice-for-fusion",
     "com.unity.2d.animation": "13.0.5",
     "com.unity.2d.aseprite": "3.0.2",
     "com.unity.2d.psdimporter": "12.0.2",
