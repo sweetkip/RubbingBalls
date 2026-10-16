@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2557271144306471924}
   - component: {fileID: 5179793728615375430}
   - component: {fileID: 1934913441228574969}
+  - component: {fileID: 7608791158862108644}
   m_Layer: 0
   m_Name: LobbyPlayer
   m_TagString: Untagged
@@ -52,6 +53,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 1934913441228574969}
+  - {fileID: 7608791158862108644}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &1934913441228574969
 MonoBehaviour:
@@ -69,3 +71,23 @@ MonoBehaviour:
   _ColorIndex: 0
   _IsReady:
     RawValue: 0
+  _Nickname:
+    _length: 0
+    _data:
+      Data: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+--- !u!114 &7608791158862108644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746516036736503021}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e9c6f6f9fa1b4a49bcdd6025b000f57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayersChat
+  input: {fileID: 0}
+  chatText: {fileID: 0}
+  chatButton: {fileID: 0}
+  chatManager: {fileID: 9197841153437091495, guid: 818d274bb1d3c7e428dea2171b077af3, type: 3}
