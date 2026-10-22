@@ -15,6 +15,11 @@ public class MenuUI : MonoBehaviour
 
     private Coroutine sRoutine;
 
+    private void Awake()
+    {
+        manager = NetworkManager.Instance;
+    }
+
     private void OnEnable()
     {
         manager.OnJoinFailed += HandleJoinFailed;
