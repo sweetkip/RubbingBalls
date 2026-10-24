@@ -85,23 +85,17 @@ public class BallSelector : MonoBehaviour
     {
         if (mode == SelectionMode.Color)
         {
-            if (palette == null || palette.Count == 0)
+            if (palette == null || palette.CountColors == 0)
                 return;
 
             PlayerLocalData.SelectedColor = dir > 0 ? palette.NextIndex(PlayerLocalData.SelectedColor) : palette.PreviousIndex(PlayerLocalData.SelectedColor);
         }
         else
         {
-            if (textures == null || textures.Length == 0)
+            if (palette == null || palette.CountSprites == 0)
                 return;
 
-            int next = PlayerLocalData.SelectedTexture + dir;
-            if (next < 0)
-                next = textures.Length - 1;
-            if (next >= textures.Length)
-                next = 0;
-
-            PlayerLocalData.SelectedTexture = next;
+            PlayerLocalData.SelectedTexture = dir > 0 ? palette.NextSpriteIndex(PlayerLocalData.SelectedTexture) : palette.PreviousSpriteIndex(PlayerLocalData.SelectedTexture);
         }
 
         RefreshPreview();
@@ -109,10 +103,10 @@ public class BallSelector : MonoBehaviour
 
     public void RefreshPreview()
     {
-        if (colorPreview != null && palette != null && palette.Count > 0)
+        if (colorPreview != null && palette != null && palette.CountColors > 0)
             colorPreview.color = palette.GetColor(PlayerLocalData.SelectedColor);
 
-        if (texturePreview != null && textures != null && textures.Length > 0)
+        if (texturePreview != null && palette != null && palette.CountSprites > 0)
             texturePreview.sprite = textures[PlayerLocalData.SelectedTexture];
     }
 

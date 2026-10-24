@@ -21,3 +21,13 @@ MonoBehaviour:
   - {r: 1, g: 0, b: 1, a: 1}
   - {r: 1, g: 0.5490196, b: 0, a: 1}
   - {r: 1, g: 1, b: 1, a: 1}
+  sprites:
+  - {fileID: -4824871906443745265, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: -4120015347156684875, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: -4711295090718464220, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: -1393925385471631048, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: -4686444210690678318, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: 3044542361627363376, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: -7048620242059489554, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: 2948586714716120069, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  defaultSprite: {fileID: -4824871906443745265, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}

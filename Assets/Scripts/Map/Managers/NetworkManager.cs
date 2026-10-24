@@ -44,6 +44,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     private TaskCompletionSource<List<SessionInfo>> quickSessionTcs;
 
     private Dictionary<PlayerRef, byte> playerColors = new Dictionary<PlayerRef, byte>();
+    private Dictionary<PlayerRef, byte> playerSprites = new Dictionary<PlayerRef, byte>();
     private readonly Dictionary<PlayerRef, NetworkInputData> lastValidInput = new Dictionary<PlayerRef, NetworkInputData>();
 
     private bool inPreGame;
@@ -301,6 +302,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             }
 
             playerColors.Remove(player);
+            playerSprites.Remove(player);
             lastValidInput.Remove(player);
 
             if (inPreGame && !startingGame)
@@ -394,6 +396,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     private void SaveLobbyPlayerData()
     {
         playerColors.Clear();
+        playerSprites.Clear();
 
         foreach (PlayerRef player in runner.ActivePlayers)
         {
@@ -406,6 +409,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 continue;
 
             playerColors[player] = lobbyPlayer.ColorIndex;
+            playerSprites[player] = lobbyPlayer.SpriteIndex;
         }
     }
 
@@ -489,12 +493,19 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             Ball ball = ballObject.GetComponent<Ball>();
 
             byte colorIndex = 0;
+            byte spriteIndex = 0;
 
             if (playerColors.TryGetValue(player, out byte savedColor))
                 colorIndex = savedColor;
 
+            if (playerSprites.TryGetValue(player, out byte savedSprite))
+                spriteIndex = savedSprite;
+
             if (ball != null)
+            {
                 ball.SetInitialColor(colorIndex);
+                ball.SetInitialSprite(spriteIndex);
+            }
 
             runner.SetPlayerObject(player, ballObject);
 

@@ -1,4 +1,5 @@
 ﻿using Fusion;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,6 +25,9 @@ public class LobbyPlayerSlot : MonoBehaviour
 
         if (colorImage != null && palette != null)
             colorImage.color = palette.GetColor(lobbyPlayer.ColorIndex);
+
+        if(colorImage != null && palette != null)
+            colorImage.sprite = palette.GetSprite(lobbyPlayer.SpriteIndex);
 
         if (readyText != null)
             readyText.text = lobbyPlayer.IsReady? "READY" : "CHOOSING";

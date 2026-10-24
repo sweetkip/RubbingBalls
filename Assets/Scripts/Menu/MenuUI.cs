@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using TMPro;
+using Unity.VisualScripting;
 
 public class MenuUI : MonoBehaviour
 {
@@ -15,7 +16,7 @@ public class MenuUI : MonoBehaviour
 
     private Coroutine sRoutine;
 
-    private void Awake()
+    private void Start()
     {
         manager = NetworkManager.Instance;
     }

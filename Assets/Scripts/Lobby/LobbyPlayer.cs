@@ -6,21 +6,24 @@ public class LobbyPlayer : NetworkBehaviour
     [SerializeField] private PlayerColorPalette palette;
 
     [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public byte ColorIndex { get; private set; }
+    [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public byte SpriteIndex { get; private set; }
     [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public NetworkBool IsReady { get; private set; }
     [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public NetworkString<_32> Nickname { get; private set; }
 
-
+    
     public override void Spawned()
     {
         if (Object.HasStateAuthority)
         {
             ColorIndex = 0;
+            SpriteIndex = 0;
             IsReady = false;
         }
 
         if (Object.HasInputAuthority)
         {
             SelectColor((byte)PlayerLocalData.SelectedColor);
+            SelectSprite((byte)PlayerLocalData.SelectedTexture);
             SetNick(PlayerLocalData.Nickname);
         }
 
@@ -33,6 +36,14 @@ public class LobbyPlayer : NetworkBehaviour
             return;
 
         RPC_SelectColor(colorIndex);
+    }
+
+    public void SelectSprite(byte spriteIndex)
+    {
+        if (!Object.HasInputAuthority)
+            return;
+
+        RPC_SelectSprite(spriteIndex);
     }
 
     public void SetReady(bool ready)
@@ -56,13 +67,30 @@ public class LobbyPlayer : NetworkBehaviour
         if (IsReady)
             return;
 
-        if (palette == null || palette.Count == 0)
+        if (palette == null || palette.CountColors == 0)
             return;
 
-        if (colorIndex >= palette.Count)
+        if (colorIndex >= palette.CountColors)
             return;
 
         ColorIndex = colorIndex;
+
+        PreGameLobbyUI.Instance?.RefreshLobby();
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_SelectSprite(byte spriteIndex)
+    {
+        if (IsReady)
+            return;
+
+        if (palette == null || palette.CountSprites == 0)
+            return;
+
+        if (spriteIndex >= palette.CountSprites)
+            return;
+
+        SpriteIndex = spriteIndex;
 
         PreGameLobbyUI.Instance?.RefreshLobby();
     }

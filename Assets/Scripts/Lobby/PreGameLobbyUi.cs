@@ -43,7 +43,7 @@ public class PreGameLobbyUI : MonoBehaviour
         if (player == null || player.IsReady)
             return;
 
-        if (palette == null || palette.Count == 0)
+        if (palette == null || palette.CountColors == 0)
             return;
 
         player.SelectColor((byte)palette.NextIndex(player.ColorIndex));
@@ -56,7 +56,7 @@ public class PreGameLobbyUI : MonoBehaviour
         if (player == null || player.IsReady)
             return;
 
-        if (palette == null || palette.Count == 0)
+        if (palette == null || palette.CountColors == 0)
             return;
 
         player.SelectColor((byte)palette.PreviousIndex(player.ColorIndex));

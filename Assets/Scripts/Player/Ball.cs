@@ -1,4 +1,5 @@
 ﻿using Fusion;
+using System.Threading;
 using UnityEngine;
 
 public class Ball : NetworkBehaviour
@@ -8,6 +9,9 @@ public class Ball : NetworkBehaviour
 
     [Networked, OnChangedRender(nameof(UpdateBallColor))]
     public byte ColorIndex { get; private set; }
+
+    [Networked, OnChangedRender(nameof(UpdateBallSprite))]
+    public byte SpriteIndex { get; private set; }
 
     [Networked, OnChangedRender(nameof(UpdateBallColor))]
     public int ShootsLeft { get; private set; }
@@ -77,6 +81,7 @@ public class Ball : NetworkBehaviour
         }
 
         UpdateBallColor();
+        UpdateBallSprite();
         UpdateLocalIndicator();
     }
 
@@ -109,14 +114,29 @@ public class Ball : NetworkBehaviour
         if (!Object.HasStateAuthority)
             return;
 
-        if (palette == null || palette.Count == 0)
+        if (palette == null || palette.CountColors == 0)
             return;
 
-        if (colorIndex >= palette.Count)
+        if (colorIndex >= palette.CountColors)
             colorIndex = 0;
 
         ColorIndex = colorIndex;
         UpdateBallColor();
+    }
+
+    public void SetInitialSprite(byte spriteIndex)
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        if (palette == null || palette.CountSprites == 0)
+            return;
+
+        if (spriteIndex >= palette.CountSprites)
+            spriteIndex = 0;
+
+        SpriteIndex = spriteIndex;
+        UpdateBallSprite();
     }
 
     public override void FixedUpdateNetwork()
@@ -200,8 +220,8 @@ public class Ball : NetworkBehaviour
         if (!Object.HasStateAuthority)
             return;
 
-rb.gravityScale = originalGS;
-rb.linearVelocity = Vector2.zero;
+        rb.gravityScale = originalGS;
+        rb.linearVelocity = Vector2.zero;
 
         Vector2 actualPos = transform.position;
         Vector2 throwVector = actualPos - clampedPosition;
@@ -276,24 +296,24 @@ rb.linearVelocity = Vector2.zero;
         if (spriteRenderer == null)
             return;
 
-        if (palette == null || palette.Count == 0)
+        if (palette == null || palette.CountColors == 0)
             return;
 
         Color baseColor = palette.GetColor(ColorIndex);
         int usedShoots = Mathf.Clamp(maxShoots - ShootsLeft, 0, maxShoots);
         float darkness = Mathf.Pow(0.75f, usedShoots);
 
-        spriteRenderer.color =new Color(
-                baseColor.r *
-                darkness,
+        spriteRenderer.color =new Color(baseColor.r * darkness, baseColor.g * darkness, baseColor.b * darkness, baseColor.a);
+    }
 
-                baseColor.g *
-                darkness,
+    private void UpdateBallSprite()
+    {
+        if (spriteRenderer == null)
+            return;
 
-                baseColor.b *
-                darkness,
-
-                baseColor.a);
+        if (palette == null || palette.CountSprites == 0)
+            return;
+        spriteRenderer.sprite = palette.GetSprite(SpriteIndex);
     }
 
     public int GetLives()
