@@ -7506,50 +7506,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1249724097}
     m_Modifications:
-    - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
-      propertyPath: maxCharts
-      value: 9
-      objectReference: {fileID: 0}
-    - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
-      propertyPath: textures.Array.size
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
-      propertyPath: 'textures.Array.data[0]'
-      value: 
-      objectReference: {fileID: -4824871906443745265, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-    - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
-      propertyPath: 'textures.Array.data[1]'
-      value: 
-      objectReference: {fileID: -4120015347156684875, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-    - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
-      propertyPath: 'textures.Array.data[2]'
-      value: 
-      objectReference: {fileID: -4711295090718464220, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-    - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
-      propertyPath: 'textures.Array.data[3]'
-      value: 
-      objectReference: {fileID: -1393925385471631048, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-    - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
-      propertyPath: 'textures.Array.data[4]'
-      value: 
-      objectReference: {fileID: -4686444210690678318, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-    - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
-      propertyPath: 'textures.Array.data[5]'
-      value: 
-      objectReference: {fileID: 3044542361627363376, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-    - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
-      propertyPath: 'textures.Array.data[6]'
-      value: 
-      objectReference: {fileID: -7048620242059489554, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-    - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
-      propertyPath: 'textures.Array.data[7]'
-      value: 
-      objectReference: {fileID: 2948586714716120069, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-    - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
-      propertyPath: 'textures.Array.data[8]'
-      value: 
-      objectReference: {fileID: 2948586714716120069, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
     - target: {fileID: 4653537535099161873, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7629,10 +7585,6 @@ PrefabInstance:
     - target: {fileID: 4653537535099161873, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5348792129580663972, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
-      propertyPath: m_OnEndEdit.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: CheckName
       objectReference: {fileID: 0}
     - target: {fileID: 6522092840825724198, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target

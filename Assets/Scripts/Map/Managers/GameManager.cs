@@ -65,7 +65,7 @@ public class GameManager : NetworkBehaviour
         int playerLives = player.GetLives();
         if (playerLives - 1 <= 0)
         {
-            RPC_PlayerLost(id, player.name);
+            RPC_PlayerLost(id, player.ballName);
 
             int index = aliveIds.IndexOf(id);
 

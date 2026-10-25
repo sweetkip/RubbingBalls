@@ -25,7 +25,7 @@ public class HealthController : NetworkBehaviour
 
         if (ball != null)
             id = ball.id;
-        UIManager.Instance.ChangeHealth(Health, id, Lives, ball.name);
+        UIManager.Instance.ChangeHealth(Health, id, Lives, ball.ballName);
     }
 
     public void TakeDamage(float amount)
@@ -43,7 +43,7 @@ public class HealthController : NetworkBehaviour
     }
     private void OnHealthChanged()
     {
-        UIManager.Instance.ChangeHealth(Health, id, Lives, ball.name);
+        UIManager.Instance.ChangeHealth(Health, id, Lives, ball.ballName);
     }
 
     public void ResetHealth()

@@ -1,11 +1,13 @@
 using Fusion;
 using System.Collections.Generic;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class PreGameLobbyUI : MonoBehaviour
 {
+    private enum SelectionMode { Color, Texture }
     public static PreGameLobbyUI Instance { get; private set; }
 
     [SerializeField] private PlayerColorPalette palette;
@@ -14,11 +16,16 @@ public class PreGameLobbyUI : MonoBehaviour
 
     [SerializeField] private Image localColorPreview;
 
+    [Header("Btns")]
+    [SerializeField] private Button colorBtn;
+    [SerializeField] private Button textureBtn;
     [SerializeField] private Button previousColorButton;
     [SerializeField] private Button nextColorButton;
     [SerializeField] private Button readyButton;
 
     [SerializeField] private TMP_Text readyButtonText;
+
+    private SelectionMode mode = SelectionMode.Color;
 
     private void Awake()
     {
@@ -38,28 +45,78 @@ public class PreGameLobbyUI : MonoBehaviour
 
     public void NextColor()
     {
-        LobbyPlayer player = GetLocalLobbyPlayer();
+        if (mode == SelectionMode.Color)
+        {
+            LobbyPlayer player = GetLocalLobbyPlayer();
 
-        if (player == null || player.IsReady)
-            return;
+            if (player == null || player.IsReady)
+                return;
 
-        if (palette == null || palette.CountColors == 0)
-            return;
+            if (palette == null || palette.CountColors == 0)
+                return;
 
-        player.SelectColor((byte)palette.NextIndex(player.ColorIndex));
+            player.SelectColor((byte)palette.NextIndex(player.ColorIndex));
+        }
+        else
+        {
+            LobbyPlayer player = GetLocalLobbyPlayer();
+
+            if (player == null || player.IsReady)
+                return;
+
+            if (palette == null || palette.CountSprites == 0)
+                return;
+
+            player.SelectSprite((byte)palette.NextSpriteIndex(player.SpriteIndex));
+        }
     }
 
     public void PreviousColor()
     {
-        LobbyPlayer player = GetLocalLobbyPlayer();
+        if (mode == SelectionMode.Color)
+        {
+            LobbyPlayer player = GetLocalLobbyPlayer();
 
-        if (player == null || player.IsReady)
-            return;
+            if (player == null || player.IsReady)
+                return;
 
-        if (palette == null || palette.CountColors == 0)
-            return;
+            if (palette == null || palette.CountColors == 0)
+                return;
 
-        player.SelectColor((byte)palette.PreviousIndex(player.ColorIndex));
+            player.SelectColor((byte)palette.PreviousIndex(player.ColorIndex));
+        }
+        else
+        {
+            LobbyPlayer player = GetLocalLobbyPlayer();
+
+            if (player == null || player.IsReady)
+                return;
+
+            if (palette == null || palette.CountSprites == 0)
+                return;
+
+            player.SelectSprite((byte)palette.PreviousSpriteIndex(player.SpriteIndex));
+        }
+    }
+
+    public void SetColor()
+    {
+        mode = SelectionMode.Color;
+        RefreshBtns();
+    }
+
+    public void SetTexture()
+    {
+        mode = SelectionMode.Texture;
+        RefreshBtns();
+    }
+
+    private void RefreshBtns()
+    {
+        if (colorBtn != null)
+            colorBtn.interactable = mode != SelectionMode.Color;
+        if (textureBtn != null)
+            textureBtn.interactable = mode != SelectionMode.Texture;
     }
 
     public void ToggleReady()
@@ -134,7 +191,10 @@ public class PreGameLobbyUI : MonoBehaviour
         }
 
         if (localColorPreview != null && palette != null)
+        {
             localColorPreview.color = palette.GetColor(localPlayer.ColorIndex);
+            localColorPreview.sprite = palette.GetSprite(localPlayer.SpriteIndex);
+        }
 
         bool ready = localPlayer.IsReady;
 

@@ -1955,7 +1955,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 4091278741715795945}
         m_TargetAssemblyTypeName: BallSelector, Assembly-CSharp
-        m_MethodName: ChangeName
+        m_MethodName: CheckName
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2504,6 +2504,15 @@ MonoBehaviour:
   colorPreview: {fileID: 6445006430335347790}
   texturePreview: {fileID: 6445006430335347790}
   palette: {fileID: 11400000, guid: fc6e9a45d96834344bc00f279d7e7dc2, type: 2}
-  textures: []
+  textures:
+  - {fileID: -4824871906443745265, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: -4120015347156684875, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: -4711295090718464220, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: -1393925385471631048, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: -4686444210690678318, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: 3044542361627363376, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: -7048620242059489554, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  - {fileID: 2948586714716120069, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
   colorBtn: {fileID: 2548973447266526635}
   textureBtn: {fileID: 4302572016241613930}
+  maxCharts: 9

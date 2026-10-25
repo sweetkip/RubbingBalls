@@ -15,7 +15,7 @@ public class Ball : NetworkBehaviour
     [Networked, OnChangedRender(nameof(UpdateBallColor))]
     public int ShootsLeft { get; private set; }
 
-    [Networked] public string name { get; private set; }
+    [Networked] public string ballName { get; private set; }
 
     [SerializeField] private PlayerColorPalette palette;
 
@@ -144,10 +144,10 @@ public class Ball : NetworkBehaviour
     {
         if (!Object.HasStateAuthority)
             return;
-        this.name = name;
-        if(string.IsNullOrWhiteSpace(this.name))
+        this.ballName = name;
+        if(string.IsNullOrWhiteSpace(this.ballName))
         {
-            this.name = "NoName";
+            this.ballName = "NoName";
         }
     }
 
