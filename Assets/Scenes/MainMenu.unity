@@ -7507,6 +7507,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 1249724097}
     m_Modifications:
     - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
+      propertyPath: maxCharts
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 4091278741715795945, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
       propertyPath: textures.Array.size
       value: 8
       objectReference: {fileID: 0}
@@ -7625,6 +7629,10 @@ PrefabInstance:
     - target: {fileID: 4653537535099161873, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5348792129580663972, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
+      propertyPath: m_OnEndEdit.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: CheckName
       objectReference: {fileID: 0}
     - target: {fileID: 6522092840825724198, guid: 775f73e91390d8947b244965f4e94c00, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target

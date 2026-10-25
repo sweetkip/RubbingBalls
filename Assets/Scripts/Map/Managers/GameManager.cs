@@ -1,4 +1,5 @@
 using Fusion;
+using Photon.Realtime;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -64,7 +65,7 @@ public class GameManager : NetworkBehaviour
         int playerLives = player.GetLives();
         if (playerLives - 1 <= 0)
         {
-            RPC_PlayerLost(id);
+            RPC_PlayerLost(id, player.name);
 
             int index = aliveIds.IndexOf(id);
 
@@ -91,21 +92,23 @@ public class GameManager : NetworkBehaviour
         aliveIds.RemoveAt(index);
         alivePlayerRefs.RemoveAt(index);
         alivePlayers--;
-
-        RPC_PlayerDisconnected(id);   
+        string name = NetworkManager.Instance.SendName(playerRef);
+        if (string.IsNullOrWhiteSpace(name))
+            name = $"Player {playerRef.PlayerId}";
+        RPC_PlayerDisconnected(id, name);   
         CheckWinner();                
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_PlayerDisconnected(int id)
+    private void RPC_PlayerDisconnected(int id, string name)
     {
-        UIManager.Instance.PlayerDisconnected(id);
+        UIManager.Instance.PlayerDisconnected(id, name);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_PlayerLost(int id)
+    private void RPC_PlayerLost(int id, string name)
     {
-        UIManager.Instance.PlayerLost(id);
+        UIManager.Instance.PlayerLost(id, name);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

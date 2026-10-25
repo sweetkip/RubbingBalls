@@ -45,6 +45,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     private Dictionary<PlayerRef, byte> playerColors = new Dictionary<PlayerRef, byte>();
     private Dictionary<PlayerRef, byte> playerSprites = new Dictionary<PlayerRef, byte>();
+    private Dictionary<PlayerRef, string> playerName = new Dictionary<PlayerRef, string>();
     private readonly Dictionary<PlayerRef, NetworkInputData> lastValidInput = new Dictionary<PlayerRef, NetworkInputData>();
 
     private bool inPreGame;
@@ -303,6 +304,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
             playerColors.Remove(player);
             playerSprites.Remove(player);
+            playerName.Remove(player);
             lastValidInput.Remove(player);
 
             if (inPreGame && !startingGame)
@@ -397,6 +399,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         playerColors.Clear();
         playerSprites.Clear();
+        playerName.Clear();
 
         foreach (PlayerRef player in runner.ActivePlayers)
         {
@@ -410,6 +413,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
             playerColors[player] = lobbyPlayer.ColorIndex;
             playerSprites[player] = lobbyPlayer.SpriteIndex;
+            playerName[player] = lobbyPlayer.Nickname.ToString();
         }
     }
 
@@ -494,6 +498,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
             byte colorIndex = 0;
             byte spriteIndex = 0;
+            string name = "";
 
             if (playerColors.TryGetValue(player, out byte savedColor))
                 colorIndex = savedColor;
@@ -501,10 +506,14 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             if (playerSprites.TryGetValue(player, out byte savedSprite))
                 spriteIndex = savedSprite;
 
+            if (playerName.TryGetValue(player, out string savedName))
+                name = savedName;
+
             if (ball != null)
             {
                 ball.SetInitialColor(colorIndex);
                 ball.SetInitialSprite(spriteIndex);
+                ball.SetName(name);
             }
 
             runner.SetPlayerObject(player, ballObject);
@@ -555,7 +564,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             int playerCount = 0;
 
             foreach (PlayerRef player in runner.ActivePlayers)
+            {
                 playerCount++;
+            }
+
 
             UIManager.Instance?.PlayerJoined(playerCount);
 
@@ -717,5 +729,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             default:
                 return "Error de conexión: " + reason;
         }
+    }
+
+    public string SendName(PlayerRef player)
+    {
+        return playerName[player];
     }
 }

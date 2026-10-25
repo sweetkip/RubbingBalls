@@ -4,8 +4,7 @@ using UnityEngine;
 
 public class Ball : NetworkBehaviour
 {
-    [Networked]
-    public int id { get; private set; }
+    [Networked] public int id { get; private set; }
 
     [Networked, OnChangedRender(nameof(UpdateBallColor))]
     public byte ColorIndex { get; private set; }
@@ -15,6 +14,8 @@ public class Ball : NetworkBehaviour
 
     [Networked, OnChangedRender(nameof(UpdateBallColor))]
     public int ShootsLeft { get; private set; }
+
+    [Networked] public string name { get; private set; }
 
     [SerializeField] private PlayerColorPalette palette;
 
@@ -137,6 +138,17 @@ public class Ball : NetworkBehaviour
 
         SpriteIndex = spriteIndex;
         UpdateBallSprite();
+    }
+
+    public void SetName(string name)
+    {
+        if (!Object.HasStateAuthority)
+            return;
+        this.name = name;
+        if(string.IsNullOrWhiteSpace(this.name))
+        {
+            this.name = "NoName";
+        }
     }
 
     public override void FixedUpdateNetwork()

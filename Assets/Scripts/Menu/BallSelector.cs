@@ -31,6 +31,8 @@ public class BallSelector : MonoBehaviour
     [SerializeField] private Button colorBtn;
     [SerializeField] private Button textureBtn;
 
+    [SerializeField] private int maxCharts;
+
     private SelectionMode mode = SelectionMode.Color;
 
     private void Start()
@@ -116,6 +118,18 @@ public class BallSelector : MonoBehaviour
             colorBtn.interactable = mode != SelectionMode.Color;
         if (textureBtn != null)
             textureBtn.interactable = mode != SelectionMode.Texture;
+    }
+
+    public void CheckName()
+    {
+        if(nickInput.text.Length <= maxCharts)
+        {
+            ChangeName();
+        }
+        else
+        {
+            nickInput.text = "Too Long! Max " + maxCharts;
+        }
     }
 
     public void ChangeName()
