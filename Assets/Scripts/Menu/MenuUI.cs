@@ -33,7 +33,7 @@ public class MenuUI : MonoBehaviour
 
     public void CreateGame()
     {
-        manager.StartGameHost(input.text);
+        manager.StartGameHost(input.text, false);
     }
     public void JoinGame()
     {

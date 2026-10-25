@@ -87,7 +87,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         runner.AddCallbacks(this);
     }
 
-    public async void StartGameHost(string sessionName)
+    public async void StartGameHost(string sessionName, bool visible)
     {
         if (string.IsNullOrWhiteSpace(sessionName))
         {
@@ -110,7 +110,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 PlayerCount = maxPlayers,
 
                 IsOpen = true,
-                IsVisible = true,
+                IsVisible = visible,
 
                 MatchmakingMode = Photon.Realtime.MatchmakingMode.FillRoom,
                 Scene = SceneRef.FromIndex(preGameSceneIndex),
@@ -253,7 +253,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         if (best != null)
             StartGameClient(best.Name);
         else
-            StartGameHost(GenerateRoomCode());
+            StartGameHost(GenerateRoomCode(), true);
     }
 
     private string GenerateRoomCode()
