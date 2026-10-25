@@ -211,7 +211,7 @@ public class PreGameLobbyUI : MonoBehaviour
             readyButtonText.text = ready ? "Cancel" : "Ready";
     }
 
-    private LobbyPlayer GetLocalLobbyPlayer()
+    public LobbyPlayer GetLocalLobbyPlayer()
     {
         if (NetworkManager.Instance == null)
             return null;
