@@ -2,6 +2,7 @@ using Fusion;
 using Photon.Realtime;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 public class GameManager : NetworkBehaviour
 {
@@ -10,6 +11,11 @@ public class GameManager : NetworkBehaviour
     public static GameManager Instance;
     [SerializeField] private int maxPlayers;
     [SerializeField] private NetworkPrefabRef explosionPrefab;
+
+    [Header("Feedback")]
+    [SerializeField] private AudioClip fallSound;
+    [SerializeField, Range(0f, 1f)] private float fallSoundVolume = 0.65f;
+    [SerializeField] private AudioMixerGroup feedbackMixer;
 
     private List<int> aliveIds = new List<int>();
     private List<PlayerRef> alivePlayerRefs = new List<PlayerRef>();
@@ -114,6 +120,7 @@ public class GameManager : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_SpawnExplosion(Vector3 position)
     {
+        BallFeedbackAudio.PlayDetached(fallSound, BallFeedbackSound.Fall, position, fallSoundVolume, feedbackMixer);
         if (!Object.HasStateAuthority)
             return;
 

@@ -34,6 +34,8 @@ public class HealthController : NetworkBehaviour
             return;
 
         Health += amount;
+        if (amount > 0f)
+            ball?.ReportDamage();
     }
 
     public void Heal(float amount)

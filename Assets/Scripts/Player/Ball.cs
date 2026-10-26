@@ -16,6 +16,8 @@ public class Ball : NetworkBehaviour
     public int ShootsLeft { get; private set; }
 
     [Networked] public string ballName { get; private set; }
+    [Networked] private NetworkBool IsAiming { get; set; }
+    [Networked] private Vector2 AimOffset { get; set; }
 
     [SerializeField] private PlayerColorPalette palette;
 
@@ -48,6 +50,8 @@ public class Ball : NetworkBehaviour
     private bool wasPressed;
 
     private HealthController health;
+    private BallFeedback feedback;
+    private float lastImpactFeedbackTime = -100f;
 
     private void Awake()
     {
@@ -58,6 +62,12 @@ public class Ball : NetworkBehaviour
         health = GetComponent<HealthController>();
 
         netTransform = GetComponent<NetworkTransform>();
+        feedback = GetComponent<BallFeedback>();
+        if (feedback == null)
+            feedback = gameObject.AddComponent<BallFeedback>();
+        feedback.Initialize(spriteRenderer);
+        if (feedback.VisualRenderer != null)
+            spriteRenderer = feedback.VisualRenderer;
 
         if (lr == null)
             lr = GetComponent<LineRenderer>();
@@ -84,6 +94,13 @@ public class Ball : NetworkBehaviour
         UpdateBallColor();
         UpdateBallSprite();
         UpdateLocalIndicator();
+        feedback.ResetFeedback();
+    }
+
+    public override void Render()
+    {
+        if (!Object.HasInputAuthority)
+            feedback.SetAim(IsAiming, AimOffset, AimOffset.magnitude / Mathf.Max(0.01f, maxDistance));
     }
 
     private void Update()
@@ -172,6 +189,9 @@ public class Ball : NetworkBehaviour
                     Throw();
 
                 wasPressed = false;
+                if (Object.HasStateAuthority)
+                    IsAiming = false;
+                feedback.SetAim(false, Vector2.zero, 0f);
 
                 if (trajectoryLr != null)
                     trajectoryLr.enabled = false;
@@ -192,6 +212,9 @@ public class Ball : NetworkBehaviour
         }
         else
             canShoot = false;
+
+        if (Object.HasStateAuthority)
+            IsAiming = canShoot;
     }
 
     private void Drag(Vector2 aimWorldPosition)
@@ -207,6 +230,11 @@ public class Ball : NetworkBehaviour
         if (dragDistance > maxDistance)
             clampedPosition = actualPos + (dragPosition - actualPos).normalized * maxDistance;
 
+        Vector2 feedbackOffset = actualPos - clampedPosition;
+        if (Object.HasStateAuthority)
+            AimOffset = feedbackOffset;
+        feedback.SetAim(true, feedbackOffset, feedbackOffset.magnitude / Mathf.Max(0.01f, maxDistance));
+
         if (lr != null)
         {
             lr.SetPosition(0, transform.position);
@@ -219,6 +247,7 @@ public class Ball : NetworkBehaviour
     private void Throw()
     {
         wasPressed = false;
+        feedback.SetAim(false, Vector2.zero, 0f);
 
         if (trajectoryLr != null)
             trajectoryLr.enabled = false;
@@ -232,6 +261,8 @@ public class Ball : NetworkBehaviour
         if (!Object.HasStateAuthority)
             return;
 
+        IsAiming = false;
+        AimOffset = Vector2.zero;
         rb.gravityScale = originalGS;
         rb.linearVelocity = Vector2.zero;
 
@@ -242,6 +273,7 @@ public class Ball : NetworkBehaviour
         force = Mathf.Clamp(distance / maxDistance, 0f, 1f) * maxForce;
         rb.AddForce(throwVector * force);
         ShootsLeft = Mathf.Max(0, ShootsLeft - 1);
+        RPC_PlayLaunchFeedback(throwVector, Mathf.Clamp01(distance / Mathf.Max(0.01f, maxDistance)));
 
         UpdateBallColor();
     }
@@ -250,6 +282,15 @@ public class Ball : NetworkBehaviour
     {
         if (!Object.HasStateAuthority)
             return;
+
+        float feedbackSpeed = collision.relativeVelocity.magnitude;
+        if (feedbackSpeed >= 0.75f && Runner.SimulationTime - lastImpactFeedbackTime >= 0.08f)
+        {
+            lastImpactFeedbackTime = Runner.SimulationTime;
+            Ball otherBall = collision.rigidbody != null ? collision.rigidbody.GetComponent<Ball>() : collision.gameObject.GetComponent<Ball>();
+            Vector2 feedbackNormal = collision.contactCount > 0 ? collision.GetContact(0).normal : Vector2.up;
+            RPC_PlayImpactFeedback(feedbackNormal, feedbackSpeed, otherBall != null, otherBall == null || id < otherBall.id);
+        }
 
         if (collision.gameObject.layer == WallLayer)
         {
@@ -315,7 +356,7 @@ public class Ball : NetworkBehaviour
         int usedShoots = Mathf.Clamp(maxShoots - ShootsLeft, 0, maxShoots);
         float darkness = Mathf.Pow(0.75f, usedShoots);
 
-        spriteRenderer.color =new Color(baseColor.r * darkness, baseColor.g * darkness, baseColor.b * darkness, baseColor.a);
+        feedback.SetBaseColor(new Color(baseColor.r * darkness, baseColor.g * darkness, baseColor.b * darkness, baseColor.a));
     }
 
     private void UpdateBallSprite()
@@ -347,5 +388,36 @@ public class Ball : NetworkBehaviour
         health.ResetHealth();
         rb.simulated = true;
         UpdateBallColor();
+        RPC_PlayRespawnFeedback();
+    }
+
+    public void ReportDamage()
+    {
+        if (Object != null && Object.IsValid && Object.HasStateAuthority)
+            RPC_PlayDamageFeedback();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayLaunchFeedback(Vector2 direction, float power)
+    {
+        feedback.PlayLaunch(direction, power);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayImpactFeedback(Vector2 normal, float impactSpeed, bool marble, bool withSound)
+    {
+        feedback.PlayImpact(normal, impactSpeed, marble, withSound);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayDamageFeedback()
+    {
+        feedback.PlayDamage();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayRespawnFeedback()
+    {
+        feedback.PlayRespawn();
     }
 }
