@@ -15,7 +15,11 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     [SerializeField] private int preGameSceneIndex = 1;
     [SerializeField] private int[] mapSceneIndices = { 2,3 };
-    private int selectedMapSceneIndex;
+    private bool sessionVisible = true;
+
+    public const int MinPlayersToStart = 2;
+    public int MapCount => mapSceneIndices.Length;
+    //private int selectedMapSceneIndex;
 
     [SerializeField] private string mainMenuSceneName = "MainMenu";
 
@@ -101,7 +105,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         }
 
         SetStatus("Creando la partida \"" + sessionName + "\"...");
-
+        sessionVisible = visible;
         runner.ProvideInput = true;
         inPreGame = true;
         startingGame = false;
@@ -351,6 +355,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         if (startingGame)
             return;
 
+        // NUEVO: si la votación ya está en marcha, no hacer nada
+        if (MapVoteController.Instance != null && MapVoteController.Instance.IsActive)
+            return;
+
         int playerCount = 0;
 
         foreach (PlayerRef player in runner.ActivePlayers)
@@ -369,13 +377,40 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 return;
         }
 
-        if (playerCount < 2)
+        if (playerCount < MinPlayersToStart)
             return;
 
-        StartMatch();
+        BeginMapVote();
     }
 
-    private async void StartMatch()
+    private void BeginMapVote()
+    {
+        if (MapVoteController.Instance == null)
+        {
+            Debug.LogWarning("No hay MapVoteController en la escena Lobby: se carga el primer mapa.");
+            StartMatch(0);
+            return;
+        }
+
+        SetSessionOpen(false);
+        MapVoteController.Instance.BeginVoting();
+    }
+
+    public void CancelMapVote()
+    {
+        SetSessionOpen(true);
+    }
+
+    private void SetSessionOpen(bool open)
+    {
+        if (!runner.SessionInfo.IsValid)
+            return;
+
+        runner.SessionInfo.IsOpen = open;
+        runner.SessionInfo.IsVisible = open && sessionVisible;
+    }
+
+    public async void StartMatch(int mapIndex)
     {
         if (!runner.IsServer)
             return;
@@ -383,24 +418,48 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         if (startingGame)
             return;
 
+        if (mapIndex < 0 || mapIndex >= mapSceneIndices.Length)
+            mapIndex = 0;
+
         startingGame = true;
         inPreGame = false;
 
-        if (runner.SessionInfo.IsValid)
-        {
-            runner.SessionInfo.IsOpen = false;
-            runner.SessionInfo.IsVisible = false;
-        }
-
-        selectedMapSceneIndex = ChooseMapSceneIndex();
+        SetSessionOpen(false);
 
         SaveLobbyPlayerData();
         DespawnLobbyPlayers();
 
         gamePlayersSpawned = false;
 
-        await runner.LoadScene(SceneRef.FromIndex(selectedMapSceneIndex));
+        await runner.LoadScene(SceneRef.FromIndex(mapSceneIndices[mapIndex]));
     }
+
+    //private async void StartMatch()
+    //{
+    //    if (!runner.IsServer)
+    //        return;
+
+    //    if (startingGame)
+    //        return;
+
+    //    startingGame = true;
+    //    inPreGame = false;
+
+    //    if (runner.SessionInfo.IsValid)
+    //    {
+    //        runner.SessionInfo.IsOpen = false;
+    //        runner.SessionInfo.IsVisible = false;
+    //    }
+
+    //    selectedMapSceneIndex = ChooseMapSceneIndex();
+
+    //    SaveLobbyPlayerData();
+    //    DespawnLobbyPlayers();
+
+    //    gamePlayersSpawned = false;
+
+    //    await runner.LoadScene(SceneRef.FromIndex(selectedMapSceneIndex));
+    //}
 
     private void SaveLobbyPlayerData()
     {
@@ -753,53 +812,53 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         return playerName[player];
     }
 
-    private int ChooseMapSceneIndex()
-    {
-        int mapCount = mapSceneIndices.Length;
-        int[] votes = new int[mapCount];
+    //private int ChooseMapSceneIndex()
+    //{
+    //    int mapCount = mapSceneIndices.Length;
+    //    int[] votes = new int[mapCount];
 
        
-        foreach (PlayerRef player in runner.ActivePlayers)
-        {
-            if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject))
-                continue;
+    //    foreach (PlayerRef player in runner.ActivePlayers)
+    //    {
+    //        if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject))
+    //            continue;
 
-            LobbyPlayer lobbyPlayer = playerObject.GetComponent<LobbyPlayer>();
+    //        LobbyPlayer lobbyPlayer = playerObject.GetComponent<LobbyPlayer>();
 
-            if (lobbyPlayer == null)
-                continue;
+    //        if (lobbyPlayer == null)
+    //            continue;
 
-            byte vote = lobbyPlayer.MapVote;
+    //        byte vote = lobbyPlayer.MapVote;
 
-            if (vote < mapCount)
-                votes[vote]++;
-        }
-
-        
-        int maxVotes = 0;
-
-        for (int i = 0; i < mapCount; i++)
-        {
-            if (votes[i] > maxVotes)
-                maxVotes = votes[i];
-        }
+    //        if (vote < mapCount)
+    //            votes[vote]++;
+    //    }
 
         
-        List<int> winners = new List<int>();
+    //    int maxVotes = 0;
 
-        for (int i = 0; i < mapCount; i++)
-        {
-            if (maxVotes == 0 || votes[i] == maxVotes)
-                winners.Add(i);
-        }
+    //    for (int i = 0; i < mapCount; i++)
+    //    {
+    //        if (votes[i] > maxVotes)
+    //            maxVotes = votes[i];
+    //    }
+
+        
+    //    List<int> winners = new List<int>();
+
+    //    for (int i = 0; i < mapCount; i++)
+    //    {
+    //        if (maxVotes == 0 || votes[i] == maxVotes)
+    //            winners.Add(i);
+    //    }
 
      
-        int winner = winners[UnityEngine.Random.Range(0, winners.Count)];
+    //    int winner = winners[UnityEngine.Random.Range(0, winners.Count)];
 
-        int chosenScene = mapSceneIndices[winner];
-        Debug.Log("Votos: " + string.Join(", ", votes) + " -> escena elegida: " + chosenScene);
-        return chosenScene;
-    }
+    //    int chosenScene = mapSceneIndices[winner];
+    //    Debug.Log("Votos: " + string.Join(", ", votes) + " -> escena elegida: " + chosenScene);
+    //    return chosenScene;
+    //}
 
     private bool IsMapScene(int sceneIndex)
     {

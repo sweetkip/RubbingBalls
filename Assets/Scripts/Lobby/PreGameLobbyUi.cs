@@ -25,9 +25,7 @@ public class PreGameLobbyUI : MonoBehaviour
 
     [SerializeField] private TMP_Text readyButtonText;
 
-    [Header("Map Voting")]
-    [SerializeField] private Button[] mapButtons;
-    [SerializeField] private TMP_Text[] mapVoteTexts;
+  
 
     private SelectionMode mode = SelectionMode.Color;
 
@@ -38,15 +36,7 @@ public class PreGameLobbyUI : MonoBehaviour
 
     private void Start()
     {
-        for (int i = 0; i < mapButtons.Length; i++)
-        {
-            if (mapButtons[i] == null)
-                continue;
-
-            int mapIndex = i;
-            mapButtons[i].onClick.AddListener(() => VoteMap(mapIndex));
-        }
-
+      
         RefreshLobby();
     }
 
@@ -85,51 +75,9 @@ public class PreGameLobbyUI : MonoBehaviour
     }
 
 
-    public void VoteMap(int mapIndex)
-    {
-        LobbyPlayer player = GetLocalLobbyPlayer();
+   
 
-        if (player == null || player.IsReady)
-            return;
-
-        player.SelectMap((byte)mapIndex);
-    }
-
-    private void RefreshMapVotes(NetworkRunner runner)
-    {
-        if (mapButtons == null || mapButtons.Length == 0)
-            return;
-
-        int[] votes = new int[mapButtons.Length];
-
-        foreach (PlayerRef player in runner.ActivePlayers)
-        {
-            if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject))
-                continue;
-
-            LobbyPlayer lobbyPlayer = playerObject.GetComponent<LobbyPlayer>();
-
-            if (lobbyPlayer == null)
-                continue;
-
-            byte vote = lobbyPlayer.MapVote;
-
-            if (vote < votes.Length)
-                votes[vote]++;
-        }
-
-        LobbyPlayer localPlayer = GetLocalLobbyPlayer();
-        bool canVote = localPlayer != null && !localPlayer.IsReady;
-
-        for (int i = 0; i < mapButtons.Length; i++)
-        {
-            if (mapVoteTexts != null && i < mapVoteTexts.Length && mapVoteTexts[i] != null)
-                mapVoteTexts[i].text = votes[i].ToString();
-
-            if (mapButtons[i] != null)
-                mapButtons[i].interactable = canVote && localPlayer.MapVote != i;
-        }
-    }
+  
     public void PreviousColor()
     {
         if (mode == SelectionMode.Color)
@@ -233,7 +181,7 @@ public class PreGameLobbyUI : MonoBehaviour
             slotIndex++;
         }
 
-        RefreshMapVotes(runner);   
+         
 
         LobbyPlayer localPlayer = GetLocalLobbyPlayer();
 
@@ -265,8 +213,10 @@ public class PreGameLobbyUI : MonoBehaviour
         if (nextColorButton != null)
             nextColorButton.interactable = !ready;
 
+        bool voting = MapVoteController.Instance != null && MapVoteController.Instance.IsActive;
+
         if (readyButton != null)
-            readyButton.interactable = true;
+            readyButton.interactable = !voting;
 
         if (readyButtonText != null)
             readyButtonText.text = ready ? "Cancel" : "Ready";

@@ -55,7 +55,12 @@ public class LobbyPlayer : NetworkBehaviour
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_SelectMap(byte mapIndex)
     {
-        if (IsReady)
+        MapVoteController controller = MapVoteController.Instance;
+
+        if (controller == null || !controller.IsVoting)
+            return;
+
+        if (mapIndex >= NetworkManager.Instance.MapCount)
             return;
 
         MapVote = mapIndex;
@@ -123,11 +128,22 @@ public class LobbyPlayer : NetworkBehaviour
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_SetReady(bool ready)
     {
+        if (MapVoteController.Instance != null && MapVoteController.Instance.IsActive)
+            return;
+
         IsReady = ready;
 
         PreGameLobbyUI.Instance?.RefreshLobby();
 
         NetworkManager.Instance?.CheckAllPlayersReady();
+    }
+
+    public void ResetMapVote()
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        MapVote = NoVote;
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
