@@ -146,7 +146,7 @@ public class BallFeedback : MonoBehaviour
         float strength = Mathf.InverseLerp(0.5f, fullStretchSpeed, speed);
         Kick(normal, -impactSquash * Mathf.Lerp(0.3f, 1f, strength));
         if (withSound)
-            PlaySound(marble ? marbleImpactSound : wallImpactSound, marble ? BallFeedbackSound.MarbleImpact : BallFeedbackSound.WallImpact, Mathf.Lerp(0.3f, 1f, strength));
+            PlaySound(marble ? marbleImpactSound : wallImpactSound, marble ? BallFeedbackSound.MarbleImpact : BallFeedbackSound.WallImpact, Mathf.Lerp(0.3f, 1f, strength) * (marble ? 1f : 0.3f));
     }
 
     public void PlayDamage()

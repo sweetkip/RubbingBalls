@@ -1,4 +1,4 @@
-﻿using Fusion;
+using Fusion;
 using System.Threading;
 using UnityEngine;
 
@@ -49,6 +49,14 @@ public class Ball : NetworkBehaviour
     private bool canShoot;
     private bool wasPressed;
 
+    [SerializeField, Min(0f)] private float respawnPushImmunity = 2f;
+    [Networked] public TickTimer PushProtection { get; private set; }
+    public bool IsPushImmune => Object != null && Object.IsValid && !PushProtection.ExpiredOrNotRunning(Runner);
+    public Collider2D[] PhysicsColliders { get; private set; }
+    private Vector3 spawnPosition;
+    private Quaternion spawnRotation;
+    private bool previousProtection;
+    private Vector3[] trajectoryPoints;
     private HealthController health;
     private BallFeedback feedback;
     private float lastImpactFeedbackTime = -100f;
@@ -72,6 +80,7 @@ public class Ball : NetworkBehaviour
         if (lr == null)
             lr = GetComponent<LineRenderer>();
 
+        PhysicsColliders = GetComponents<Collider2D>();
         originalGS = rb.gravityScale;
 
         slowGS = originalGS / 10f;
@@ -87,6 +96,9 @@ public class Ball : NetworkBehaviour
     {
         if (Object.HasStateAuthority)
         {
+            spawnPosition = transform.position;
+            spawnRotation = transform.rotation;
+            BallCollisionProtection.Register(this);
             id = GameManager.Instance.IJoined(Object.InputAuthority);
             ShootsLeft = maxShoots;
         }
@@ -170,11 +182,24 @@ public class Ball : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        if (Object.HasStateAuthority && previousProtection != IsPushImmune)
+        {
+            previousProtection = IsPushImmune;
+            BallCollisionProtection.Refresh(this);
+        }
         if (GetInput(out NetworkInputData data))
         {
+            if (data.Buttons.IsSet(1))
+            {
+                wasPressed = false;
+                canShoot = false;
+                if (Object.HasStateAuthority) { rb.gravityScale = originalGS; IsAiming = false; }
+                HideAimFeedback();
+                return;
+            }
             if (data.Buttons.IsSet((int)InputButton.Fire))
             {
-                NetworkManager.Instance?.RegisterLastInput(Object.InputAuthority, data);
+                if (!data.Buttons.IsSet(2)) NetworkManager.Instance?.RegisterLastInput(Object.InputAuthority, data);
                 if (!wasPressed)
                     ButtonPressed();
                 else
@@ -283,15 +308,6 @@ public class Ball : NetworkBehaviour
         if (!Object.HasStateAuthority)
             return;
 
-        float feedbackSpeed = collision.relativeVelocity.magnitude;
-        if (feedbackSpeed >= 0.75f && Runner.SimulationTime - lastImpactFeedbackTime >= 0.08f)
-        {
-            lastImpactFeedbackTime = Runner.SimulationTime;
-            Ball otherBall = collision.rigidbody != null ? collision.rigidbody.GetComponent<Ball>() : collision.gameObject.GetComponent<Ball>();
-            Vector2 feedbackNormal = collision.contactCount > 0 ? collision.GetContact(0).normal : Vector2.up;
-            RPC_PlayImpactFeedback(feedbackNormal, feedbackSpeed, otherBall != null, otherBall == null || id < otherBall.id);
-        }
-
         if (collision.gameObject.layer == WallLayer)
         {
             ShootsLeft = maxShoots;
@@ -323,7 +339,9 @@ public class Ball : NetworkBehaviour
 
         trajectoryLr.positionCount = trajectoryResolution;
 
-        Vector3[] points = new Vector3[trajectoryResolution];
+        if (trajectoryPoints == null || trajectoryPoints.Length != trajectoryResolution)
+            trajectoryPoints = new Vector3[trajectoryResolution];
+        Vector3[] points = trajectoryPoints;
         Vector2 actualPos = transform.position;
         Vector2 throwVector = actualPos - clampedPosition;
 
@@ -383,12 +401,41 @@ public class Ball : NetworkBehaviour
         rb.simulated = false;
         rb.linearVelocity = Vector2.zero;
         rb.gravityScale = originalGS;
-        netTransform.Teleport(Vector3.zero);
+        rb.position = spawnPosition;
+        rb.angularVelocity = 0f;
+        netTransform.Teleport(spawnPosition, spawnRotation);
         ShootsLeft = maxShoots;
         health.ResetHealth();
         rb.simulated = true;
+        PushProtection = TickTimer.CreateFromSeconds(Runner, respawnPushImmunity);
+        previousProtection = IsPushImmune;
+        BallCollisionProtection.Refresh(this);
         UpdateBallColor();
         RPC_PlayRespawnFeedback();
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        BallCollisionProtection.Unregister(this);
+    }
+
+    private void OnDestroy()
+    {
+        BallCollisionProtection.Unregister(this);
+    }
+
+    private void HideAimFeedback()
+    {
+        if (lr != null) { lr.SetPosition(0, Vector3.zero); lr.SetPosition(1, Vector3.zero); }
+        if (trajectoryLr != null) trajectoryLr.enabled = false;
+        feedback.SetAim(false, Vector2.zero, 0f);
+    }
+
+    public void ReportImpact(Vector2 normal, float speed, Ball other = null)
+    {
+        if (!Object.HasStateAuthority || speed < 0.75f) return;
+        RPC_PlayImpactFeedback(normal, speed, other != null, true);
+        if (other != null) other.RPC_PlayImpactFeedback(-normal, speed, true, false);
     }
 
     public void ReportDamage()
@@ -397,13 +444,13 @@ public class Ball : NetworkBehaviour
             RPC_PlayDamageFeedback();
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, Channel = RpcChannel.Unreliable)]
     private void RPC_PlayLaunchFeedback(Vector2 direction, float power)
     {
         feedback.PlayLaunch(direction, power);
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, Channel = RpcChannel.Unreliable)]
     private void RPC_PlayImpactFeedback(Vector2 normal, float impactSpeed, bool marble, bool withSound)
     {
         feedback.PlayImpact(normal, impactSpeed, marble, withSound);
