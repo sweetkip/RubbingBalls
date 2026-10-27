@@ -6247,7 +6247,7 @@ MonoBehaviour:
   ballPrefab:
     RawGuidValue: 2a2a9e56339a7454a90fb9fb9cf0cb07
   preGameSceneIndex: 1
-  gameSceneIndex: 2
+  mapSceneIndices: 02000000030000000400000005000000
   mainMenuSceneName: MainMenu
   maxPlayers: 4
 --- !u!4 &1731808434

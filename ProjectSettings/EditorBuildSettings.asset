@@ -17,6 +17,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Partida.unity
     guid: 8d073329c1ca5aa448fa4945f39043e8
+  - enabled: 1
+    path: Assets/Scenes/map2.unity
+    guid: 71ff7458b166cce4d93fc24e06d13030
+  - enabled: 1
+    path: Assets/Scenes/map3.unity
+    guid: 99039de16ec76614a8bd86c6b0fffb8d
+  - enabled: 1
+    path: Assets/Scenes/map4.unity
+    guid: acde16b0341b3a64292a36207b8ab19a
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

@@ -10,7 +10,12 @@ public class LobbyPlayer : NetworkBehaviour
     [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public NetworkBool IsReady { get; private set; }
     [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public NetworkString<_32> Nickname { get; private set; }
 
-    
+    // Arriba de todo, junto a las otras propiedades [Networked]:
+    public const byte NoVote = 255;
+
+    [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public byte MapVote { get; private set; }
+
+
     public override void Spawned()
     {
         if (Object.HasStateAuthority)
@@ -18,6 +23,7 @@ public class LobbyPlayer : NetworkBehaviour
             ColorIndex = 0;
             SpriteIndex = 0;
             IsReady = false;
+            MapVote = NoVote;
         }
 
         if (Object.HasInputAuthority)
@@ -36,6 +42,25 @@ public class LobbyPlayer : NetworkBehaviour
             return;
 
         RPC_SelectColor(colorIndex);
+    }
+
+    public void SelectMap(byte mapIndex)
+    {
+        if (!Object.HasInputAuthority)
+            return;
+
+        RPC_SelectMap(mapIndex);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_SelectMap(byte mapIndex)
+    {
+        if (IsReady)
+            return;
+
+        MapVote = mapIndex;
+
+        PreGameLobbyUI.Instance?.RefreshLobby();
     }
 
     public void SelectSprite(byte spriteIndex)
