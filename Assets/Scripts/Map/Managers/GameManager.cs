@@ -25,15 +25,22 @@ public class GameManager : NetworkBehaviour
 
     [Networked, OnChangedRender(nameof(OnWinnerChanged))]
     public PlayerRef WinnerPlayer { get; set; }
+    [SerializeField] private float returnToLobbySeconds = 8f;
+    [Networked] public TickTimer ReturnTimer { get; private set; }
 
     public override void Spawned()
     {
+        aliveIds.Clear();
+        alivePlayerRefs.Clear();
+
+        if (!HasStateAuthority)
+            return;
+
         totalPlayers = 0;
         alivePlayers = 0;
         WinnerId = -1;
         WinnerPlayer = PlayerRef.None;
-        aliveIds.Clear();
-        alivePlayerRefs.Clear();
+        ReturnTimer = default;
     }
 
     public int IJoined(PlayerRef playerRef)
@@ -130,8 +137,9 @@ public class GameManager : NetworkBehaviour
 
     private void CheckWinner()
     {
-        if (alivePlayers > 1) return;                 
-        if (WinnerPlayer != PlayerRef.None) return;  
+        if (!HasStateAuthority) return;
+        if (alivePlayers > 1) return;
+        if (ReturnTimer.IsRunning) return;
 
         if (aliveIds.Count == 1)
         {
@@ -143,6 +151,8 @@ public class GameManager : NetworkBehaviour
             WinnerId = -1;
             WinnerPlayer = PlayerRef.None;
         }
+
+        ReturnTimer = TickTimer.CreateFromSeconds(Runner, returnToLobbySeconds);
     }
 
     public void ShowResults()
@@ -157,5 +167,46 @@ public class GameManager : NetworkBehaviour
 
         bool won = WinnerPlayer == Runner.LocalPlayer;
         UIManager.Instance.GameIsOver(won);
+    }
+
+    public override void FixedUpdateNetwork()
+    {
+        if (!HasStateAuthority)
+            return;
+
+        if (!ReturnTimer.Expired(Runner))
+            return;
+
+        if (NetworkManager.Instance == null)
+            return;
+
+        NetworkManager.Instance.ReturnToLobby();
+    }
+
+    public bool IsGameOver
+    {
+        get
+        {
+            if (Object == null || !Object.IsValid)
+                return false;
+
+            return ReturnTimer.IsRunning;
+        }
+    }
+
+    public float ReturnRemainingSeconds
+    {
+        get
+        {
+            if (!IsGameOver)
+                return 0f;
+
+            float? remaining = ReturnTimer.RemainingTime(Runner);
+
+            if (remaining == null)
+                return 0f;
+
+            return remaining.Value;
+        }
     }
 }

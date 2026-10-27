@@ -9,6 +9,7 @@ public class UIManager : NetworkBehaviour
     [SerializeField] private List<TextMeshProUGUI> playerHealth;
     [SerializeField] private GameObject winPanel;
     [SerializeField] private GameObject losePanel;
+    [SerializeField] private TMP_Text returnTimerText;
 
     private void Awake()
     {
@@ -18,6 +19,23 @@ public class UIManager : NetworkBehaviour
             return;
         }
         Instance = this;
+    }
+
+    private void Update()
+    {
+        if (returnTimerText == null)
+            return;
+
+        GameManager gameManager = GameManager.Instance;
+
+        if (gameManager == null || !gameManager.IsGameOver)
+        {
+            returnTimerText.gameObject.SetActive(false);
+            return;
+        }
+
+        returnTimerText.gameObject.SetActive(true);
+        returnTimerText.text = "Back to the lobby in: " + Mathf.CeilToInt(gameManager.ReturnRemainingSeconds) + "s";
     }
 
     public void PlayerJoined(int totalPlayers)

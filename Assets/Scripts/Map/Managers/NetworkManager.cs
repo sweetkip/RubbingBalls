@@ -60,6 +60,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     private bool inputEnabled = true;
     [SerializeField, Min(0f)] private float missingInputGrace = 0.15f;
     private readonly Dictionary<PlayerRef, int> lastInputTicks = new Dictionary<PlayerRef, int>();
+    private bool returningToLobby;
 
     public static NetworkManager Find()
     {
@@ -483,6 +484,45 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
+    public async void ReturnToLobby()
+    {
+        if (!runner.IsServer)
+            return;
+
+        if (returningToLobby || inPreGame)
+            return;
+
+        returningToLobby = true;
+
+        DespawnGameBalls();
+        lastValidInput.Clear();
+        lastInputTicks.Clear();
+
+        await runner.LoadScene(SceneRef.FromIndex(preGameSceneIndex));
+    }
+
+    private void DespawnGameBalls()
+    {
+        List<NetworkObject> objectsToDespawn = new List<NetworkObject>();
+
+        foreach (PlayerRef player in runner.ActivePlayers)
+        {
+            if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject))
+                continue;
+
+            if (playerObject == null || !playerObject.IsValid)
+                continue;
+
+            if (playerObject.GetComponent<Ball>() == null)
+                continue;
+
+            objectsToDespawn.Add(playerObject);
+        }
+
+        foreach (NetworkObject obj in objectsToDespawn)
+            runner.Despawn(obj);
+    }
+
     private void DespawnLobbyPlayers()
     {
         List<NetworkObject> objectsToDespawn = new List<NetworkObject>();
@@ -617,9 +657,13 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             inPreGame = true;
             startingGame = false;
             gamePlayersSpawned = false;
+            returningToLobby = false;
 
             if (runner.IsServer)
+            {
+                SetSessionOpen(true);
                 EnsureLobbyPlayersExist();
+            }
 
             PreGameLobbyUI.Instance?.RefreshLobby();
         }
@@ -809,7 +853,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public string SendName(PlayerRef player)
     {
-        return playerName[player];
+        if (playerName.TryGetValue(player, out string savedName))
+            return savedName;
+
+        return "";
     }
 
     //private int ChooseMapSceneIndex()
@@ -817,7 +864,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     //    int mapCount = mapSceneIndices.Length;
     //    int[] votes = new int[mapCount];
 
-       
+
     //    foreach (PlayerRef player in runner.ActivePlayers)
     //    {
     //        if (!runner.TryGetPlayerObject(player, out NetworkObject playerObject))
@@ -834,7 +881,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     //            votes[vote]++;
     //    }
 
-        
+
     //    int maxVotes = 0;
 
     //    for (int i = 0; i < mapCount; i++)
@@ -843,7 +890,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     //            maxVotes = votes[i];
     //    }
 
-        
+
     //    List<int> winners = new List<int>();
 
     //    for (int i = 0; i < mapCount; i++)
@@ -852,7 +899,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     //            winners.Add(i);
     //    }
 
-     
+
     //    int winner = winners[UnityEngine.Random.Range(0, winners.Count)];
 
     //    int chosenScene = mapSceneIndices[winner];

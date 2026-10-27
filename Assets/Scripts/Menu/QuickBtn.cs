@@ -15,6 +15,7 @@ public class QuickBtn : MonoBehaviour
     private void OnDisable()
     {
         manager.OnJoinFailed -= ReenableButton;
+        manager.OnLobbySearching -= HandleSearching;
     }
 
     public void QuickPlay()

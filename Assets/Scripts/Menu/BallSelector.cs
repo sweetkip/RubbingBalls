@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Unity.VisualScripting;
 
 public static class PlayerLocalData
 {
@@ -99,6 +98,9 @@ public class BallSelector : MonoBehaviour
 
             PlayerLocalData.SelectedTexture = dir > 0 ? palette.NextSpriteIndex(PlayerLocalData.SelectedTexture) : palette.PreviousSpriteIndex(PlayerLocalData.SelectedTexture);
         }
+
+        PlayerPrefs.SetInt("PlayerColor", PlayerLocalData.SelectedColor);
+        PlayerPrefs.SetInt("PlayerTexture", PlayerLocalData.SelectedTexture);
 
         RefreshPreview();
     }

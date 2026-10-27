@@ -41,6 +41,9 @@ public class LobbyPlayer : NetworkBehaviour
         if (!Object.HasInputAuthority)
             return;
 
+        PlayerLocalData.SelectedColor = colorIndex;
+        PlayerPrefs.SetInt("PlayerColor", colorIndex);
+
         RPC_SelectColor(colorIndex);
     }
 
@@ -72,6 +75,9 @@ public class LobbyPlayer : NetworkBehaviour
     {
         if (!Object.HasInputAuthority)
             return;
+
+        PlayerLocalData.SelectedTexture = spriteIndex;
+        PlayerPrefs.SetInt("PlayerTexture", spriteIndex);
 
         RPC_SelectSprite(spriteIndex);
     }
