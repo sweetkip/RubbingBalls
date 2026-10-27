@@ -1,4 +1,4 @@
-﻿using Fusion;
+using Fusion;
 using Fusion.Sockets;
 using System;
 using System.Collections.Generic;
@@ -54,6 +54,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     private bool gamePlayersSpawned;
 
     private bool inputEnabled = true;
+    [SerializeField, Min(0f)] private float missingInputGrace = 0.15f;
+    private readonly Dictionary<PlayerRef, int> lastInputTicks = new Dictionary<PlayerRef, int>();
 
     public static NetworkManager Find()
     {
@@ -81,6 +83,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        Application.runInBackground = true;
 
         if (runner == null)
             runner = GetComponent<NetworkRunner>();
@@ -307,6 +310,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             playerSprites.Remove(player);
             playerName.Remove(player);
             lastValidInput.Remove(player);
+            lastInputTicks.Remove(player);
 
             if (inPreGame && !startingGame)
                 CheckAllPlayersReady();
@@ -610,7 +614,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
     {
-        OnSessionListChanged?.Invoke(sessionList);
+        lastSessionList = new List<SessionInfo>(sessionList);
+        OnSessionListChanged?.Invoke(lastSessionList);
         quickSessionTcs?.TrySetResult(sessionList);
 
         if (!isInSession)
@@ -647,16 +652,25 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public void RegisterLastInput(PlayerRef player, NetworkInputData data)
     {
         lastValidInput[player] = data;
+        lastInputTicks[player] = runner.Tick.Raw;
     }
 
     public void OnInputMissing(NetworkRunner runner, PlayerRef player,NetworkInput input)
     {
-        Debug.Log("Input missing, runner: " + runner + " player: " + player + ". Input is: " + input);
+
         NetworkInputData fallback = default;
 
         if (lastValidInput.TryGetValue(player, out NetworkInputData cached))
+        {
             fallback = cached;
+            if (!lastInputTicks.TryGetValue(player, out int tick) || runner.Tick.Raw - tick > Mathf.CeilToInt(missingInputGrace / runner.DeltaTime))
+            {
+                fallback.Buttons.Set((int)InputButton.Fire, false);
+                fallback.Buttons.Set(1, true);
+            }
+        }
 
+        fallback.Buttons.Set(2, true);
         input.Set(fallback);
     }
 
