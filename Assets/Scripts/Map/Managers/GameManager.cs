@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 
+public enum StartPhase : byte { None = 0, Ready = 1, Set = 2, Go = 3 }
+
 public class GameManager : NetworkBehaviour
 {
     [Networked] public int totalPlayers { get; set; }
@@ -28,6 +30,13 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private float returnToLobbySeconds = 8f;
     [Networked] public TickTimer ReturnTimer { get; private set; }
 
+    [Header("Start countdown")]
+    [SerializeField, Min(0.1f)] private float readySeconds = 1f;
+    [SerializeField, Min(0.1f)] private float setSeconds = 1f;
+    [SerializeField, Min(0.1f)] private float goSeconds = 0.75f;
+    [SerializeField] private bool allowPlayDuringGo = true;
+    [Networked] public TickTimer StartTimer { get; private set; }
+
     public override void Spawned()
     {
         aliveIds.Clear();
@@ -41,6 +50,7 @@ public class GameManager : NetworkBehaviour
         WinnerId = -1;
         WinnerPlayer = PlayerRef.None;
         ReturnTimer = default;
+        StartTimer = default;
     }
 
     public int IJoined(PlayerRef playerRef)
@@ -207,6 +217,58 @@ public class GameManager : NetworkBehaviour
                 return 0f;
 
             return remaining.Value;
+        }
+    }
+
+    public void BeginStartCountdown()
+    {
+        if (!HasStateAuthority)
+            return;
+
+        StartTimer = TickTimer.CreateFromSeconds(Runner, readySeconds + setSeconds + goSeconds);
+    }
+
+    public StartPhase CurrentStartPhase
+    {
+        get
+        {
+            if (Object == null || !Object.IsValid)
+                return StartPhase.None;
+
+            float? remaining = StartTimer.RemainingTime(Runner);
+
+            if (remaining == null)
+                return StartPhase.None;
+
+            float total = readySeconds + setSeconds + goSeconds;
+            float elapsed = Mathf.Clamp(total - remaining.Value, 0f, total);
+
+            if (elapsed < readySeconds)
+                return StartPhase.Ready;
+
+            if (elapsed < readySeconds + setSeconds)
+                return StartPhase.Set;
+
+            if (elapsed < total)
+                return StartPhase.Go;
+
+            return StartPhase.None;
+        }
+    }
+
+    public bool CanPlay
+    {
+        get
+        {
+            StartPhase phase = CurrentStartPhase;
+
+            if (phase == StartPhase.Ready || phase == StartPhase.Set)
+                return false;
+
+            if (phase == StartPhase.Go)
+                return allowPlayDuringGo;
+
+            return true;
         }
     }
 }

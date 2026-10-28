@@ -189,6 +189,14 @@ public class Ball : NetworkBehaviour
         }
         if (GetInput(out NetworkInputData data))
         {
+            GameManager manager = GameManager.Instance;
+
+            if (manager != null && !manager.CanPlay)
+            {
+                CancelAim();
+                return;
+            }
+
             if (data.Buttons.IsSet(1))
             {
                 wasPressed = false;
@@ -205,7 +213,10 @@ public class Ball : NetworkBehaviour
                 else
                 {
                     if (canShoot)
-                        Drag(data.AimWorldPosition);
+                    {
+                        Vector2 ballPosition = transform.position;
+                        Drag(ballPosition + data.AimOffset);
+                    }
                 }
             }
             else
@@ -466,5 +477,18 @@ public class Ball : NetworkBehaviour
     private void RPC_PlayRespawnFeedback()
     {
         feedback.PlayRespawn();
+    }
+
+    private void CancelAim()
+    {
+        wasPressed = false;
+
+        if (Object.HasStateAuthority)
+        {
+            rb.gravityScale = originalGS;
+            IsAiming = false;
+        }
+
+        HideAimFeedback();
     }
 }

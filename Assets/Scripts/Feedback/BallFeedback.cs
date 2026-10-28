@@ -32,6 +32,7 @@ public class BallFeedback : MonoBehaviour
     [SerializeField] private AudioClip wallImpactSound;
     [SerializeField] private AudioClip damageSound;
     [SerializeField] private AudioClip respawnSound;
+    private static Shader cachedFlashShader;
 
     public SpriteRenderer VisualRenderer { get; private set; }
 
@@ -78,7 +79,7 @@ public class BallFeedback : MonoBehaviour
         CopyRenderer(sourceRenderer, VisualRenderer);
         sourceRenderer.enabled = false;
 
-        Shader shader = Resources.Load<Shader>("BallFeedback/BallFlash");
+        Shader shader = GetFlashShader();
         if (shader != null && shader.isSupported)
         {
             flashMaterial = new Material(shader);
@@ -99,6 +100,19 @@ public class BallFeedback : MonoBehaviour
         audioSource.spatialBlend = 0f;
         audioSource.loop = false;
         ResetFeedback();
+    }
+
+    public static Shader GetFlashShader()
+    {
+        if (cachedFlashShader == null)
+            cachedFlashShader = Resources.Load<Shader>("BallFeedback/BallFlash");
+
+        return cachedFlashShader;
+    }
+
+    public static void PreloadResources()
+    {
+        GetFlashShader();
     }
 
     private static void CopyRenderer(SpriteRenderer source, SpriteRenderer target)

@@ -6095,6 +6095,53 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1562822036}
   m_CullTransparentMesh: 1
+--- !u!1 &1580995481
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1580995482}
+  - component: {fileID: 1580995483}
+  m_Layer: 0
+  m_Name: WarmupLoader
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1580995482
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1580995481}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1580995483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1580995481}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40862b57b45607745880c3fe5395f857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WarmupLoader
+  shaderVariants: {fileID: 20000000, guid: fa8d357b3d2a6264a9337e51007c746e, type: 2}
+  variantsPerFrame: 8
+  maxFrames: 600
 --- !u!1 &1650138446
 GameObject:
   m_ObjectHideFlags: 0
@@ -6250,6 +6297,7 @@ MonoBehaviour:
   mapSceneIndices: 02000000030000000400000005000000
   mainMenuSceneName: MainMenu
   maxPlayers: 4
+  missingInputGrace: 0.15
 --- !u!4 &1731808434
 Transform:
   m_ObjectHideFlags: 0
@@ -7618,3 +7666,4 @@ SceneRoots:
   - {fileID: 1320699689}
   - {fileID: 1749214302}
   - {fileID: 172323363}
+  - {fileID: 1580995482}

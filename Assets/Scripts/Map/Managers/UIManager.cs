@@ -11,6 +11,11 @@ public class UIManager : NetworkBehaviour
     [SerializeField] private GameObject losePanel;
     [SerializeField] private TMP_Text returnTimerText;
 
+    [Header("Start countdown")]
+    [SerializeField] private GameObject startCountdownRoot;
+    [SerializeField] private TMP_Text startCountdownText;
+
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -22,6 +27,12 @@ public class UIManager : NetworkBehaviour
     }
 
     private void Update()
+    {
+        UpdateReturnTimer();
+        UpdateStartCountdown();
+    }
+
+    private void UpdateReturnTimer()
     {
         if (returnTimerText == null)
             return;
@@ -36,6 +47,37 @@ public class UIManager : NetworkBehaviour
 
         returnTimerText.gameObject.SetActive(true);
         returnTimerText.text = "Back to the lobby in: " + Mathf.CeilToInt(gameManager.ReturnRemainingSeconds) + "s";
+    }
+
+    private void UpdateStartCountdown()
+    {
+        if (startCountdownRoot == null || startCountdownText == null)
+            return;
+
+        GameManager gameManager = GameManager.Instance;
+
+        if (gameManager == null || gameManager.IsGameOver)
+        {
+            startCountdownRoot.SetActive(false);
+            return;
+        }
+
+        StartPhase phase = gameManager.CurrentStartPhase;
+
+        if (phase == StartPhase.None)
+        {
+            startCountdownRoot.SetActive(false);
+            return;
+        }
+
+        startCountdownRoot.SetActive(true);
+
+        if (phase == StartPhase.Ready)
+            startCountdownText.text = "Ready";
+        else if (phase == StartPhase.Set)
+            startCountdownText.text = "Set";
+        else
+            startCountdownText.text = "Go!";
     }
 
     public void PlayerJoined(int totalPlayers)

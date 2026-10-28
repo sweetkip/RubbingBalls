@@ -626,6 +626,9 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
             Debug.Log("Player " + player.PlayerId + " spawneado en " + spawnPoint.name + " - Posición: " + spawnPoint.position);
         }
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.BeginStartCountdown();
     }
 
     public void SetInputEnabled(bool enabled)
@@ -642,7 +645,16 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             data.Buttons.Set((int)InputButton.Fire,Input.GetMouseButton(0));
 
             if (Camera.main != null)
-                data.AimWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            {
+                Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                data.AimWorldPosition = mouseWorld;
+
+                if (runner.TryGetPlayerObject(runner.LocalPlayer, out NetworkObject localObject))
+                {
+                    if (localObject != null)
+                        data.AimOffset = mouseWorld - (Vector2)localObject.transform.position;
+                }
+            }
         }
 
         input.Set(data);

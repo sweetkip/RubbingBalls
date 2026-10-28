@@ -36,4 +36,10 @@ public static class BallFeedbackAudio
         source.Play();
         Object.Destroy(soundObject, clip.length / source.pitch + 0.1f);
     }
+
+    public static void PreloadAll()
+    {
+        for (int i = 0; i < clips.Length; i++)
+            GetClip((BallFeedbackSound)i);
+    }
 }
