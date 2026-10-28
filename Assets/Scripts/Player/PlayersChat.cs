@@ -49,7 +49,7 @@ public class PlayersChat : NetworkBehaviour
         }
     }
 
-    [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_SendMessage(string message, string name, RpcInfo info = default)
     {
         ChatManager.Instance.AddMessage(name + ": " + message);
