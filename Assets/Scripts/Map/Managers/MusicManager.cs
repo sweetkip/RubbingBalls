@@ -10,6 +10,7 @@ public class MusicManager : MonoBehaviour
     [SerializeField] private AudioClip gameOST;
 
     private AudioSource audioSource;
+    private float baseVolume;
 
     private void Awake()
     {
@@ -22,11 +23,17 @@ public class MusicManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         audioSource = GetComponent<AudioSource>();
+        baseVolume = audioSource.volume;    
+        ApplyMusicVolume();
 
         SceneManager.sceneLoaded += OnSceneLoaded;
         PlayForScene(SceneManager.GetActiveScene().name);
     }
 
+    public void ApplyMusicVolume()
+    {
+        audioSource.volume = baseVolume * GameSettings.MusicVolume;
+    }
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         PlayForScene(scene.name);
