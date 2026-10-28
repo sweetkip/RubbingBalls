@@ -42,6 +42,8 @@ public class MusicManager : MonoBehaviour
     private void PlayForScene(string sceneName)
     {
         AudioClip clip = sceneName switch
+
+
         {
             "MainMenu" => menuOST,
             "Lobby" => charOST,
