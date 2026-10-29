@@ -5693,8 +5693,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1641939922}
   m_HandleRect: {fileID: 1641939921}
   m_Direction: 2
-  m_Value: 0.154
-  m_Size: 0.675235
+  m_Value: 0
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -6054,7 +6054,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1123319143
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6372,7 +6372,7 @@ RectTransform:
   m_Father: {fileID: 801405020}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -7352,6 +7352,22 @@ PrefabInstance:
       propertyPath: m_Colors.m_NormalColor.r
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3395947511070037175, guid: d051f8129e244ac4da4f96239eeec79e, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3395947511070037175, guid: d051f8129e244ac4da4f96239eeec79e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3645613934173507758, guid: d051f8129e244ac4da4f96239eeec79e, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3645613934173507758, guid: d051f8129e244ac4da4f96239eeec79e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4014553958823470869, guid: d051f8129e244ac4da4f96239eeec79e, type: 3}
       propertyPath: m_IsActive
       value: 1
@@ -7411,6 +7427,14 @@ PrefabInstance:
     - target: {fileID: 5082172410464663055, guid: d051f8129e244ac4da4f96239eeec79e, type: 3}
       propertyPath: m_Color.r
       value: 0.92156863
+      objectReference: {fileID: 0}
+    - target: {fileID: 5111414025472848683, guid: d051f8129e244ac4da4f96239eeec79e, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5111414025472848683, guid: d051f8129e244ac4da4f96239eeec79e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5209544729602538655, guid: d051f8129e244ac4da4f96239eeec79e, type: 3}
       propertyPath: m_AnchorMax.x
@@ -7630,7 +7654,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7561409377521408805, guid: d051f8129e244ac4da4f96239eeec79e, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7727605243037473563, guid: d051f8129e244ac4da4f96239eeec79e, type: 3}
       propertyPath: m_AnchorMax.x
@@ -7872,7 +7896,7 @@ RectTransform:
   m_Father: {fileID: 2116468166}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -9984,7 +10008,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LobbyName
   nickInput: {fileID: 214157065}
   maxCharts: 9
-  nameButton: {fileID: 0}
   nameButtonLabel: {fileID: 0}
   defaultLabel: Name
 --- !u!4 &1797329516
@@ -11785,7 +11808,7 @@ RectTransform:
   m_Father: {fileID: 298056386}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -12598,7 +12621,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 2.60722}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 5.2039547}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2134783120
