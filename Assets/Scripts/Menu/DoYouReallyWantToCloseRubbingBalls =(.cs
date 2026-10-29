@@ -15,10 +15,6 @@ public class DoYouReallyWantToCloseRubbingBalls: MonoBehaviour
 
     public void Confirm()
     {
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit()
-#endif
+        Application.Quit();
     }
 }

@@ -60,6 +60,7 @@ public class Ball : NetworkBehaviour
     private HealthController health;
     private BallFeedback feedback;
     private float lastImpactFeedbackTime = -100f;
+    private bool hudDirty;
 
     private void Awake()
     {
@@ -107,10 +108,18 @@ public class Ball : NetworkBehaviour
         UpdateBallSprite();
         UpdateLocalIndicator();
         feedback.ResetFeedback();
+        hudDirty = true;
     }
 
     public override void Render()
     {
+        if (hudDirty)
+        {
+            hudDirty = false;
+
+            if (health != null)
+                health.RefreshHud();
+        }
         if (!Object.HasInputAuthority)
             feedback.SetAim(IsAiming, AimOffset, AimOffset.magnitude / Mathf.Max(0.01f, maxDistance));
     }
@@ -152,6 +161,7 @@ public class Ball : NetworkBehaviour
 
         ColorIndex = colorIndex;
         UpdateBallColor();
+        hudDirty = true;
     }
 
     public void SetInitialSprite(byte spriteIndex)
@@ -167,6 +177,7 @@ public class Ball : NetworkBehaviour
 
         SpriteIndex = spriteIndex;
         UpdateBallSprite();
+        hudDirty = true;
     }
 
     public void SetName(string name)
@@ -178,6 +189,7 @@ public class Ball : NetworkBehaviour
         {
             this.ballName = "NoName";
         }
+        hudDirty = true;
     }
 
     public override void FixedUpdateNetwork()
@@ -490,5 +502,32 @@ public class Ball : NetworkBehaviour
         }
 
         HideAimFeedback();
+    }
+
+    public Sprite BaseSprite
+    {
+        get
+        {
+            if (palette == null)
+                return null;
+
+            return palette.GetSprite(SpriteIndex);
+        }
+    }
+
+    public Color BaseColor
+    {
+        get
+        {
+            if (palette == null)
+                return Color.white;
+
+            return palette.GetColor(ColorIndex);
+        }
+    }
+
+    public void MarkHudDirty()
+    {
+        hudDirty = true;
     }
 }

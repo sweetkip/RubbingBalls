@@ -6,7 +6,7 @@ using UnityEngine;
 public class UIManager : NetworkBehaviour
 {
     public static UIManager Instance;
-    [SerializeField] private List<TextMeshProUGUI> playerHealth;
+    [SerializeField] private PlayerHudSlot[] playerSlots;
     [SerializeField] private GameObject winPanel;
     [SerializeField] private GameObject losePanel;
     [SerializeField] private TMP_Text returnTimerText;
@@ -24,6 +24,11 @@ public class UIManager : NetworkBehaviour
             return;
         }
         Instance = this;
+        for (int i = 0; i < playerSlots.Length; i++)
+        {
+            if (playerSlots[i] != null)
+                playerSlots[i].Hide();
+        }
     }
 
     private void Update()
@@ -80,29 +85,53 @@ public class UIManager : NetworkBehaviour
             startCountdownText.text = "Go!";
     }
 
+    private PlayerHudSlot GetSlot(int id)
+    {
+        if (playerSlots == null || id < 0 || id >= playerSlots.Length)
+            return null;
+
+        return playerSlots[id];
+    }
+
     public void PlayerJoined(int totalPlayers)
     {
-        for (int i = 0; i < totalPlayers; i++)
+        for (int i = 0; i < totalPlayers && i < playerSlots.Length; i++)
         {
-            playerHealth[i].gameObject.SetActive(true);
+            if (playerSlots[i] != null)
+                playerSlots[i].Show();
         }
     }
 
-    public void ChangeHealth(float health, int id, int lives, string name)
+    public void SetPlayerInfo(int id, string playerName, Sprite sprite, Color color)
     {
-        playerHealth[id].text = name + " " + " Damage Received: " + health.ToString("F2") + " - Lives Left: " + lives;
+        PlayerHudSlot slot = GetSlot(id);
+
+        if (slot != null)
+            slot.SetPlayer(playerName, sprite, color);
     }
 
+    public void SetPlayerStats(int id, float damage, int lives)
+    {
+        PlayerHudSlot slot = GetSlot(id);
+
+        if (slot != null)
+            slot.SetStats(damage, lives);
+    }
 
     public void PlayerLost(int id, string name)
     {
-        playerHealth[id].text = name + " " + " PERDIO";
+        PlayerHudSlot slot = GetSlot(id);
+
+        if (slot != null)
+            slot.SetLost();
     }
 
     public void PlayerDisconnected(int id, string name)
     {
-        if (id < 0 || id >= playerHealth.Count) return;
-        playerHealth[id].text = name + " " + " SE DESCONECTÓ";
+        PlayerHudSlot slot = GetSlot(id);
+
+        if (slot != null)
+            slot.SetDisconnected();
     }
 
     public void GameIsOver(bool won)
