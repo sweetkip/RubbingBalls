@@ -41,13 +41,13 @@ public class ConnectionStatusUI : MonoBehaviour
         }
         else
         {
-            ShowStatus("Creá una partida, unite con un nombre o tocá Quick Play.", false); //Join friends in Private Game or select Public Game to play
+            ShowStatus("Join friends in Private Game or select Public Game to play", false);
         }
 
         if (ConnectionMessage.RejoinSession != "")
         {
             sessionInput.text = ConnectionMessage.RejoinSession;
-            statusText.text += "\nSi la partida sigue abierta, tocá Client para volver a entrar.";
+            statusText.text += "\nCan't conect";
             ConnectionMessage.RejoinSession = "";
         }
     }
