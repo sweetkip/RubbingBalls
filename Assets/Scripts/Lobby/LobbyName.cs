@@ -9,7 +9,6 @@ public class LobbyName : MonoBehaviour
     [SerializeField] private int maxCharts = 20;
 
     [Header("Botón Nombre")]
-    [SerializeField] private GameObject nameButton;
     [SerializeField] private TMP_Text nameButtonLabel;
     [SerializeField] private string defaultLabel = "Name";
 
@@ -34,7 +33,6 @@ public class LobbyName : MonoBehaviour
 
     public void StartEditing()
     {
-        nameButton.SetActive(false);
         nickInput.gameObject.SetActive(true);
         nickInput.text = PlayerLocalData.Nickname;
         StartCoroutine(FocusNextFrame());
@@ -80,7 +78,6 @@ public class LobbyName : MonoBehaviour
     private void StopEditing()
     {
         nickInput.gameObject.SetActive(false);
-        nameButton.SetActive(true);
     }
 
     private void RefreshLabel()

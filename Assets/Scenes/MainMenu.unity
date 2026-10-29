@@ -539,51 +539,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 119232025}
   m_CullTransparentMesh: 1
---- !u!1 &172323361
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 172323363}
-  - component: {fileID: 172323362}
-  m_Layer: 0
-  m_Name: VoiceLogger
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &172323362
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 172323361}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a86f533fd9917dd4da8601e9eb542c96, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: PhotonVoice::Photon.Voice.Unity.VoiceLogger
-  LogLevel: 2
---- !u!4 &172323363
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 172323361}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &195974970
 GameObject:
   m_ObjectHideFlags: 0
@@ -5440,7 +5395,6 @@ GameObject:
   - component: {fileID: 1731808432}
   - component: {fileID: 1731808431}
   - component: {fileID: 1731808430}
-  - component: {fileID: 1731808435}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -5531,50 +5485,6 @@ Transform:
   - {fileID: 2069902543}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1731808435
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1731808429}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 33a38d73a8571ce438052dd31e09df5b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: PhotonVoice.Fusion::Photon.Voice.Fusion.FusionVoiceClient
-  Id: 
-  DisconnectAfterKeepAlive: 0
-  KeepAliveInBackground: 60000
-  runInBackground: 1
-  statsResetInterval: 1000
-  speakerPrefab: {fileID: 0}
-  primaryRecorder: {fileID: 0}
-  usePrimaryRecorder: 0
-  cppCompatibilityMode: 0
-  Settings:
-    AppIdRealtime: 
-    AppIdFusion: 
-    AppIdQuantum: 
-    AppIdChat: 
-    AppIdVoice: ca26dd3c-703b-4697-b7c9-1beb6e483832
-    AppVersion: 
-    UseNameServer: 1
-    FixedRegion: 
-    Server: 
-    Port: 0
-    ProxyServer: 
-    Protocol: 0
-    EnableProtocolFallback: 1
-    AuthMode: 2
-    EnableLobbyStatistics: 0
-    NetworkLogging: 1
-    ClientLogging: 2
-  ShowSettings: 1
-  ApplyDontDestroyOnLoad: 1
-  AutoConnectAndJoin: 1
-  UseFusionAppSettings: 1
-  UseFusionAuthValues: 1
 --- !u!1 &1749214299
 GameObject:
   m_ObjectHideFlags: 0
@@ -6732,5 +6642,4 @@ SceneRoots:
   - {fileID: 1249724097}
   - {fileID: 1320699689}
   - {fileID: 1749214302}
-  - {fileID: 172323363}
   - {fileID: 1580995482}
