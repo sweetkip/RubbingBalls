@@ -18,6 +18,7 @@ public abstract class Hazard : MonoBehaviour
 
     private void TryApply(Collider2D other)
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         if (!other.TryGetComponent(out Ball ball))
             return;
 

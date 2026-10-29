@@ -53,6 +53,7 @@ public class Ball : NetworkBehaviour
     [Networked] public TickTimer PushProtection { get; private set; }
     public bool IsPushImmune => Object != null && Object.IsValid && !PushProtection.ExpiredOrNotRunning(Runner);
     public Collider2D[] PhysicsColliders { get; private set; }
+    public PlayerColorPalette MigrationPalette => palette;
     private Vector3 spawnPosition;
     private Quaternion spawnRotation;
     private bool previousProtection;
@@ -60,6 +61,7 @@ public class Ball : NetworkBehaviour
     private HealthController health;
     private BallFeedback feedback;
     private float lastImpactFeedbackTime = -100f;
+    private bool hudDirty;
 
     private void Awake()
     {
@@ -94,7 +96,7 @@ public class Ball : NetworkBehaviour
 
     public override void Spawned()
     {
-        if (Object.HasStateAuthority)
+        if (Object.HasStateAuthority && (NetworkManager.Instance == null || !NetworkManager.Instance.IsMigrating))
         {
             spawnPosition = transform.position;
             spawnRotation = transform.rotation;
@@ -107,10 +109,20 @@ public class Ball : NetworkBehaviour
         UpdateBallSprite();
         UpdateLocalIndicator();
         feedback.ResetFeedback();
+        hudDirty = true;
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating)
+            SetMigrationPaused(true);
     }
 
     public override void Render()
     {
+        if (hudDirty)
+        {
+            hudDirty = false;
+
+            if (health != null)
+                health.RefreshHud();
+        }
         if (!Object.HasInputAuthority)
             feedback.SetAim(IsAiming, AimOffset, AimOffset.magnitude / Mathf.Max(0.01f, maxDistance));
     }
@@ -152,6 +164,7 @@ public class Ball : NetworkBehaviour
 
         ColorIndex = colorIndex;
         UpdateBallColor();
+        hudDirty = true;
     }
 
     public void SetInitialSprite(byte spriteIndex)
@@ -167,6 +180,7 @@ public class Ball : NetworkBehaviour
 
         SpriteIndex = spriteIndex;
         UpdateBallSprite();
+        hudDirty = true;
     }
 
     public void SetName(string name)
@@ -178,10 +192,12 @@ public class Ball : NetworkBehaviour
         {
             this.ballName = "NoName";
         }
+        hudDirty = true;
     }
 
     public override void FixedUpdateNetwork()
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         if (Object.HasStateAuthority && previousProtection != IsPushImmune)
         {
             previousProtection = IsPushImmune;
@@ -189,6 +205,7 @@ public class Ball : NetworkBehaviour
         }
         if (GetInput(out NetworkInputData data))
         {
+            if (!data.Buttons.IsSet(2)) NetworkManager.Instance?.RegisterLastInput(Object.InputAuthority, data);
             GameManager manager = GameManager.Instance;
 
             if (manager != null && !manager.CanPlay)
@@ -207,7 +224,6 @@ public class Ball : NetworkBehaviour
             }
             if (data.Buttons.IsSet((int)InputButton.Fire))
             {
-                if (!data.Buttons.IsSet(2)) NetworkManager.Instance?.RegisterLastInput(Object.InputAuthority, data);
                 if (!wasPressed)
                     ButtonPressed();
                 else
@@ -226,7 +242,11 @@ public class Ball : NetworkBehaviour
 
                 wasPressed = false;
                 if (Object.HasStateAuthority)
+                {
+                    rb.gravityScale = originalGS;
                     IsAiming = false;
+                    AimOffset = Vector2.zero;
+                }
                 feedback.SetAim(false, Vector2.zero, 0f);
 
                 if (trajectoryLr != null)
@@ -490,5 +510,112 @@ public class Ball : NetworkBehaviour
         }
 
         HideAimFeedback();
+    }
+
+    public Sprite BaseSprite
+    {
+        get
+        {
+            if (palette == null)
+                return null;
+
+            return palette.GetSprite(SpriteIndex);
+        }
+    }
+
+    public Color BaseColor
+    {
+        get
+        {
+            if (palette == null)
+                return Color.white;
+
+            return palette.GetColor(ColorIndex);
+        }
+    }
+
+    public void CaptureMigration(MigrationPlayerState state)
+    {
+        state.GameId = id;
+        state.HasBall = true;
+        state.Name = ballName;
+        state.ColorIndex = ColorIndex;
+        state.SpriteIndex = SpriteIndex;
+        state.ShootsLeft = ShootsLeft;
+        state.Position = rb.position;
+        state.Position.z = transform.position.z;
+        state.Rotation = Quaternion.Euler(0f, 0f, rb.rotation);
+        state.Velocity = rb.linearVelocity;
+        state.AngularVelocity = rb.angularVelocity;
+        state.SpawnPosition = spawnPosition;
+        state.SpawnRotation = spawnRotation;
+        state.ProtectionRemaining = PushProtection.RemainingTime(Runner) ?? 0f;
+        health.CaptureMigration(state);
+    }
+
+    public void RestoreMigration(MigrationPlayerState state)
+    {
+        if (!Object.HasStateAuthority) return;
+        id = state.GameId;
+        ballName = state.Name;
+        ColorIndex = state.ColorIndex;
+        SpriteIndex = state.SpriteIndex;
+        ShootsLeft = state.ShootsLeft;
+        spawnPosition = state.SpawnPosition;
+        spawnRotation = state.SpawnRotation;
+        health.RestoreMigration(state);
+        rb.position = state.Position;
+        rb.rotation = state.Rotation.eulerAngles.z;
+        netTransform.Teleport(state.Position, state.Rotation);
+        SetMigrationPaused(true);
+        UpdateBallColor();
+        UpdateBallSprite();
+        hudDirty = true;
+    }
+
+    public void SetMigrationPaused(bool paused)
+    {
+        if (!paused) return;
+        if (Object != null && Object.IsValid) CancelAim();
+        else HideAimFeedback();
+        rb.simulated = false;
+    }
+
+    public void ResumeMigrationPhysics()
+    {
+        rb.gravityScale = originalGS;
+        wasPressed = false;
+        canShoot = false;
+        HideAimFeedback();
+        rb.simulated = true;
+        hudDirty = true;
+        health.RefreshHud();
+    }
+
+    public void FinishMigration(MigrationPlayerState state)
+    {
+        rb.gravityScale = originalGS;
+        wasPressed = false;
+        canShoot = false;
+        HideAimFeedback();
+        if (Object.HasStateAuthority)
+        {
+            PushProtection = state.ProtectionRemaining > 0f ? TickTimer.CreateFromSeconds(Runner, state.ProtectionRemaining) : TickTimer.None;
+            IsAiming = false;
+            AimOffset = Vector2.zero;
+        }
+        rb.simulated = true;
+        if (Object.HasStateAuthority) BallCollisionProtection.Register(this);
+        rb.linearVelocity = state.Velocity;
+        rb.angularVelocity = state.AngularVelocity;
+        previousProtection = IsPushImmune;
+        if (Object.HasStateAuthority) BallCollisionProtection.Refresh(this);
+        hudDirty = true;
+        health.RefreshHud();
+    }
+
+    public void MarkHudDirty()
+    {
+        hudDirty = true;
     }
 }

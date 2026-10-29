@@ -36,6 +36,28 @@ public class LobbyPlayer : NetworkBehaviour
         PreGameLobbyUI.Instance?.RefreshLobby();
     }
 
+    public void CaptureMigration(MigrationPlayerState state)
+    {
+        state.Name = Nickname.ToString();
+        state.ColorIndex = ColorIndex;
+        state.SpriteIndex = SpriteIndex;
+        state.Ready = IsReady;
+        state.MapVote = MapVote;
+        state.HasBall = false;
+        state.GameId = -1;
+    }
+
+    public void RestoreMigration(MigrationPlayerState state)
+    {
+        if (!Object.HasStateAuthority) return;
+        ColorIndex = state.ColorIndex;
+        SpriteIndex = state.SpriteIndex;
+        IsReady = state.Ready;
+        Nickname = state.Name;
+        MapVote = state.MapVote;
+        PreGameLobbyUI.Instance?.RefreshLobby();
+    }
+
     public void SelectColor(byte colorIndex)
     {
         if (!Object.HasInputAuthority)
@@ -58,6 +80,7 @@ public class LobbyPlayer : NetworkBehaviour
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_SelectMap(byte mapIndex)
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         MapVoteController controller = MapVoteController.Instance;
 
         if (controller == null || !controller.IsVoting)
@@ -100,6 +123,7 @@ public class LobbyPlayer : NetworkBehaviour
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_SelectColor(byte colorIndex)
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         if (IsReady)
             return;
 
@@ -117,6 +141,7 @@ public class LobbyPlayer : NetworkBehaviour
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_SelectSprite(byte spriteIndex)
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         if (IsReady)
             return;
 
@@ -134,6 +159,7 @@ public class LobbyPlayer : NetworkBehaviour
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_SetReady(bool ready)
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         if (MapVoteController.Instance != null && MapVoteController.Instance.IsActive)
             return;
 
@@ -155,6 +181,7 @@ public class LobbyPlayer : NetworkBehaviour
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_SetNick(string nick)
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         if (nick != null && nick.Length > 20)
             nick = nick.Substring(0, 20);
 

@@ -83,6 +83,7 @@ public class GameManager : NetworkBehaviour
 
     public void PlayerOut(int id, Ball player)
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         Vector3 deathPosition = player.transform.position;
         RPC_SpawnExplosion(deathPosition);
         int playerLives = player.GetLives();
@@ -181,6 +182,7 @@ public class GameManager : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         if (!HasStateAuthority)
             return;
 
@@ -218,6 +220,60 @@ public class GameManager : NetworkBehaviour
 
             return remaining.Value;
         }
+    }
+
+    public MigrationGameState CaptureMigration()
+    {
+        return new MigrationGameState
+        {
+            TotalPlayers = totalPlayers,
+            WinnerId = WinnerId,
+            ReturnRunning = ReturnTimer.IsRunning,
+            ReturnRemaining = ReturnTimer.RemainingTime(Runner) ?? 0f,
+            StartRunning = !StartTimer.ExpiredOrNotRunning(Runner),
+            StartRemaining = StartTimer.RemainingTime(Runner) ?? 0f
+        };
+    }
+
+    public void RestoreMigration(MigrationGameState state, MigrationPlayerState[] players, Dictionary<string, PlayerRef> rejoined)
+    {
+        if (!HasStateAuthority || state == null) return;
+        totalPlayers = state.TotalPlayers;
+        aliveIds.Clear();
+        alivePlayerRefs.Clear();
+        foreach (MigrationPlayerState player in players)
+        {
+            if (!player.HasBall || !rejoined.TryGetValue(player.Identity, out PlayerRef reference)) continue;
+            aliveIds.Add(player.GameId);
+            alivePlayerRefs.Add(reference);
+        }
+        alivePlayers = aliveIds.Count;
+        WinnerId = state.WinnerId;
+        WinnerPlayer = PlayerRef.None;
+        foreach (MigrationPlayerState player in players)
+            if (player.GameId == WinnerId && rejoined.TryGetValue(player.Identity, out PlayerRef reference))
+                WinnerPlayer = reference;
+        ReturnTimer = state.ReturnRunning ? TickTimer.CreateFromSeconds(Runner, Mathf.Max(0.01f, state.ReturnRemaining)) : TickTimer.None;
+        StartTimer = state.StartRunning ? TickTimer.CreateFromSeconds(Runner, Mathf.Max(0.01f, state.StartRemaining)) : TickTimer.None;
+        CheckWinner();
+        RefreshMigrationHud(players);
+    }
+
+    public void RefreshMigrationHud(MigrationPlayerState[] players)
+    {
+        if (UIManager.Instance == null || players == null) return;
+        UIManager.Instance.PlayerJoined(totalPlayers);
+        Ball referenceBall = FindFirstObjectByType<Ball>();
+        PlayerColorPalette palette = referenceBall != null ? referenceBall.MigrationPalette : null;
+        foreach (MigrationPlayerState player in players)
+        {
+            if (player.GameId < 0) continue;
+            UIManager.Instance.SetPlayerInfo(player.GameId, player.Name, palette != null ? palette.GetSprite(player.SpriteIndex) : null, palette != null ? palette.GetColor(player.ColorIndex) : Color.white);
+            UIManager.Instance.SetPlayerStats(player.GameId, player.DisplayDamage, player.Lives);
+            if (!player.Connected) UIManager.Instance.PlayerDisconnected(player.GameId, player.Name);
+            else if (!player.HasBall) UIManager.Instance.PlayerLost(player.GameId, player.Name);
+        }
+        if (IsGameOver) UIManager.Instance.GameIsOver(WinnerPlayer == Runner.LocalPlayer);
     }
 
     public void BeginStartCountdown()

@@ -3,7 +3,7 @@ using Fusion;
 
 public class HealthController : NetworkBehaviour
 {
-    [Networked, OnChangedRender(nameof(OnHealthChanged))] 
+    [Networked, OnChangedRender(nameof(OnHealthChanged))]
     public float Health { get; set; }
     [Networked, OnChangedRender(nameof(OnHealthChanged))]
     public int Lives { get; set; }
@@ -11,7 +11,6 @@ public class HealthController : NetworkBehaviour
     [SerializeField] private int initialHealth = 1;
     [SerializeField] private int initialLives = 3;
 
-    private int id;
     private Ball ball;
 
     public override void Spawned()
@@ -21,11 +20,11 @@ public class HealthController : NetworkBehaviour
             Health = initialHealth;
             Lives = initialLives;
         }
+
         ball = GetComponent<Ball>();
 
         if (ball != null)
-            id = ball.id;
-        UIManager.Instance.ChangeHealth(Health, id, Lives, ball.ballName);
+            ball.MarkHudDirty();
     }
 
     public void TakeDamage(float amount)
@@ -43,9 +42,34 @@ public class HealthController : NetworkBehaviour
         if (!Object.HasStateAuthority) return;
         Health -= amount;
     }
+
     private void OnHealthChanged()
     {
-        UIManager.Instance.ChangeHealth(Health, id, Lives, ball.ballName);
+        RefreshHud();
+    }
+
+    public void RefreshHud()
+    {
+        if (ball == null || UIManager.Instance == null)
+            return;
+
+        UIManager.Instance.SetPlayerInfo(ball.id, ball.ballName, ball.BaseSprite, ball.BaseColor);
+        UIManager.Instance.SetPlayerStats(ball.id, Health - initialHealth, Lives);
+    }
+
+    public void CaptureMigration(MigrationPlayerState state)
+    {
+        state.Damage = Health;
+        state.Lives = Lives;
+        state.DisplayDamage = Health - initialHealth;
+    }
+
+    public void RestoreMigration(MigrationPlayerState state)
+    {
+        if (!Object.HasStateAuthority) return;
+        Health = state.Damage;
+        Lives = state.Lives;
+        ball.MarkHudDirty();
     }
 
     public void ResetHealth()

@@ -5,6 +5,7 @@ public class AreaLeave : NetworkBehaviour
 {
     private void OnTriggerExit2D(Collider2D collision)
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         if (Object == null || !Object.HasStateAuthority)
             return;
 
