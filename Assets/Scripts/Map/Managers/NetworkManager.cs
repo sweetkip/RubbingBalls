@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
+public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 {
     [SerializeField] private NetworkRunner runner;
 
@@ -98,6 +98,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public async void StartGameHost(string sessionName, bool visible)
     {
+        if (IsMigrating || migrationClosing || isInSession || !ValidateMigrationSetup()) return;
+        ResetMigrationSession(true);
         if (string.IsNullOrWhiteSpace(sessionName))
         {
             SetStatus("Escribí un nombre para la partida.", true);
@@ -116,6 +118,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             {
                 GameMode = GameMode.Host,
                 SessionName = sessionName,
+                ConnectionToken = System.Text.Encoding.ASCII.GetBytes(migrationIdentity),
                 PlayerCount = maxPlayers,
 
                 IsOpen = true,
@@ -123,7 +126,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
                 MatchmakingMode = Photon.Realtime.MatchmakingMode.FillRoom,
                 Scene = SceneRef.FromIndex(preGameSceneIndex),
-                SceneManager = GetComponent<NetworkSceneManagerDefault>()
+                SceneManager = runner.GetComponent<NetworkSceneManagerDefault>()
             });
 
         if (!result.Ok)
@@ -136,6 +139,9 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         isInSession = true;
         currentSessionName = sessionName;
+        if (enableHostMigration)
+            foreach (PlayerRef player in runner.ActivePlayers)
+                if (!migrationPlayerIdentities.ContainsKey(player)) MigrationPlayerJoined(player);
 
         SetStatus("Partida \"" + sessionName + "\" creada. Entrando a la sala...");
 
@@ -144,6 +150,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public async void StartGameClient(string sessionName)
     {
+        if (IsMigrating || migrationClosing || isInSession || !ValidateMigrationSetup()) return;
+        ResetMigrationSession(false);
         if (string.IsNullOrWhiteSpace(sessionName))
         {
             SetStatus("Escribí el nombre de la partida a la que querés entrar.", true);
@@ -162,7 +170,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             {
                 GameMode = GameMode.Client,
                 SessionName = sessionName,
-                SceneManager = GetComponent<NetworkSceneManagerDefault>()
+                ConnectionToken = System.Text.Encoding.ASCII.GetBytes(migrationIdentity),
+                SceneManager = runner.GetComponent<NetworkSceneManagerDefault>()
             });
 
         if (!result.Ok)
@@ -207,6 +216,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public async void QuickPlay()
     {
+        if (IsMigrating || migrationClosing || isInSession || !ValidateMigrationSetup()) return;
         runner.ProvideInput = true;
         inPreGame = true;
         startingGame = false;
@@ -281,8 +291,12 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (runner == null) return;
 
+        if (migrationClosing || leftOnPurpose) return;
         leftOnPurpose = true;
-        await runner.Shutdown();
+        if (enableHostMigration && runner.IsServer && !IsMigrating)
+            await DepartMigrationAsync();
+        else
+            await CloseMigrationSessionAsync("Saliste de la partida.", false);
     }
 
     public void Disconect()
@@ -292,6 +306,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
+        if (runner != this.runner || MigrationPlayerJoined(player)) return;
         if (runner.IsServer && inPreGame && !startingGame)
             SpawnLobbyPlayerIfNeeded(runner, player);
 
@@ -300,6 +315,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnPlayerLeft(NetworkRunner runner,PlayerRef player)
     {
+        if (runner != this.runner || MigrationPlayerLeft(player)) return;
         if (runner.IsServer)
         {
             if (!inPreGame && GameManager.Instance != null)
@@ -347,6 +363,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void CheckAllPlayersReady()
     {
+        if (IsMigrating || migrationClosing) return;
         if (!runner.IsServer)
             return;
 
@@ -413,6 +430,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public async void StartMatch(int mapIndex)
     {
+        if (IsMigrating || migrationClosing) return;
         if (!runner.IsServer)
             return;
 
@@ -428,6 +446,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         SetSessionOpen(false);
 
         SaveLobbyPlayerData();
+        ResetMigrationRoundPlayers();
         DespawnLobbyPlayers();
 
         gamePlayersSpawned = false;
@@ -486,6 +505,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public async void ReturnToLobby()
     {
+        if (IsMigrating || migrationClosing) return;
         if (!runner.IsServer)
             return;
 
@@ -547,6 +567,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     private void SpawnGamePlayers()
     {
+        if (IsMigrating || migrationClosing) return;
         if (!runner.IsServer)
             return;
 
@@ -640,7 +661,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         NetworkInputData data = new NetworkInputData();
 
-        if (inputEnabled)
+        if (inputEnabled && !IsMigrating && !migrationClosing && !MigrationInputBlocked())
         {
             data.Buttons.Set((int)InputButton.Fire,Input.GetMouseButton(0));
 
@@ -662,6 +683,12 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnSceneLoadDone(NetworkRunner runner)
     {
+        if (runner != this.runner) return;
+        if (IsMigrating)
+        {
+            migrationSceneReady = true;
+            return;
+        }
         int sceneIndex = SceneManager.GetActiveScene().buildIndex;
 
         if (sceneIndex == preGameSceneIndex)
@@ -700,6 +727,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
+        if (runner != this.runner || IsMigrating || migrationClosing) return;
+        if (QueueMigrationAfterHostLoss()) return;
         if (leftOnPurpose)
         {
             GoToMenu("Saliste de la partida.", false);
@@ -717,12 +746,14 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
     {
+        if (runner != this.runner || IsMigrating || migrationClosing || QueueMigrationAfterHostLoss()) return;
         Debug.LogWarning("Disconnected from server: " + reason);
         OnJoinFailed?.Invoke();
     }
 
     public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)
     {
+        if (runner != this.runner || IsMigrating || migrationClosing) return;
         Debug.LogWarning("Failed connection: " + reason);
         OnJoinFailed?.Invoke();
     }
@@ -798,10 +829,16 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
-    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ReadOnlySpan<byte> data) { }
+    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ReadOnlySpan<byte> data)
+    {
+        ReceiveMigrationData(runner, player, key, data);
+    }
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
-    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
+    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken)
+    {
+        if (runner == this.runner) QueueMigrationAfterHostLoss();
+    }
     public void OnSceneLoadStart(NetworkRunner runner) { }
 
     private void SetStatus(string message, bool isError = false)

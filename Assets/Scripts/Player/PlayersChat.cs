@@ -10,17 +10,18 @@ public class PlayersChat : NetworkBehaviour
     [SerializeField] private Button chatButton;
     [SerializeField] private NetworkObject chatManager;
     private string chatName;
+    public NetworkObject MigrationChatPrefab => chatManager;
 
     private void Start()
     {
+        if (Object == null || !Object.IsValid) return;
+        if (Runner.IsServer && ChatManager.Instance == null && chatManager != null)
+            Runner.Spawn(chatManager);
+        if (!HasInputAuthority) return;
         input = GameObject.Find("ChatInput").GetComponent<TMP_InputField>();
         chatButton = GameObject.Find("ChatButton").GetComponent<Button>();
         chatButton.onClick.AddListener(SendMessaje);
         input.onEndEdit.AddListener(OnInputEndEdit);
-        if(Runner.IsServer && ChatManager.Instance == null)
-        {
-            Runner.Spawn(chatManager);
-        }
 
         if(PlayerPrefs.HasKey("PlayerName"))
         {
@@ -33,8 +34,15 @@ public class PlayersChat : NetworkBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (chatButton != null) chatButton.onClick.RemoveListener(SendMessaje);
+        if (input != null) input.onEndEdit.RemoveListener(OnInputEndEdit);
+    }
+
     public void SendMessaje()
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         if (!HasInputAuthority) return;
         if (string.IsNullOrEmpty(input.text)) return;
 

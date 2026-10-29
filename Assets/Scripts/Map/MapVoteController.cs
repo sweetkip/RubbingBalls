@@ -70,6 +70,7 @@ public class MapVoteController : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         if (!Object.HasStateAuthority)
             return;
 
@@ -104,6 +105,20 @@ public class MapVoteController : NetworkBehaviour
                 }
                 break;
         }
+    }
+
+    public MigrationVoteState CaptureMigration()
+    {
+        return new MigrationVoteState { Phase = Phase, CandidatesMask = CandidatesMask, WinnerMap = WinnerMap, Remaining = PhaseTimer.RemainingTime(Runner) ?? 0f };
+    }
+
+    public void RestoreMigration(MigrationVoteState state)
+    {
+        if (!Object.HasStateAuthority || state == null) return;
+        Phase = state.Phase;
+        CandidatesMask = state.CandidatesMask;
+        WinnerMap = state.WinnerMap;
+        PhaseTimer = state.Phase == (byte)VotePhase.Idle ? TickTimer.None : TickTimer.CreateFromSeconds(Runner, Mathf.Max(0.01f, state.Remaining));
     }
 
     private void SetPhase(VotePhase newPhase, float seconds)

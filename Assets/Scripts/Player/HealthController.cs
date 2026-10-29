@@ -57,6 +57,21 @@ public class HealthController : NetworkBehaviour
         UIManager.Instance.SetPlayerStats(ball.id, Health - initialHealth, Lives);
     }
 
+    public void CaptureMigration(MigrationPlayerState state)
+    {
+        state.Damage = Health;
+        state.Lives = Lives;
+        state.DisplayDamage = Health - initialHealth;
+    }
+
+    public void RestoreMigration(MigrationPlayerState state)
+    {
+        if (!Object.HasStateAuthority) return;
+        Health = state.Damage;
+        Lives = state.Lives;
+        ball.MarkHudDirty();
+    }
+
     public void ResetHealth()
     {
         if (!Object.HasStateAuthority)

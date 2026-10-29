@@ -22,6 +22,13 @@ public class ChatManager : NetworkBehaviour
         RefreshText();
     }
 
+    public void RestoreMigration(string text)
+    {
+        if (!Object.HasStateAuthority) return;
+        conversationRecord = text ?? "";
+        RefreshText();
+    }
+
     public void AddMessage(string line)
     {
         if (!Object.HasStateAuthority) return;
