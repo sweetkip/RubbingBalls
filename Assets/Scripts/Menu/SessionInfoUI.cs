@@ -14,7 +14,7 @@ public class SessionInfoUI : MonoBehaviour
         string ping;
         if (runner.IsServer)
         {
-            ping = "Sos el host";
+            ping = "You're hosting";
         }
         else
         {
@@ -22,9 +22,9 @@ public class SessionInfoUI : MonoBehaviour
             ping = "Ping: " + Mathf.RoundToInt((float)(rttSegundos * 1000)) + " ms";
         }
 
-        infoText.text = "Sala: " + runner.SessionInfo.Name + "   Jugadores: " + runner.SessionInfo.PlayerCount + "/" + runner.SessionInfo.MaxPlayers + "   " + ping;
+        infoText.text = "Room: " + runner.SessionInfo.Name + "   Players: " + runner.SessionInfo.PlayerCount + "/" + runner.SessionInfo.MaxPlayers + "   " + ping;
 
         if (runner.SessionInfo.PlayerCount <= 1)
-            infoText.text = infoText.text + " necesitamos un player mas para empezar";
+            infoText.text = infoText.text + " not enough players";
     }
 }

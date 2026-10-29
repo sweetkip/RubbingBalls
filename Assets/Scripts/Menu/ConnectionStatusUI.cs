@@ -41,7 +41,7 @@ public class ConnectionStatusUI : MonoBehaviour
         }
         else
         {
-            ShowStatus("Creá una partida, unite con un nombre o tocá Quick Play.", false);
+            ShowStatus("Creá una partida, unite con un nombre o tocá Quick Play.", false); //Join friends in Private Game or select Public Game to play
         }
 
         if (ConnectionMessage.RejoinSession != "")
