@@ -6509,7 +6509,15 @@ PrefabInstance:
     - target: {fileID: 3115132782716556429, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 891778404}
+      objectReference: {fileID: 198453815}
+    - target: {fileID: 3115132782716556429, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Cancel
+      objectReference: {fileID: 0}
+    - target: {fileID: 3115132782716556429, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: DoYouReallyWantToCloseRubbingBalls, Assembly-CSharp
+      objectReference: {fileID: 0}
     - target: {fileID: 5224399767456760094, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
       propertyPath: m_Name
       value: Panel_Exit
