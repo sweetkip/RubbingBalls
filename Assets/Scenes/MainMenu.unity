@@ -781,7 +781,7 @@ MonoBehaviour:
   manager: {fileID: 1731808433}
   statusText: {fileID: 119232027}
   sessionInput: {fileID: 927970227}
-  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  normalColor: {r: 0, g: 0.3882353, b: 0.5568628, a: 1}
   errorColor: {r: 1, g: 0.35, b: 0.35, a: 1}
 --- !u!114 &198453814
 MonoBehaviour:

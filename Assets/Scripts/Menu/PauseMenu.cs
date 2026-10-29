@@ -79,4 +79,18 @@ public class PauseMenu : MonoBehaviour
         if (NetworkManager.Instance != null)
             NetworkManager.Instance.SetInputEnabled(enabled);
     }
+
+    public async void QuitGame()
+    {
+        NetworkManager manager = NetworkManager.Find();
+
+        if (manager != null && manager.Runner != null && manager.Runner.IsRunning)
+            await manager.Runner.Shutdown();
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+    Application.Quit();
+#endif
+    }
 }
