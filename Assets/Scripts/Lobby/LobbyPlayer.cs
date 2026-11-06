@@ -77,6 +77,7 @@ public class LobbyPlayer : NetworkBehaviour
         RPC_SelectMap(mapIndex);
     }
 
+
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_SelectMap(byte mapIndex)
     {
@@ -176,6 +177,14 @@ public class LobbyPlayer : NetworkBehaviour
             return;
 
         MapVote = NoVote;
+    }
+
+    public void ResetReady()
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        IsReady = false;
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
