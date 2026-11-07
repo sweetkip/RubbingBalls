@@ -7,6 +7,10 @@ public class PlayerColorPalette : ScriptableObject
     public Sprite[] sprites;
     public Sprite defaultSprite;
 
+    [Header("Team colors")]
+    public Color teamRedColor = new Color(0.9f, 0.15f, 0.15f, 1f);
+    public Color teamBlueColor = new Color(0.15f, 0.4f, 0.95f, 1f);
+
     public int CountColors
     {
         get
@@ -38,6 +42,22 @@ public class PlayerColorPalette : ScriptableObject
         color.a = 1f;
 
         return color;
+    }
+
+    public Color GetTeamColor(byte team)
+    {
+        Color color = team == LobbyPlayer.TeamBlue ? teamBlueColor : teamRedColor;
+        color.a = 1f;
+        return color;
+    }
+
+    // Si el jugador tiene equipo usa el color del equipo; si no, el que eligió él
+    public Color GetPlayerColor(int colorIndex, byte team)
+    {
+        if (team == LobbyPlayer.TeamRed || team == LobbyPlayer.TeamBlue)
+            return GetTeamColor(team);
+
+        return GetColor(colorIndex);
     }
 
     public Sprite GetSprite(int index)

@@ -48,6 +48,7 @@ public class LobbyPlayer : NetworkBehaviour
         state.SpriteIndex = SpriteIndex;
         state.Ready = IsReady;
         state.MapVote = MapVote;
+        state.Team = Team;
         state.HasBall = false;
         state.GameId = -1;
     }
@@ -60,6 +61,7 @@ public class LobbyPlayer : NetworkBehaviour
         IsReady = state.Ready;
         Nickname = state.Name;
         MapVote = state.MapVote;
+        Team = state.Team;
         PreGameLobbyUI.Instance?.RefreshLobby();
     }
 

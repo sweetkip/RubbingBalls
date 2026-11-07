@@ -21,6 +21,8 @@ public sealed class HostMigrationCheckpoint
     public MigrationPlayerState[] Players;
     public MigrationGameState Game;
     public MigrationVoteState Vote;
+    public byte ModeValue;          // modo elegido en el lobby: 0 = Free 4 All, 1 = Teams
+    public byte TeamSelectPhase;    // 0 = no se están eligiendo equipos
 }
 
 [Serializable]
@@ -35,6 +37,7 @@ public sealed class MigrationPlayerState
     public byte SpriteIndex;
     public bool Ready;
     public byte MapVote = 255;
+    public byte Team = 255;         // 255 = sin equipo
     public bool HasBall;
     public float Damage;
     public float DisplayDamage;
