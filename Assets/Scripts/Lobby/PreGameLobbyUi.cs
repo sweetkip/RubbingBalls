@@ -212,10 +212,11 @@ public class PreGameLobbyUI : MonoBehaviour
         if (nextColorButton != null)
             nextColorButton.interactable = !ready;
 
-        bool voting = MapVoteController.Instance != null && MapVoteController.Instance.IsActive;
+        bool busy = (MapVoteController.Instance != null && MapVoteController.Instance.IsActive)
+          || (TeamSelectController.Instance != null && TeamSelectController.Instance.IsActive);
 
         if (readyButton != null)
-            readyButton.interactable = !voting;
+            readyButton.interactable = !busy;
 
         if (readyButtonText != null)
             readyButtonText.text = ready ? "Cancel" : "Ready";

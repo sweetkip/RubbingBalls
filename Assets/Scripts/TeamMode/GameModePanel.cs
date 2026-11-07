@@ -35,10 +35,10 @@ public class GameModePanel : MonoBehaviour
     private void Update()
     {
         MapVoteController vote = MapVoteController.Instance;
-        bool voting = vote != null && vote.IsActive;
+        TeamSelectController teams = TeamSelectController.Instance;
+        bool busy = (vote != null && vote.IsActive) || (teams != null && teams.IsActive);
 
-        panelRoot.SetActive(!voting);
-
+        panelRoot.SetActive(!busy);
         GameModeController controller = GameModeController.Instance;
 
         if (controller == null)

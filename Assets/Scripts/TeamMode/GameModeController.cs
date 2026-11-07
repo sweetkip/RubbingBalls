@@ -26,7 +26,16 @@ public class GameModeController : NetworkBehaviour
                 return false;
 
             MapVoteController vote = MapVoteController.Instance;
-            return vote == null || !vote.IsActive;
+
+            if (vote != null && vote.IsActive)
+                return false;
+
+            TeamSelectController teams = TeamSelectController.Instance;
+
+            if (teams != null && teams.IsActive)
+                return false;
+
+            return true;
         }
     }
 

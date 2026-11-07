@@ -12,7 +12,11 @@ public class LobbyPlayer : NetworkBehaviour
 
     // Arriba de todo, junto a las otras propiedades [Networked]:
     public const byte NoVote = 255;
+    public const byte NoTeam = 255;
+    public const byte TeamRed = 0;
+    public const byte TeamBlue = 1;
 
+    [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public byte Team { get; private set; }
     [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public byte MapVote { get; private set; }
 
 
@@ -24,6 +28,7 @@ public class LobbyPlayer : NetworkBehaviour
             SpriteIndex = 0;
             IsReady = false;
             MapVote = NoVote;
+            Team = NoTeam;
         }
 
         if (Object.HasInputAuthority)
@@ -160,7 +165,11 @@ public class LobbyPlayer : NetworkBehaviour
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_SetReady(bool ready)
     {
-        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
+        if (MapVoteController.Instance != null && MapVoteController.Instance.IsActive)
+            return;
+
+        if (TeamSelectController.Instance != null && TeamSelectController.Instance.IsActive)
+            return;
         if (MapVoteController.Instance != null && MapVoteController.Instance.IsActive)
             return;
 
@@ -186,6 +195,46 @@ public class LobbyPlayer : NetworkBehaviour
 
         IsReady = false;
     }
+
+
+    public void SelectTeam(byte team)
+    {
+        if (!Object.HasInputAuthority)
+            return;
+
+        RPC_SelectTeam(team);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_SelectTeam(byte team)
+    {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
+
+        TeamSelectController controller = TeamSelectController.Instance;
+
+        if (controller == null || !controller.IsActive)
+            return;
+
+        if (team != TeamRed && team != TeamBlue)
+            return;
+
+        if (Team == team)
+            return;
+
+        Team = team;
+        controller.OnTeamChanged();
+        PreGameLobbyUI.Instance?.RefreshLobby();
+    }
+
+    public void ResetTeam()
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        Team = NoTeam;
+    }
+
+
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_SetNick(string nick)

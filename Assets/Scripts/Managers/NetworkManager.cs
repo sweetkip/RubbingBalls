@@ -373,8 +373,10 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         if (startingGame)
             return;
 
-        // NUEVO: si la votación ya está en marcha, no hacer nada
         if (MapVoteController.Instance != null && MapVoteController.Instance.IsActive)
+            return;
+
+        if (TeamSelectController.Instance != null && TeamSelectController.Instance.IsActive)
             return;
 
         int playerCount = 0;
@@ -398,10 +400,19 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         if (playerCount < MinPlayersToStart)
             return;
 
+        bool teamsMode = GameModeController.Instance != null && GameModeController.Instance.IsTeams;
+
+        if (teamsMode && TeamSelectController.Instance != null)
+        {
+            SetSessionOpen(false);
+            TeamSelectController.Instance.BeginSelecting();
+            return;
+        }
+
         BeginMapVote();
     }
 
-    private void BeginMapVote()
+    public void BeginMapVote()
     {
         if (MapVoteController.Instance == null)
         {
@@ -415,6 +426,11 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     }
 
     public void CancelMapVote()
+    {
+        SetSessionOpen(true);
+    }
+
+    public void CancelTeamSelect()
     {
         SetSessionOpen(true);
     }
