@@ -54,8 +54,7 @@ public static class BallCollisionProtection
                 continue;
             if (!Usable(pair.First) || !Usable(pair.Second))
                 continue;
-            bool ignore = pair.OriginallyIgnored || pair.A.IsPushImmune || pair.B.IsPushImmune;
-            if (Physics2D.GetIgnoreCollision(pair.First, pair.Second) != ignore)
+            bool ignore = pair.OriginallyIgnored || pair.A.IsPushImmune || pair.B.IsPushImmune || pair.A.IsSameTeam(pair.B); if (Physics2D.GetIgnoreCollision(pair.First, pair.Second) != ignore)
                 Physics2D.IgnoreCollision(pair.First, pair.Second, ignore);
         }
     }

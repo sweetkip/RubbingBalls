@@ -9,6 +9,9 @@ public class Ball : NetworkBehaviour
     [Networked, OnChangedRender(nameof(UpdateBallColor))]
     public byte ColorIndex { get; private set; }
 
+    [Networked, OnChangedRender(nameof(OnTeamIdChanged))]
+    public byte TeamId { get; private set; }
+
     [Networked, OnChangedRender(nameof(UpdateBallSprite))]
     public byte SpriteIndex { get; private set; }
 
@@ -100,6 +103,7 @@ public class Ball : NetworkBehaviour
         {
             spawnPosition = transform.position;
             spawnRotation = transform.rotation;
+            TeamId = LobbyPlayer.NoTeam;
             BallCollisionProtection.Register(this);
             id = GameManager.Instance.IJoined(Object.InputAuthority);
             ShootsLeft = maxShoots;
@@ -180,6 +184,34 @@ public class Ball : NetworkBehaviour
 
         SpriteIndex = spriteIndex;
         UpdateBallSprite();
+        hudDirty = true;
+    }
+
+    public void SetTeam(byte team)
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        TeamId = team;
+        UpdateBallColor();
+        hudDirty = true;
+        BallCollisionProtection.Refresh(this);
+    }
+
+    public bool IsSameTeam(Ball other)
+    {
+        if (other == null || other == this)
+            return false;
+
+        if (Object == null || !Object.IsValid || other.Object == null || !other.Object.IsValid)
+            return false;
+
+        return TeamId <= LobbyPlayer.TeamBlue && TeamId == other.TeamId;
+    }
+
+    private void OnTeamIdChanged()
+    {
+        UpdateBallColor();
         hudDirty = true;
     }
 
@@ -401,7 +433,7 @@ public class Ball : NetworkBehaviour
         if (palette == null || palette.CountColors == 0)
             return;
 
-        Color baseColor = palette.GetColor(ColorIndex);
+        Color baseColor = palette.GetPlayerColor(ColorIndex, TeamId);
         int usedShoots = Mathf.Clamp(maxShoots - ShootsLeft, 0, maxShoots);
         float darkness = Mathf.Pow(0.75f, usedShoots);
 
@@ -530,7 +562,7 @@ public class Ball : NetworkBehaviour
             if (palette == null)
                 return Color.white;
 
-            return palette.GetColor(ColorIndex);
+            return palette.GetPlayerColor(ColorIndex, TeamId);
         }
     }
 
@@ -541,6 +573,7 @@ public class Ball : NetworkBehaviour
         state.Name = ballName;
         state.ColorIndex = ColorIndex;
         state.SpriteIndex = SpriteIndex;
+        state.Team = TeamId;
         state.ShootsLeft = ShootsLeft;
         state.Position = rb.position;
         state.Position.z = transform.position.z;
@@ -560,6 +593,7 @@ public class Ball : NetworkBehaviour
         ballName = state.Name;
         ColorIndex = state.ColorIndex;
         SpriteIndex = state.SpriteIndex;
+        TeamId = state.Team;
         ShootsLeft = state.ShootsLeft;
         spawnPosition = state.SpawnPosition;
         spawnRotation = state.SpawnRotation;

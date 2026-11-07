@@ -268,8 +268,7 @@ public class GameManager : NetworkBehaviour
         foreach (MigrationPlayerState player in players)
         {
             if (player.GameId < 0) continue;
-            UIManager.Instance.SetPlayerInfo(player.GameId, player.Name, palette != null ? palette.GetSprite(player.SpriteIndex) : null, palette != null ? palette.GetColor(player.ColorIndex) : Color.white);
-            UIManager.Instance.SetPlayerStats(player.GameId, player.DisplayDamage, player.Lives);
+            UIManager.Instance.SetPlayerInfo(player.GameId, player.Name, palette != null ? palette.GetSprite(player.SpriteIndex) : null, palette != null ? palette.GetPlayerColor(player.ColorIndex, player.Team) : Color.white); UIManager.Instance.SetPlayerStats(player.GameId, player.DisplayDamage, player.Lives);
             if (!player.Connected) UIManager.Instance.PlayerDisconnected(player.GameId, player.Name);
             else if (!player.HasBall) UIManager.Instance.PlayerLost(player.GameId, player.Name);
         }

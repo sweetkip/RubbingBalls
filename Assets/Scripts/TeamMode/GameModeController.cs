@@ -44,6 +44,15 @@ public class GameModeController : NetworkBehaviour
         Instance = this;
     }
 
+    public void RestoreMigration(byte mode)
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        ModeValue = mode;
+    }
+
+
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
         if (Instance == this)

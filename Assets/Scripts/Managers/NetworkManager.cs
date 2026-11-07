@@ -51,6 +51,8 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     private Dictionary<PlayerRef, byte> playerColors = new Dictionary<PlayerRef, byte>();
     private Dictionary<PlayerRef, byte> playerSprites = new Dictionary<PlayerRef, byte>();
     private Dictionary<PlayerRef, string> playerName = new Dictionary<PlayerRef, string>();
+    private Dictionary<PlayerRef, byte> playerTeams = new Dictionary<PlayerRef, byte>();
+    private bool teamsMatch;
     private readonly Dictionary<PlayerRef, NetworkInputData> lastValidInput = new Dictionary<PlayerRef, NetworkInputData>();
 
     private bool inPreGame;
@@ -330,6 +332,7 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             playerColors.Remove(player);
             playerSprites.Remove(player);
             playerName.Remove(player);
+            playerTeams.Remove(player);
             lastValidInput.Remove(player);
             lastInputTicks.Remove(player);
 
@@ -502,6 +505,7 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         playerColors.Clear();
         playerSprites.Clear();
         playerName.Clear();
+        playerTeams.Clear();
 
         foreach (PlayerRef player in runner.ActivePlayers)
         {
@@ -516,7 +520,36 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             playerColors[player] = lobbyPlayer.ColorIndex;
             playerSprites[player] = lobbyPlayer.SpriteIndex;
             playerName[player] = lobbyPlayer.Nickname.ToString();
+            playerTeams[player] = lobbyPlayer.Team;
         }
+
+        teamsMatch = ComputeTeamsMatch();
+
+        if (!teamsMatch)
+            playerTeams.Clear();
+    }
+
+    private bool ComputeTeamsMatch()
+    {
+        bool modeIsTeams = GameModeController.Instance != null && GameModeController.Instance.IsTeams;
+
+        if (!modeIsTeams)
+            return false;
+
+        int red = 0;
+        int blue = 0;
+
+        foreach (byte team in playerTeams.Values)
+        {
+            if (team == LobbyPlayer.TeamRed)
+                red++;
+            else if (team == LobbyPlayer.TeamBlue)
+                blue++;
+            else
+                return false;   // alguien sin equipo: no es una partida por equipos válida
+        }
+
+        return red > 0 && blue > 0;
     }
 
     public async void ReturnToLobby()
@@ -603,7 +636,21 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         foreach (PlayerRef player in runner.ActivePlayers)
             players.Add(player);
 
-        players.Sort((a, b) => a.PlayerId.CompareTo(b.PlayerId));
+        players.Sort((a, b) =>
+        {
+            if (teamsMatch)
+            {
+                byte teamA = playerTeams.TryGetValue(a, out byte ta) ? ta : (byte)255;
+                byte teamB = playerTeams.TryGetValue(b, out byte tb) ? tb : (byte)255;
+
+                int byTeam = teamA.CompareTo(teamB);
+
+                if (byTeam != 0)
+                    return byTeam;
+            }
+
+            return a.PlayerId.CompareTo(b.PlayerId);
+        });
 
         int playerCount = players.Count;
 
@@ -657,6 +704,8 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
                 ball.SetInitialColor(colorIndex);
                 ball.SetInitialSprite(spriteIndex);
                 ball.SetName(name);
+                if (teamsMatch && playerTeams.TryGetValue(player, out byte savedTeam))
+                    ball.SetTeam(savedTeam);
             }
 
             runner.SetPlayerObject(player, ballObject);

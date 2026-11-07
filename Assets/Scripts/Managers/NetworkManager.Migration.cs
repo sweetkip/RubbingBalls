@@ -277,6 +277,7 @@ public partial class NetworkManager
                 member.DisplayDamage = copy.DisplayDamage;
                 member.Lives = copy.Lives;
                 member.ShootsLeft = copy.ShootsLeft;
+                member.Team = copy.Team;
                 break;
             }
             if (!lobby && copy.GameId >= 0 && !HasLiveMigrationBall(member.Identity))
@@ -299,6 +300,8 @@ public partial class NetworkManager
             Players = players.ToArray(),
             Game = !lobby ? GameManager.Instance.CaptureMigration() : null,
             Vote = lobby && MapVoteController.Instance != null ? MapVoteController.Instance.CaptureMigration() : null,
+            ModeValue = lobby && GameModeController.Instance != null ? GameModeController.Instance.ModeValue : (byte)0,
+            TeamSelectPhase = lobby && TeamSelectController.Instance != null ? TeamSelectController.Instance.Phase : (byte)0,
             Chat = ChatManager.Instance != null && ChatManager.Instance.Object != null && ChatManager.Instance.Object.IsValid ? ChatManager.Instance.conversationRecord.ToString() : ""
         };
         migrationCheckpoint = checkpoint;
@@ -618,42 +621,52 @@ public partial class NetworkManager
             {
                 if (MapVoteController.Instance != null && migrationCheckpoint.Vote != null)
                     MapVoteController.Instance.RestoreMigration(migrationCheckpoint.Vote);
+
+                if (GameModeController.Instance != null)
+                    GameModeController.Instance.RestoreMigration(migrationCheckpoint.ModeValue);
+
+                if (TeamSelectController.Instance != null)
+                    TeamSelectController.Instance.RestoreMigration(migrationCheckpoint.TeamSelectPhase);
             }
             else
             {
-                if (GameManager.Instance == null)
-                    throw new InvalidOperationException("No hay GameManager en el mapa restaurado.");
-                GameManager.Instance.RestoreMigration(migrationCheckpoint.Game, migrationCheckpoint.Players, migrationRejoined);
-                foreach (KeyValuePair<string, PlayerRef> pair in migrationRejoined)
                 {
-                    MigrationPlayerState state = FindMigrationPlayer(migrationCheckpoint, pair.Key);
-                    if (state != null && state.HasBall && runner.TryGetPlayerObject(pair.Value, out NetworkObject avatar))
-                        avatar.GetComponent<Ball>().FinishMigration(state);
+                    if (GameManager.Instance == null)
+                        throw new InvalidOperationException("No hay GameManager en el mapa restaurado.");
+                    GameManager.Instance.RestoreMigration(migrationCheckpoint.Game, migrationCheckpoint.Players, migrationRejoined);
+                    foreach (KeyValuePair<string, PlayerRef> pair in migrationRejoined)
+                    {
+                        MigrationPlayerState state = FindMigrationPlayer(migrationCheckpoint, pair.Key);
+                        if (state != null && state.HasBall && runner.TryGetPlayerObject(pair.Value, out NetworkObject avatar))
+                            avatar.GetComponent<Ball>().FinishMigration(state);
+                    }
                 }
+                if (!migrationCheckpoint.IsLobby)
+                {
+                    RememberMigrationChatPrefab();
+                    if (ChatManager.Instance == null && migrationChatManagerPrefab != null)
+                        runner.Spawn(migrationChatManagerPrefab);
+                    if (ChatManager.Instance != null && ChatManager.Instance.Object != null && ChatManager.Instance.Object.IsValid)
+                        ChatManager.Instance.RestoreMigration(migrationCheckpoint.Chat);
+                }
+                migrationInProgress = false;
+                migrationEverHadTwo = true;
+                inputEnabled = GameManager.Instance == null || !GameManager.Instance.IsGameOver;
+                migrationStatus = "";
+                migrationNextCheckpointAt = Time.unscaledTime + migrationCheckpointSeconds;
+                HostMigrationCheckpoint resumed = CaptureMigrationCheckpoint();
+                if (resumed == null)
+                    throw new InvalidOperationException("La escena restaurada no esta lista.");
+                migrationSendResume = true;
+                BroadcastMigration(resumed, MigrationResume, true);
+                if (!resumed.IsLobby) GameManager.Instance.RefreshMigrationHud(resumed.Players);
+                bool voteActive = MapVoteController.Instance != null && MapVoteController.Instance.IsActive;
+                bool teamsActive = TeamSelectController.Instance != null && TeamSelectController.Instance.IsActive;
+                bool reopen = inPreGame && !voteActive && !teamsActive;
+                SetSessionOpen(reopen);
+                PreGameLobbyUI.Instance?.RefreshLobby();
+                if (inPreGame) CheckAllPlayersReady();
             }
-            if (!migrationCheckpoint.IsLobby)
-            {
-                RememberMigrationChatPrefab();
-                if (ChatManager.Instance == null && migrationChatManagerPrefab != null)
-                    runner.Spawn(migrationChatManagerPrefab);
-                if (ChatManager.Instance != null && ChatManager.Instance.Object != null && ChatManager.Instance.Object.IsValid)
-                    ChatManager.Instance.RestoreMigration(migrationCheckpoint.Chat);
-            }
-            migrationInProgress = false;
-            migrationEverHadTwo = true;
-            inputEnabled = GameManager.Instance == null || !GameManager.Instance.IsGameOver;
-            migrationStatus = "";
-            migrationNextCheckpointAt = Time.unscaledTime + migrationCheckpointSeconds;
-            HostMigrationCheckpoint resumed = CaptureMigrationCheckpoint();
-            if (resumed == null)
-                throw new InvalidOperationException("La escena restaurada no esta lista.");
-            migrationSendResume = true;
-            BroadcastMigration(resumed, MigrationResume, true);
-            if (!resumed.IsLobby) GameManager.Instance.RefreshMigrationHud(resumed.Players);
-            bool reopen = inPreGame && (MapVoteController.Instance == null || !MapVoteController.Instance.IsActive);
-            SetSessionOpen(reopen);
-            PreGameLobbyUI.Instance?.RefreshLobby();
-            if (inPreGame) CheckAllPlayersReady();
         }
         catch (Exception exception)
         {

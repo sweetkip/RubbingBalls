@@ -31,3 +31,5 @@ MonoBehaviour:
   - {fileID: -7048620242059489554, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
   - {fileID: 2948586714716120069, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
   defaultSprite: {fileID: -4824871906443745265, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
+  teamRedColor: {r: 1, g: 0, b: 0, a: 1}
+  teamBlueColor: {r: 0, g: 0, b: 1, a: 1}

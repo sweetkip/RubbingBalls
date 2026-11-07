@@ -76,6 +76,17 @@ public class TeamSelectController : NetworkBehaviour
         NetworkManager.Instance?.CancelTeamSelect();
     }
 
+
+    public void RestoreMigration(byte phase)
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        // La cuenta regresiva no se restaura: si la formación es válida, arranca de nuevo sola
+        Phase = phase == (byte)TeamPhase.Idle ? (byte)TeamPhase.Idle : (byte)TeamPhase.Selecting;
+        PhaseTimer = TickTimer.None;
+    }
+
     public override void FixedUpdateNetwork()
     {
         if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
