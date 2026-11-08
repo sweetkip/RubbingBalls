@@ -473,6 +473,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Ball
   _id: 0
   _ColorIndex: 0
+  _TeamId: 0
   _SpriteIndex: 0
   _ShootsLeft: 0
   _ballName: 

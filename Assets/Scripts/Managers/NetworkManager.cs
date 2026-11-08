@@ -679,6 +679,9 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         gamePlayersSpawned = true;
 
+        if (GameManager.Instance != null)
+            GameManager.Instance.SetTeamsMatch(teamsMatch);
+
         for (int i = 0; i < playerCount; i++)
         {
             PlayerRef player = players[i];
@@ -963,6 +966,14 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             default:
                 return "Connection issue: " + reason;
         }
+    }
+
+    public byte GetMatchTeam(PlayerRef player)
+    {
+        if (teamsMatch && playerTeams.TryGetValue(player, out byte team))
+            return team;
+
+        return LobbyPlayer.NoTeam;
     }
 
     public string SendName(PlayerRef player)

@@ -20,10 +20,16 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private AudioMixerGroup feedbackMixer;
 
     private List<int> aliveIds = new List<int>();
+    private List<byte> aliveTeams = new List<byte>();
     private List<PlayerRef> alivePlayerRefs = new List<PlayerRef>();
 
     [Networked, OnChangedRender(nameof(OnWinnerChanged))]
     public int WinnerId { get; set; } = -1;
+
+    [Networked] public NetworkBool TeamsMatch { get; private set; }
+
+    [Networked, OnChangedRender(nameof(OnWinnerChanged))]
+    public byte WinnerTeam { get; set; } = LobbyPlayer.NoTeam;
 
     [Networked, OnChangedRender(nameof(OnWinnerChanged))]
     public PlayerRef WinnerPlayer { get; set; }
@@ -41,6 +47,7 @@ public class GameManager : NetworkBehaviour
     {
         aliveIds.Clear();
         alivePlayerRefs.Clear();
+        aliveTeams.Clear();
 
         if (!HasStateAuthority)
             return;
@@ -49,8 +56,18 @@ public class GameManager : NetworkBehaviour
         alivePlayers = 0;
         WinnerId = -1;
         WinnerPlayer = PlayerRef.None;
+        WinnerTeam = LobbyPlayer.NoTeam;
+        TeamsMatch = false;
         ReturnTimer = default;
         StartTimer = default;
+    }
+
+    public void SetTeamsMatch(bool value)
+    {
+        if (!HasStateAuthority)
+            return;
+
+        TeamsMatch = value;
     }
 
     public int IJoined(PlayerRef playerRef)
@@ -62,6 +79,7 @@ public class GameManager : NetworkBehaviour
             alivePlayers++;
             aliveIds.Add(id);
             alivePlayerRefs.Add(playerRef);
+            aliveTeams.Add(NetworkManager.Instance != null ? NetworkManager.Instance.GetMatchTeam(playerRef) : LobbyPlayer.NoTeam);
         }
         else
         {
@@ -96,7 +114,11 @@ public class GameManager : NetworkBehaviour
             Runner.Despawn(player.gameObject.GetComponent<NetworkObject>());
             alivePlayers--;
             aliveIds.Remove(id);
-            if (index >= 0) alivePlayerRefs.RemoveAt(index);
+            if (index >= 0)
+            {
+                alivePlayerRefs.RemoveAt(index);
+                aliveTeams.RemoveAt(index);
+            }
             CheckWinner();
         }
         else
@@ -104,23 +126,23 @@ public class GameManager : NetworkBehaviour
             player.Respawn();
         }
     }
-
     public void PlayerDisconnected(PlayerRef playerRef)
     {
         if (!HasStateAuthority) return;
 
         int index = alivePlayerRefs.IndexOf(playerRef);
-        if (index < 0) return;   
+        if (index < 0) return;
 
         int id = aliveIds[index];
         aliveIds.RemoveAt(index);
         alivePlayerRefs.RemoveAt(index);
+        aliveTeams.RemoveAt(index);
         alivePlayers--;
         string name = NetworkManager.Instance.SendName(playerRef);
         if (string.IsNullOrWhiteSpace(name))
             name = $"Player {playerRef.PlayerId}";
-        RPC_PlayerDisconnected(id, name);   
-        CheckWinner();                
+        RPC_PlayerDisconnected(id, name);
+        CheckWinner();
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -149,8 +171,31 @@ public class GameManager : NetworkBehaviour
     private void CheckWinner()
     {
         if (!HasStateAuthority) return;
-        if (alivePlayers > 1) return;
         if (ReturnTimer.IsRunning) return;
+
+        if (TeamsMatch)
+        {
+            int red = CountAliveInTeam(LobbyPlayer.TeamRed);
+            int blue = CountAliveInTeam(LobbyPlayer.TeamBlue);
+
+            if (red > 0 && blue > 0)
+                return;
+
+            WinnerId = -1;
+            WinnerPlayer = PlayerRef.None;
+
+            if (red > 0)
+                WinnerTeam = LobbyPlayer.TeamRed;
+            else if (blue > 0)
+                WinnerTeam = LobbyPlayer.TeamBlue;
+            else
+                WinnerTeam = LobbyPlayer.NoTeam;
+
+            ReturnTimer = TickTimer.CreateFromSeconds(Runner, returnToLobbySeconds);
+            return;
+        }
+
+        if (alivePlayers > 1) return;
 
         if (aliveIds.Count == 1)
         {
@@ -166,6 +211,19 @@ public class GameManager : NetworkBehaviour
         ReturnTimer = TickTimer.CreateFromSeconds(Runner, returnToLobbySeconds);
     }
 
+    private int CountAliveInTeam(byte team)
+    {
+        int count = 0;
+
+        foreach (byte aliveTeam in aliveTeams)
+        {
+            if (aliveTeam == team)
+                count++;
+        }
+
+        return count;
+    }
+
     public void ShowResults()
     {
         UIManager.Instance.GameIsOver(true);
@@ -173,11 +231,23 @@ public class GameManager : NetworkBehaviour
 
     private void OnWinnerChanged()
     {
-        if (WinnerPlayer == PlayerRef.None)
+        if (TeamsMatch)
+        {
+            if (WinnerTeam > LobbyPlayer.TeamBlue)
+                return;
+        }
+        else if (WinnerPlayer == PlayerRef.None)
             return;
 
-        bool won = WinnerPlayer == Runner.LocalPlayer;
-        UIManager.Instance.GameIsOver(won);
+        UIManager.Instance.GameIsOver(DidLocalPlayerWin());
+    }
+
+    public bool DidLocalPlayerWin()
+    {
+        if (TeamsMatch)
+            return WinnerTeam <= LobbyPlayer.TeamBlue && Ball.LocalTeam == WinnerTeam;
+
+        return WinnerPlayer == Runner.LocalPlayer;
     }
 
     public override void FixedUpdateNetwork()
@@ -228,10 +298,13 @@ public class GameManager : NetworkBehaviour
         {
             TotalPlayers = totalPlayers,
             WinnerId = WinnerId,
+            TeamsMatch = TeamsMatch,
+            WinnerTeam = WinnerTeam,
             ReturnRunning = ReturnTimer.IsRunning,
             ReturnRemaining = ReturnTimer.RemainingTime(Runner) ?? 0f,
             StartRunning = !StartTimer.ExpiredOrNotRunning(Runner),
             StartRemaining = StartTimer.RemainingTime(Runner) ?? 0f
+
         };
     }
 
@@ -239,13 +312,17 @@ public class GameManager : NetworkBehaviour
     {
         if (!HasStateAuthority || state == null) return;
         totalPlayers = state.TotalPlayers;
+        TeamsMatch = state.TeamsMatch;
+        WinnerTeam = state.WinnerTeam;
         aliveIds.Clear();
         alivePlayerRefs.Clear();
+        aliveTeams.Clear();
         foreach (MigrationPlayerState player in players)
         {
             if (!player.HasBall || !rejoined.TryGetValue(player.Identity, out PlayerRef reference)) continue;
             aliveIds.Add(player.GameId);
             alivePlayerRefs.Add(reference);
+            aliveTeams.Add(player.Team);
         }
         alivePlayers = aliveIds.Count;
         WinnerId = state.WinnerId;
@@ -272,7 +349,7 @@ public class GameManager : NetworkBehaviour
             if (!player.Connected) UIManager.Instance.PlayerDisconnected(player.GameId, player.Name);
             else if (!player.HasBall) UIManager.Instance.PlayerLost(player.GameId, player.Name);
         }
-        if (IsGameOver) UIManager.Instance.GameIsOver(WinnerPlayer == Runner.LocalPlayer);
+        if (IsGameOver) UIManager.Instance.GameIsOver(DidLocalPlayerWin());
     }
 
     public void BeginStartCountdown()

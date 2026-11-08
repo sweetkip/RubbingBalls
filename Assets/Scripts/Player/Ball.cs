@@ -21,7 +21,8 @@ public class Ball : NetworkBehaviour
     [Networked] public string ballName { get; private set; }
     [Networked] private NetworkBool IsAiming { get; set; }
     [Networked] private Vector2 AimOffset { get; set; }
-
+    private byte lastCollisionTeam = 254;
+    private bool lastCollisionImmune;
     [SerializeField] private PlayerColorPalette palette;
 
     [SerializeField] private float force;
@@ -55,6 +56,9 @@ public class Ball : NetworkBehaviour
     [SerializeField, Min(0f)] private float respawnPushImmunity = 2f;
     [Networked] public TickTimer PushProtection { get; private set; }
     public bool IsPushImmune => Object != null && Object.IsValid && !PushProtection.ExpiredOrNotRunning(Runner);
+
+    public static byte LocalTeam { get; private set; } = LobbyPlayer.NoTeam;
+
     public Collider2D[] PhysicsColliders { get; private set; }
     public PlayerColorPalette MigrationPalette => palette;
     private Vector3 spawnPosition;
@@ -104,14 +108,16 @@ public class Ball : NetworkBehaviour
             spawnPosition = transform.position;
             spawnRotation = transform.rotation;
             TeamId = LobbyPlayer.NoTeam;
-            BallCollisionProtection.Register(this);
             id = GameManager.Instance.IJoined(Object.InputAuthority);
             ShootsLeft = maxShoots;
         }
 
+        BallCollisionProtection.Register(this);
+
         UpdateBallColor();
         UpdateBallSprite();
         UpdateLocalIndicator();
+        RememberLocalTeam();
         feedback.ResetFeedback();
         hudDirty = true;
         if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating)
@@ -129,6 +135,8 @@ public class Ball : NetworkBehaviour
         }
         if (!Object.HasInputAuthority)
             feedback.SetAim(IsAiming, AimOffset, AimOffset.magnitude / Mathf.Max(0.01f, maxDistance));
+
+        RefreshCollisionRules();
     }
 
     private void Update()
@@ -196,6 +204,27 @@ public class Ball : NetworkBehaviour
         UpdateBallColor();
         hudDirty = true;
         BallCollisionProtection.Refresh(this);
+        RememberLocalTeam();
+    }
+
+
+
+    private void RefreshCollisionRules()
+    {
+        bool immune = IsPushImmune;
+
+        if (TeamId == lastCollisionTeam && immune == lastCollisionImmune)
+            return;
+
+        lastCollisionTeam = TeamId;
+        lastCollisionImmune = immune;
+        BallCollisionProtection.Refresh(this);
+    }
+
+    private void RememberLocalTeam()
+    {
+        if (Object != null && Object.IsValid && Object.HasInputAuthority)
+            LocalTeam = TeamId;
     }
 
     public bool IsSameTeam(Ball other)
@@ -213,6 +242,7 @@ public class Ball : NetworkBehaviour
     {
         UpdateBallColor();
         hudDirty = true;
+        RememberLocalTeam();
     }
 
     public void SetName(string name)
@@ -594,6 +624,7 @@ public class Ball : NetworkBehaviour
         ColorIndex = state.ColorIndex;
         SpriteIndex = state.SpriteIndex;
         TeamId = state.Team;
+        RememberLocalTeam();
         ShootsLeft = state.ShootsLeft;
         spawnPosition = state.SpawnPosition;
         spawnRotation = state.SpawnRotation;

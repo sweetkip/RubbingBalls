@@ -23,6 +23,8 @@ public sealed class HostMigrationCheckpoint
     public MigrationVoteState Vote;
     public byte ModeValue;          // modo elegido en el lobby: 0 = Free 4 All, 1 = Teams
     public byte TeamSelectPhase;    // 0 = no se están eligiendo equipos
+    public bool TeamsMatch;
+    public byte WinnerTeam = 255;
 }
 
 [Serializable]
@@ -52,11 +54,14 @@ public sealed class MigrationPlayerState
     public float ProtectionRemaining;
 }
 
+
 [Serializable]
 public sealed class MigrationGameState
 {
     public int TotalPlayers;
     public int WinnerId = -1;
+    public bool TeamsMatch;
+    public byte WinnerTeam = 255;
     public bool ReturnRunning;
     public float ReturnRemaining;
     public bool StartRunning;
