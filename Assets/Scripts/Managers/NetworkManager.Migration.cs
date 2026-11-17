@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Photon.Voice.Fusion;
 
 public partial class NetworkManager
 {
@@ -748,7 +749,27 @@ public partial class NetworkManager
         runner.name = "Migrated NetworkRunner";
         runner.transform.SetParent(transform, false);
         runner.ProvideInput = true;
+
+        SwapVoiceClient(runner);
+
         runner.AddCallbacks(this);
+    }
+
+    private void SwapVoiceClient(NetworkRunner newRunner)
+    {
+        FusionVoiceClient newClient = newRunner.GetComponent<FusionVoiceClient>();
+
+        if (newClient == null)
+        {
+            Debug.LogWarning("Migration Runner Prefab has no FusionVoiceClient: voice will not work after a migration.");
+            return;
+        }
+
+        if (voiceClient != null && voiceClient != newClient)
+            Destroy(voiceClient);
+
+        voiceClient = newClient;
+        newRunner.AddCallbacks(voiceClient);
     }
 
     private void ReleaseMigrationHoldingScene()

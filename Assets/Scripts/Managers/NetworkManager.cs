@@ -1,5 +1,6 @@
 using Fusion;
 using Fusion.Sockets;
+using Photon.Voice.Fusion;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using UnityEngine.SceneManagement;
 
 public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 {
+    private FusionVoiceClient voiceClient;
     [SerializeField] private NetworkRunner runner;
 
     [SerializeField] private NetworkPrefabRef lobbyPlayerPrefab;
@@ -94,6 +96,10 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         if (runner == null)
             runner = GetComponent<NetworkRunner>();
+
+        voiceClient = runner.GetComponent<FusionVoiceClient>();
+        if (voiceClient != null)
+            runner.AddCallbacks(voiceClient);
 
         runner.AddCallbacks(this);
     }
