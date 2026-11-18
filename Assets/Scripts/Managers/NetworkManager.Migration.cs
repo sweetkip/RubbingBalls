@@ -537,7 +537,10 @@ public partial class NetworkManager
                 IsVisible = false
             };
             if (becomeHost)
+            {
                 args.Scene = SceneRef.FromIndex(sceneIndex);
+                args.SessionProperties = RubbingBalls.Accounts.LoginSession.Current.Coins.CreateRoomProof();
+            }
             if (!becomeHost)
                 await Task.Delay(800);
             if (migrationClosing || this == null) return;

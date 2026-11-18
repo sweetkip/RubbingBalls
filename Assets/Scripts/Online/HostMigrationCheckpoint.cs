@@ -58,6 +58,8 @@ public sealed class MigrationPlayerState
 [Serializable]
 public sealed class MigrationGameState
 {
+    public string CoinRound;
+    public string[] CoinAccounts;
     public int TotalPlayers;
     public int WinnerId = -1;
     public bool TeamsMatch;

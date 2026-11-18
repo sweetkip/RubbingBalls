@@ -43,6 +43,11 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private bool allowPlayDuringGo = true;
     [Networked] public TickTimer StartTimer { get; private set; }
 
+    private string coinRound;
+    private readonly Dictionary<PlayerRef, int> coinSeats = new Dictionary<PlayerRef, int>();
+    private readonly Dictionary<PlayerRef, byte> coinTeams = new Dictionary<PlayerRef, byte>();
+    private readonly HashSet<int> queuedSeats = new HashSet<int>();
+
     public override void Spawned()
     {
         aliveIds.Clear();
@@ -52,6 +57,7 @@ public class GameManager : NetworkBehaviour
         if (!HasStateAuthority)
             return;
 
+        coinRound = System.Guid.NewGuid().ToString("D");
         totalPlayers = 0;
         alivePlayers = 0;
         WinnerId = -1;
@@ -79,7 +85,10 @@ public class GameManager : NetworkBehaviour
             alivePlayers++;
             aliveIds.Add(id);
             alivePlayerRefs.Add(playerRef);
-            aliveTeams.Add(NetworkManager.Instance != null ? NetworkManager.Instance.GetMatchTeam(playerRef) : LobbyPlayer.NoTeam);
+            byte team = NetworkManager.Instance != null ? NetworkManager.Instance.GetMatchTeam(playerRef) : LobbyPlayer.NoTeam;
+            aliveTeams.Add(team);
+            coinSeats[playerRef] = id;
+            coinTeams[playerRef] = team;
         }
         else
         {
@@ -130,6 +139,11 @@ public class GameManager : NetworkBehaviour
     {
         if (!HasStateAuthority) return;
 
+        if (!IsGameOver)
+        {
+            coinSeats.Remove(playerRef);
+            coinTeams.Remove(playerRef);
+        }
         int index = alivePlayerRefs.IndexOf(playerRef);
         if (index < 0) return;
 
@@ -192,6 +206,7 @@ public class GameManager : NetworkBehaviour
                 WinnerTeam = LobbyPlayer.NoTeam;
 
             ReturnTimer = TickTimer.CreateFromSeconds(Runner, returnToLobbySeconds);
+            AwardWinners();
             return;
         }
 
@@ -209,6 +224,32 @@ public class GameManager : NetworkBehaviour
         }
 
         ReturnTimer = TickTimer.CreateFromSeconds(Runner, returnToLobbySeconds);
+        AwardWinners();
+    }
+
+    private void AwardWinners()
+    {
+        if (!HasStateAuthority || totalPlayers < 2 || string.IsNullOrEmpty(coinRound)) return;
+        foreach (var entry in coinSeats)
+        {
+            int seat = entry.Value;
+            bool won = TeamsMatch ? WinnerTeam <= LobbyPlayer.TeamBlue && coinTeams[entry.Key] == WinnerTeam
+                : WinnerPlayer != PlayerRef.None && entry.Key == WinnerPlayer;
+            if (won && queuedSeats.Add(seat))
+            {
+                if (entry.Key == Runner.LocalPlayer) ReceiveCoinWin(coinRound);
+                else RPC_CoinWin(entry.Key, coinRound);
+            }
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, Channel = RpcChannel.Reliable)]
+    private void RPC_CoinWin([RpcTarget] PlayerRef winner, string round) => ReceiveCoinWin(round);
+
+    private static void ReceiveCoinWin(string round)
+    {
+        var session = RubbingBalls.Accounts.LoginSession.Current;
+        if (session.HasAccount) session.Coins.RecordWin(round);
     }
 
     private int CountAliveInTeam(byte team)
@@ -296,6 +337,7 @@ public class GameManager : NetworkBehaviour
     {
         return new MigrationGameState
         {
+            CoinRound = coinRound,
             TotalPlayers = totalPlayers,
             WinnerId = WinnerId,
             TeamsMatch = TeamsMatch,
@@ -311,6 +353,10 @@ public class GameManager : NetworkBehaviour
     public void RestoreMigration(MigrationGameState state, MigrationPlayerState[] players, Dictionary<string, PlayerRef> rejoined)
     {
         if (!HasStateAuthority || state == null) return;
+        coinRound = state.CoinRound;
+        coinSeats.Clear();
+        coinTeams.Clear();
+        queuedSeats.Clear();
         totalPlayers = state.TotalPlayers;
         TeamsMatch = state.TeamsMatch;
         WinnerTeam = state.WinnerTeam;
@@ -319,7 +365,13 @@ public class GameManager : NetworkBehaviour
         aliveTeams.Clear();
         foreach (MigrationPlayerState player in players)
         {
-            if (!player.HasBall || !rejoined.TryGetValue(player.Identity, out PlayerRef reference)) continue;
+            if (!rejoined.TryGetValue(player.Identity, out PlayerRef reference)) continue;
+            if (player.GameId >= 0 && player.GameId < maxPlayers)
+            {
+                coinSeats[reference] = player.GameId;
+                coinTeams[reference] = player.Team;
+            }
+            if (!player.HasBall) continue;
             aliveIds.Add(player.GameId);
             alivePlayerRefs.Add(reference);
             aliveTeams.Add(player.Team);
@@ -333,6 +385,7 @@ public class GameManager : NetworkBehaviour
         ReturnTimer = state.ReturnRunning ? TickTimer.CreateFromSeconds(Runner, Mathf.Max(0.01f, state.ReturnRemaining)) : TickTimer.None;
         StartTimer = state.StartRunning ? TickTimer.CreateFromSeconds(Runner, Mathf.Max(0.01f, state.StartRemaining)) : TickTimer.None;
         CheckWinner();
+        if (IsGameOver) AwardWinners();
         RefreshMigrationHud(players);
     }
 

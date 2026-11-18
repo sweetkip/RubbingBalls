@@ -125,6 +125,7 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         var result = await runner.StartGame(new StartGameArgs()
             {
                 GameMode = GameMode.Host,
+                SessionProperties = RubbingBalls.Accounts.LoginSession.Current.Coins.CreateRoomProof(),
                 SessionName = sessionName,
                 ConnectionToken = System.Text.Encoding.ASCII.GetBytes(migrationIdentity),
                 PlayerCount = maxPlayers,

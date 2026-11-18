@@ -10,6 +10,11 @@ public class MainPanels : MonoBehaviour
     [SerializeField] private SlidePanel charPanel;
     [SerializeField] private LobbyPanelUI publicPanel;
 
+    private void Start()
+    {
+        RubbingBalls.Accounts.LoginMenu.Attach(this);
+    }
+
     public void OpenPrivate()
     {
         mainBtns.SetActive(false);
