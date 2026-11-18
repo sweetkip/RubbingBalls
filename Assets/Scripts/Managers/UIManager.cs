@@ -8,6 +8,14 @@ public class UIManager : NetworkBehaviour
     public static UIManager Instance;
     [SerializeField] private PlayerHudSlot[] playerSlots;
     [SerializeField] private GameObject winPanel;
+    [Tooltip("Opcional. Si se deja vacío, el importe se agrega al título de victoria del mapa.")]
+    [SerializeField] private TMP_Text victoryRewardText;
+    private TMP_Text[] victoryTitles;
+    private string[] originalTitles;
+    [SerializeField] private Sprite victoryCoinSprite;
+    private RectTransform coinIcon;
+    private TMP_Text coinLabel;
+    private int shownReward;
     [SerializeField] private GameObject losePanel;
     [SerializeField] private TMP_Text returnTimerText;
 
@@ -24,6 +32,17 @@ public class UIManager : NetworkBehaviour
             return;
         }
         Instance = this;
+        if (victoryRewardText) victoryRewardText.text = "";
+        else if (winPanel)
+        {
+            // Algunos mapas dibujan el título con varias capas (color, sombra y contorno).
+            var title = winPanel.transform.Find("Victory") ?? winPanel.transform.Find("Txt_Victory");
+            if (title)
+            {
+                victoryTitles = title.GetComponentsInChildren<TMP_Text>(true);
+                originalTitles = System.Array.ConvertAll(victoryTitles, label => label.text);
+            }
+        }
         for (int i = 0; i < playerSlots.Length; i++)
         {
             if (playerSlots[i] != null)
@@ -33,8 +52,74 @@ public class UIManager : NetworkBehaviour
 
     private void Update()
     {
+        if (winPanel && winPanel.activeInHierarchy) RefreshVictoryReward();
         UpdateReturnTimer();
         UpdateStartCountdown();
+    }
+
+    private void RefreshVictoryReward()
+    {
+        int amount = 0;
+        var game = GameManager.Instance;
+        if (game && game.LocalAwardRound != null)
+        {
+            var session = RubbingBalls.Accounts.LoginSession.Current;
+            if (session.HasAccount && !session.Coins.TryGetReceipt(game.LocalAwardRound, out amount))
+                amount = -1;
+        }
+        if (shownReward == amount) return;
+        shownReward = amount;
+        string receipt = amount < 0 ? "…" : amount > 0 ? "+" + amount : "";
+        if (victoryRewardText) victoryRewardText.text = receipt;
+        else if (victoryTitles != null)
+        {
+            for (int i = 0; i < victoryTitles.Length; i++)
+            {
+                var title = victoryTitles[i];
+                var suffix = title.richText ? "  <size=60%>" + receipt + "</size>" : "  " + receipt;
+                title.textWrappingMode = TextWrappingModes.NoWrap;
+                title.text = amount != 0 ? originalTitles[i] + suffix : originalTitles[i];
+            }
+        }
+        UpdateCoinIcon(amount > 0);
+    }
+
+    private void UpdateCoinIcon(bool visible)
+    {
+        if (!visible || !victoryCoinSprite)
+        {
+            if (coinIcon) coinIcon.gameObject.SetActive(false);
+            return;
+        }
+
+        if (!coinIcon)
+        {
+            coinLabel = victoryRewardText;
+            if (!coinLabel && victoryTitles != null && victoryTitles.Length > 0)
+                coinLabel = victoryTitles[victoryTitles.Length - 1];
+            if (!coinLabel) return;
+
+            var icon = new GameObject("Moneda de victoria", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            icon.layer = coinLabel.gameObject.layer;
+            coinIcon = (RectTransform)icon.transform;
+            coinIcon.SetParent(coinLabel.rectTransform, false);
+            coinIcon.sizeDelta = new Vector2(30f, 30f);
+            coinIcon.pivot = new Vector2(0f, 0.5f);
+            var image = icon.GetComponent<UnityEngine.UI.Image>();
+            image.sprite = victoryCoinSprite;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            coinLabel.OnPreRenderText += PositionCoinIcon;
+        }
+        coinIcon.gameObject.SetActive(true);
+        coinLabel.ForceMeshUpdate();
+    }
+
+    private void PositionCoinIcon(TMP_TextInfo info)
+    {
+        if (!coinIcon || shownReward <= 0 || info.characterCount == 0) return;
+        var digit = info.characterInfo[info.characterCount - 1];
+        coinIcon.localPosition = new Vector3(digit.topRight.x + 6f, (digit.topRight.y + digit.bottomLeft.y) * 0.5f, 0f);
     }
 
     private void UpdateReturnTimer()

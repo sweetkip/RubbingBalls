@@ -12,6 +12,7 @@ public class LobbyName : MonoBehaviour
     [SerializeField] private TMP_Text nameButtonLabel;
     [SerializeField] private string defaultLabel = "Name";
 
+    private RubbingBalls.Accounts.AccountProfile profile;
     private int Limit => maxCharts > 0 ? maxCharts : 20;
 
     private void Awake()
@@ -22,11 +23,14 @@ public class LobbyName : MonoBehaviour
 
     private void Start()
     {
+        profile = RubbingBalls.Accounts.LoginSession.Current.Profile;
+        profile.Applied += RefreshLabel;
         RefreshLabel();
     }
 
     private void OnDestroy()
     {
+        if (profile) profile.Applied -= RefreshLabel;
         if (nickInput != null)
             nickInput.onEndEdit.RemoveListener(OnEndEdit);
     }
@@ -64,8 +68,7 @@ public class LobbyName : MonoBehaviour
 
     private void SaveNick(string nick)
     {
-        PlayerLocalData.Nickname = nick;
-        PlayerPrefs.SetString("PlayerName", nick);
+        profile.SetName(nick);
 
         LobbyPlayer localPlayer = PreGameLobbyUI.Instance != null ? PreGameLobbyUI.Instance.GetLocalLobbyPlayer() : null;
 

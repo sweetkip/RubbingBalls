@@ -4,6 +4,7 @@ using UnityEngine;
 public class LobbyPlayer : NetworkBehaviour
 {
     [SerializeField] private PlayerColorPalette palette;
+    private RubbingBalls.Accounts.AccountProfile profile;
 
     [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public byte ColorIndex { get; private set; }
     [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public byte SpriteIndex { get; private set; }
@@ -33,12 +34,25 @@ public class LobbyPlayer : NetworkBehaviour
 
         if (Object.HasInputAuthority)
         {
-            SelectColor((byte)PlayerLocalData.SelectedColor);
-            SelectSprite((byte)PlayerLocalData.SelectedTexture);
-            SetNick(PlayerLocalData.Nickname);
+            profile = RubbingBalls.Accounts.LoginSession.Current.Profile;
+            profile.Applied += SendLocalProfile;
+            SendLocalProfile();
         }
 
         PreGameLobbyUI.Instance?.RefreshLobby();
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        if (profile) profile.Applied -= SendLocalProfile;
+    }
+
+    private void SendLocalProfile()
+    {
+        if (!Object || !Object.IsValid || !Object.HasInputAuthority) return;
+        RPC_SelectColor((byte)PlayerLocalData.SelectedColor);
+        RPC_SelectSprite((byte)PlayerLocalData.SelectedTexture);
+        SetNick(PlayerLocalData.Nickname);
     }
 
     public void CaptureMigration(MigrationPlayerState state)
@@ -70,8 +84,7 @@ public class LobbyPlayer : NetworkBehaviour
         if (!Object.HasInputAuthority)
             return;
 
-        PlayerLocalData.SelectedColor = colorIndex;
-        PlayerPrefs.SetInt("PlayerColor", colorIndex);
+        profile.SetColor(colorIndex);
 
         RPC_SelectColor(colorIndex);
     }
@@ -107,8 +120,7 @@ public class LobbyPlayer : NetworkBehaviour
         if (!Object.HasInputAuthority)
             return;
 
-        PlayerLocalData.SelectedTexture = spriteIndex;
-        PlayerPrefs.SetInt("PlayerTexture", spriteIndex);
+        profile.SetSkin(spriteIndex);
 
         RPC_SelectSprite(spriteIndex);
     }

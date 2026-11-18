@@ -44,12 +44,14 @@ public class GameManager : NetworkBehaviour
     [Networked] public TickTimer StartTimer { get; private set; }
 
     private string coinRound;
+    public string LocalAwardRound { get; private set; }
     private readonly Dictionary<PlayerRef, int> coinSeats = new Dictionary<PlayerRef, int>();
     private readonly Dictionary<PlayerRef, byte> coinTeams = new Dictionary<PlayerRef, byte>();
     private readonly HashSet<int> queuedSeats = new HashSet<int>();
 
     public override void Spawned()
     {
+        LocalAwardRound = null;
         aliveIds.Clear();
         alivePlayerRefs.Clear();
         aliveTeams.Clear();
@@ -246,10 +248,12 @@ public class GameManager : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All, Channel = RpcChannel.Reliable)]
     private void RPC_CoinWin([RpcTarget] PlayerRef winner, string round) => ReceiveCoinWin(round);
 
-    private static void ReceiveCoinWin(string round)
+    private void ReceiveCoinWin(string round)
     {
         var session = RubbingBalls.Accounts.LoginSession.Current;
-        if (session.HasAccount) session.Coins.RecordWin(round);
+        if (!session.HasAccount) return;
+        LocalAwardRound = round;
+        session.Coins.RecordWin(round);
     }
 
     private int CountAliveInTeam(byte team)

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Text;
 using Fusion;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -15,25 +14,35 @@ namespace RubbingBalls.Accounts
         [Serializable] private class Award
         {
             public string round_id, account;
+            [NonSerialized] public bool sending;
+            [NonSerialized] public float retryAt, delay;
         }
 
         [Serializable] private class Claim { public string round_id; }
 
         private LoginSession session;
-        private string endpoint, apiKey, folder, displayedAccount;
+        private string folder, displayedAccount;
+        private readonly Dictionary<string, int> receipts = new Dictionary<string, int>();
+        private readonly Queue<string> receiptOrder = new Queue<string>();
+
+        internal bool TryGetReceipt(string round, out int amount)
+        {
+            amount = 0;
+            return round != null && receipts.TryGetValue(round, out amount);
+        }
+
         private bool reading, wanted, readFailed;
         private long? balance;
         private float nextRead;
+        private int balanceVersion;
         private readonly Dictionary<string, Award> pending = new Dictionary<string, Award>();
         public event Action Changed;
 
         public string BalanceText => balance.HasValue ? balance.Value.ToString(CultureInfo.InvariantCulture) : "";
 
-        internal void Configure(LoginSession login, string root, string publicKey)
+        internal void Configure(LoginSession login, string root)
         {
             session = login;
-            endpoint = root + "/rest/v1/rpc/";
-            apiKey = publicKey;
             folder = Path.Combine(Application.persistentDataPath, "CoinAwards", new Uri(root).IdnHost);
             try
             {
@@ -62,7 +71,12 @@ namespace RubbingBalls.Accounts
         {
             if (folder == null || !session.HasAccount || !Guid.TryParse(round, out _)) return;
             string key = round + "_" + session.AccountId;
-            if (pending.ContainsKey(key)) return;
+            if (receipts.ContainsKey(round)) return;
+            if (pending.TryGetValue(key, out var existing))
+            {
+                TrySend(key, existing);
+                return;
+            }
             var award = new Award { round_id = round, account = session.AccountId };
             pending.Add(key, award);
             var file = Path.Combine(folder, key + ".json");
@@ -76,37 +90,63 @@ namespace RubbingBalls.Accounts
                 }
             }
             catch (Exception error) { Debug.LogWarning("Monedas: envío pendiente en memoria. " + error.Message); }
+            TrySend(key, award);
         }
 
         private IEnumerator SendPending()
         {
-            float delay = 1f;
             while (true)
             {
-                if (pending.Count == 0 || !session.HasAccount) { yield return new WaitForSecondsRealtime(0.5f); continue; }
-                bool failed = false;
-                foreach (var entry in new List<KeyValuePair<string, Award>>(pending))
+                if (pending.Count > 0 && session.HasAccount)
                 {
-                    if (entry.Value.account != session.AccountId || !session.TryGetAccessToken(out string token)) continue;
-                    var claim = new Claim { round_id = entry.Value.round_id };
-                    using (var request = Post("rb_claim_win", JsonUtility.ToJson(claim)))
+                    foreach (var entry in pending)
                     {
-                        request.SetRequestHeader("Authorization", "Bearer " + token);
-                        yield return request.SendWebRequest();
-                        if (request.result != UnityWebRequest.Result.Success || request.downloadHandler.text.Trim() != "true")
+                        if (entry.Value.account == session.AccountId && !entry.Value.sending &&
+                            Time.unscaledTime >= entry.Value.retryAt)
                         {
-                            if (delay <= 1f) Debug.LogWarning("Monedas: premio pendiente (HTTP " + request.responseCode + "). Revisá la función rb_claim_win en Supabase.");
-                            failed = true;
-                            continue;
+                            TrySend(entry.Key, entry.Value);
+                            break;
                         }
                     }
-                    pending.Remove(entry.Key);
-                    try { File.Delete(Path.Combine(folder, entry.Key + ".json")); }
-                    catch (Exception error) when (error is IOException || error is UnauthorizedAccessException) { Debug.LogWarning("Monedas: " + error.Message); }
-                    nextRead = 0;
                 }
-                delay = failed ? Mathf.Min(delay * 2f, 60f) : 1f;
-                yield return new WaitForSecondsRealtime(delay);
+                yield return new WaitForSecondsRealtime(0.5f);
+            }
+        }
+
+        private void TrySend(string key, Award award)
+        {
+            if (!award.sending && session.AccountId == award.account && session.TryGetAccessToken(out string token))
+                StartCoroutine(SendAward(key, award, token));
+        }
+
+        private IEnumerator SendAward(string key, Award award, string token)
+        {
+            award.sending = true;
+            using (var request = session.Rpc("rb_win_receipt", JsonUtility.ToJson(new Claim { round_id = award.round_id }), token))
+            {
+                yield return request.SendWebRequest();
+                award.sending = false;
+                if (request.result != UnityWebRequest.Result.Success ||
+                    !int.TryParse(request.downloadHandler.text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out int amount) ||
+                    amount < 30 || amount > 50)
+                {
+                    if (award.delay == 0) Debug.LogWarning("Monedas: cobro pendiente (HTTP " + request.responseCode + ").");
+                    award.delay = Mathf.Clamp(award.delay * 2, 1, 60);
+                    award.retryAt = Time.unscaledTime + award.delay;
+                    yield break;
+                }
+                pending.Remove(key);
+                try { File.Delete(Path.Combine(folder, key + ".json")); }
+                catch (Exception error) when (error is IOException || error is UnauthorizedAccessException) { Debug.LogWarning("Monedas: " + error.Message); }
+                if (session.AccountId == award.account)
+                {
+                    receipts[award.round_id] = amount;
+                    receiptOrder.Enqueue(award.round_id);
+                    if (receiptOrder.Count > 32) receipts.Remove(receiptOrder.Dequeue());
+                    balanceVersion++;
+                    nextRead = 0;
+                    Changed?.Invoke();
+                }
             }
         }
 
@@ -120,6 +160,9 @@ namespace RubbingBalls.Accounts
         {
             if (displayedAccount == session.AccountId) return;
             displayedAccount = session.AccountId;
+            balanceVersion++;
+            receipts.Clear();
+            receiptOrder.Clear();
             balance = null;
             readFailed = false;
             nextRead = 0;
@@ -129,24 +172,23 @@ namespace RubbingBalls.Accounts
         private void Update()
         {
             if (wanted && !reading && Time.unscaledTime >= nextRead && session && session.TryGetAccessToken(out string token))
-                StartCoroutine(ReadBalance(session.AccountId, token));
+                StartCoroutine(ReadBalance(balanceVersion, token));
         }
 
-        private IEnumerator ReadBalance(string account, string token)
+        private IEnumerator ReadBalance(int version, string token)
         {
             reading = true;
-            using (var request = Post("rb_coins_balance", "{}"))
+            using (var request = session.Rpc("rb_coins_balance", "{}", token))
             {
-                request.SetRequestHeader("Authorization", "Bearer " + token);
                 yield return request.SendWebRequest();
-                if (session.AccountId == account && request.result == UnityWebRequest.Result.Success &&
+                if (version == balanceVersion && request.result == UnityWebRequest.Result.Success &&
                     long.TryParse(request.downloadHandler.text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out long amount))
                 {
                     readFailed = false;
                     balance = amount;
                     Changed?.Invoke();
                 }
-                else if (session.AccountId == account && !balance.HasValue && !readFailed)
+                else if (version == balanceVersion && !balance.HasValue && !readFailed)
                 {
                     readFailed = true;
                     Debug.LogWarning("Monedas: no se pudo leer el saldo (HTTP " + request.responseCode + ").");
@@ -154,19 +196,8 @@ namespace RubbingBalls.Accounts
                 }
             }
             reading = false;
-            nextRead = session.AccountId == account ? Time.unscaledTime + 10f : 0f;
+            nextRead = version == balanceVersion ? Time.unscaledTime + 10f : 0f;
         }
 
-        private UnityWebRequest Post(string method, string body)
-        {
-            var request = new UnityWebRequest(endpoint + method, "POST");
-            request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body));
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-            request.SetRequestHeader("apikey", apiKey);
-            request.timeout = 10;
-            request.redirectLimit = 0;
-            return request;
-        }
     }
 }

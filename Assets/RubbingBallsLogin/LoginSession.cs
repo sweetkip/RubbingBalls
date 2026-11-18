@@ -53,9 +53,19 @@ namespace RubbingBalls.Accounts
 
         public CoinWallet Coins { get; private set; }
 
+        public AccountProfile Profile { get; private set; }
+        private string projectRoot;
+
         private void Awake()
         {
             Coins = gameObject.AddComponent<CoinWallet>();
+            ConfigureConnection();
+            Profile = gameObject.AddComponent<AccountProfile>();
+            Profile.Initialize(this, projectRoot ?? "local");
+        }
+
+        private void ConfigureConnection()
+        {
             var file = Resources.Load<TextAsset>("RubbingBallsLogin/Settings");
             if (!file) return;
             Settings config;
@@ -68,13 +78,27 @@ namespace RubbingBalls.Accounts
             key = publicKey;
             baseUrl = url.GetLeftPart(UriPartial.Authority) + "/auth/v1/";
             store = new RememberedLogin(url.IdnHost);
-            Coins.Configure(this, url.GetLeftPart(UriPartial.Authority), key);
+            projectRoot = url.GetLeftPart(UriPartial.Authority);
+            Coins.Configure(this, projectRoot);
 
             var saved = store.Read();
             if (string.IsNullOrEmpty(saved)) return;
             remember = true;
             IsRestoring = true;
             Begin(Operation.Restore, "token?grant_type=refresh_token", JsonUtility.ToJson(new Refresh { refresh_token = saved }));
+        }
+
+        internal UnityWebRequest Rpc(string method, string json, string token = null)
+        {
+            var request = new UnityWebRequest(projectRoot + "/rest/v1/rpc/" + method, "POST");
+            request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("apikey", key);
+            if (!string.IsNullOrEmpty(token)) request.SetRequestHeader("Authorization", "Bearer " + token);
+            request.timeout = 10;
+            request.redirectLimit = 0;
+            return request;
         }
 
         private void OnDestroy() { store?.Dispose(); }

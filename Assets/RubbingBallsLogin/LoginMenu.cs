@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -12,7 +14,7 @@ namespace RubbingBalls.Accounts
 {
     public sealed class LoginMenu : MonoBehaviour
     {
-        private enum Page { Closed, Login, Guest, Account, Restoring }
+        private enum Page { Closed, Login, Guest, Account, Restoring, Ranking }
         private Page page;
         private LoginSession session;
         private MainPanels main;
@@ -28,6 +30,31 @@ namespace RubbingBalls.Accounts
         [SerializeField] private Button guest, acceptGuest, backToLogin, backToGame;
         [SerializeField] private Toggle rememberToggle;
         [SerializeField] private TMP_Text coinLabel;
+        private const int RowsPerPage = 6;
+        [Serializable] private class RankEntry
+        {
+            public long position, wins;
+            public string nickname;
+            public int color_index, skin_index;
+        }
+        [Serializable] private class RankReply { public RankEntry[] rows; }
+        [Serializable] private class RankQuery { public int start_at, page_size; }
+        [Serializable] private class RankRow
+        {
+            public GameObject root;
+            public TMP_Text place, nickname, wins;
+            public Image ball;
+        }
+
+        [Header("Ranking de victorias")]
+        [SerializeField] private Button rankingButton, previousPage, nextPage, reloadRanking, closeRanking;
+        [SerializeField] private GameObject rankingRoot;
+        [SerializeField] private TMP_Text rankingStatus;
+        [SerializeField] private RankRow[] rankRows;
+        [SerializeField] private PlayerColorPalette rankingPalette;
+        private int rankOffset, rankVersion;
+        private bool rankLoading, rankHasMore;
+        private float nextRankRead;
         private static readonly Color Panel = new Color32(28, 36, 59, 255);
         private static readonly Color Accent = new Color32(46, 101, 163, 255);
         private static readonly Color Secondary = new Color32(57, 69, 93, 255);
@@ -35,6 +62,8 @@ namespace RubbingBalls.Accounts
         private void Awake()
         {
             if (overlay) overlay.SetActive(false);
+            if (rankingRoot) rankingRoot.SetActive(false);
+            if (rankingButton) rankingButton.gameObject.SetActive(false);
         }
 
         public static void Attach(MainPanels main)
@@ -64,7 +93,7 @@ namespace RubbingBalls.Accounts
         [MenuItem("Tools/Rubbing Balls/Cerrar sesión en Play")]
         private static void SignOutInEditor()
         {
-            var active = Object.FindAnyObjectByType<LoginSession>();
+            var active = UnityEngine.Object.FindAnyObjectByType<LoginSession>();
             if (!active || !active.HasAccount || active.IsBusy)
             {
                 Debug.Log(active && active.IsBusy ? "Cuenta: esperá a que termine la solicitud y volvé a elegir Cerrar sesión." : "Cuenta: no hay una sesión autenticada en esta instancia.");
@@ -92,10 +121,11 @@ namespace RubbingBalls.Accounts
                 Undo.RegisterCreatedObjectUndo(menu.gameObject, "Crear interfaz de cuenta");
                 EditorSceneManager.MarkSceneDirty(scene);
             }
-            if (!menu.rememberToggle || !menu.coinLabel)
+            if (!menu.rememberToggle || !menu.coinLabel || !menu.rankingRoot || !menu.rankingButton)
             {
                 Undo.RegisterFullObjectHierarchyUndo(menu.gameObject, "Actualizar interfaz de cuenta");
                 menu.EnsureControls();
+                menu.EnsureRanking();
                 EditorUtility.SetDirty(menu);
                 EditorSceneManager.MarkSceneDirty(scene);
             }
@@ -120,6 +150,7 @@ namespace RubbingBalls.Accounts
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
             var menu = root.AddComponent<LoginMenu>();
             menu.BuildLayout();
+            menu.EnsureRanking();
             return menu;
         }
 
@@ -200,14 +231,141 @@ namespace RubbingBalls.Accounts
             }
         }
 
+        private void EnsureRanking()
+        {
+            if (!rankingPalette)
+            {
+                foreach (var root in gameObject.scene.GetRootGameObjects())
+                {
+                    var selector = root.GetComponentInChildren<BallSelector>(true);
+                    if (selector && selector.Palette) { rankingPalette = selector.Palette; break; }
+                }
+            }
+            if (!rankingButton)
+            {
+                rankingButton = MakeButton(transform, "Ranking", 0, 0, 138);
+                var corner = (RectTransform)rankingButton.transform;
+                corner.anchorMin = corner.anchorMax = corner.pivot = Vector2.one;
+                corner.anchoredPosition = new Vector2(-16, -16);
+                rankingButton.gameObject.SetActive(false);
+            }
+            if (rankingRoot) return;
+            var shade = Box(transform, "Ranking de victorias", new Color32(14, 18, 34, 225), 0, 0, 0, 0);
+            Stretch(shade);
+            rankingRoot = shade.gameObject;
+            var card = Box(shade, "Panel", Panel, 0, 0, 520, 470);
+            Label(card, "Ranking de victorias", 0, 195, 478, 43, 29);
+            Label(card, "Puesto", -196, 147, 84, 28, 16);
+            Label(card, "Jugador", -12, 147, 205, 28, 16, true);
+            Label(card, "Victorias", 180, 147, 111, 28, 16);
+            rankRows = new RankRow[RowsPerPage];
+            for (int i = 0; i < rankRows.Length; i++)
+            {
+                var line = Rect(card, "Fila " + (i + 1), 0, 107 - 39 * i, 482, 37);
+                var ball = Box(line, "Pelota", Color.white, -143, 0, 34, 34).GetComponent<Image>();
+                ball.preserveAspect = true;
+                ball.raycastTarget = false;
+                var name = Label(line, "", -12, 0, 205, 34, 20, true);
+                name.textWrappingMode = TextWrappingModes.NoWrap;
+                name.overflowMode = TextOverflowModes.Ellipsis;
+                rankRows[i] = new RankRow {
+                    root = line.gameObject, place = Label(line, "", -196, 0, 84, 34, 20),
+                    ball = ball, nickname = name, wins = Label(line, "", 180, 0, 111, 34, 21)
+                };
+                line.gameObject.SetActive(false);
+            }
+            rankingStatus = Label(card, "", 0, -128, 486, 33, 16);
+            previousPage = MakeButton(card, "Anterior", -177, -181, 108);
+            nextPage = MakeButton(card, "Siguiente", -59, -181, 108);
+            reloadRanking = MakeButton(card, "Actualizar", 59, -181, 108);
+            closeRanking = MakeButton(card, "Volver", 177, -181, 108, true);
+            rankingRoot.SetActive(false);
+        }
+
+        private void QueueRankingRefresh()
+        {
+            if (page == Page.Ranking) nextRankRead = 0;
+        }
+
+        private void LoadRankPage(int offset, bool opening = false)
+        {
+            offset = Mathf.Max(0, offset);
+            if (opening || offset != rankOffset)
+            {
+                foreach (var row in rankRows) row.root.SetActive(false);
+                rankHasMore = false;
+            }
+            rankOffset = offset;
+            int version = ++rankVersion;
+            rankLoading = true;
+            nextRankRead = Time.unscaledTime + 30;
+            rankingStatus.text = "Cargando…";
+            previousPage.interactable = nextPage.interactable = reloadRanking.interactable = false;
+            StartCoroutine(ReadRanking(version, offset));
+        }
+
+        private IEnumerator ReadRanking(int version, int offset)
+        {
+            RankEntry[] entries = null;
+            if (session.Configured)
+            {
+                var query = new RankQuery { start_at = offset, page_size = RowsPerPage + 1 };
+                session.TryGetAccessToken(out string token);
+                using (var req = session.Rpc("rb_wins_leaderboard", JsonUtility.ToJson(query), token))
+                {
+                    yield return req.SendWebRequest();
+                    if (version != rankVersion || page != Page.Ranking) yield break;
+                    if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+                    {
+                        try { entries = JsonUtility.FromJson<RankReply>("{\"rows\":" + req.downloadHandler.text + "}").rows; }
+                        catch (ArgumentException) { }
+                    }
+                }
+            }
+            rankLoading = false;
+            if (entries == null)
+                rankingStatus.text = "No se pudo cargar el ranking. Tocá Actualizar para reintentar.";
+            else
+            {
+                if (entries.Length == 0 && offset > 0) { LoadRankPage(0); yield break; }
+                rankHasMore = entries.Length > rankRows.Length;
+                int visible = Mathf.Min(entries.Length, rankRows.Length);
+                for (int i = 0; i < rankRows.Length; i++)
+                {
+                    var row = rankRows[i];
+                    row.root.SetActive(i < visible);
+                    if (i >= visible) continue;
+                    var entry = entries[i];
+                    row.place.text = entry.position.ToString();
+                    row.nickname.text = entry.nickname;
+                    row.wins.text = entry.wins.ToString();
+                    row.ball.sprite = rankingPalette ? rankingPalette.GetSprite(entry.skin_index) : null;
+                    row.ball.color = rankingPalette ? rankingPalette.GetColor(entry.color_index) : Color.white;
+                    row.ball.enabled = row.ball.sprite != null;
+                }
+                rankingStatus.text = visible == 0 ? "Todavía no hay victorias." : "";
+            }
+            previousPage.interactable = offset > 0;
+            nextPage.interactable = rankHasMore;
+            reloadRanking.interactable = true;
+        }
+
         private void Connect()
         {
             session = LoginSession.Current;
             wasAccount = session.HasAccount;
+            EnsureRanking();
+            rankingButton.onClick.AddListener(() => Show(Page.Ranking));
+            previousPage.onClick.AddListener(() => LoadRankPage(rankOffset - RowsPerPage));
+            nextPage.onClick.AddListener(() => LoadRankPage(rankOffset + RowsPerPage));
+            reloadRanking.onClick.AddListener(() => LoadRankPage(rankOffset));
+            closeRanking.onClick.AddListener(() => Show(Page.Closed));
+            session.Profile.Synced += QueueRankingRefresh;
             EnsureControls();
             rememberLabel.transform.parent.gameObject.SetActive(session.CanRemember);
             rememberToggle.SetIsOnWithoutNotify(false);
             session.Coins.Changed += RefreshBalance;
+            session.Coins.Changed += QueueRankingRefresh;
             if (badge)
             {
                 if (!badge.targetGraphic) badge.targetGraphic = badge.GetComponent<Graphic>();
@@ -309,14 +467,16 @@ namespace RubbingBalls.Accounts
 
         private void Show(Page next)
         {
+            if (page == Page.Ranking) rankVersion++;
             page = next;
             bool modal = page != Page.Closed;
             if (modal && !locked)
             {
-                if (overlay.transform != original.transform && overlay.transform.IsChildOf(original.transform))
+                var surface = page == Page.Ranking ? rankingRoot : overlay;
+                if (surface.transform != original.transform && surface.transform.IsChildOf(original.transform))
                 {
-                    if (!overlay.TryGetComponent<CanvasGroup>(out var modalGroup))
-                        modalGroup = overlay.AddComponent<CanvasGroup>();
+                    if (!surface.TryGetComponent<CanvasGroup>(out var modalGroup))
+                        modalGroup = surface.AddComponent<CanvasGroup>();
                     modalGroup.ignoreParentGroups = true;
                 }
                 oldInteractable = original.interactable;
@@ -327,7 +487,9 @@ namespace RubbingBalls.Accounts
             else if (!modal) Unlock();
             if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null);
             password.SetTextWithoutNotify("");
-            overlay.SetActive(modal && page != Page.Restoring);
+            overlay.SetActive(modal && page != Page.Restoring && page != Page.Ranking);
+            rankingRoot.SetActive(page == Page.Ranking);
+            if (page == Page.Ranking) LoadRankPage(0, true);
             loginForm.SetActive(page == Page.Login);
             guestForm.SetActive(page == Page.Guest);
             accountForm.SetActive(page == Page.Account);
@@ -352,6 +514,7 @@ namespace RubbingBalls.Accounts
             RefreshBalance();
             address.text = string.IsNullOrEmpty(session.StorageNotice) ? session.Email ?? "" : session.Email + "\n" + session.StorageNotice;
             logout.interactable = !session.IsBusy;
+            rankingButton.gameObject.SetActive(page == Page.Closed && main && main.isActiveAndEnabled);
             if (badge && !BadgeContainsCurrentPage())
                 badge.gameObject.SetActive(page == Page.Closed && main && main.isActiveAndEnabled);
         }
@@ -366,6 +529,10 @@ namespace RubbingBalls.Accounts
         {
             if (page == Page.Closed && main && badge && badge.gameObject.activeSelf != main.isActiveAndEnabled)
                 badge.gameObject.SetActive(main.isActiveAndEnabled);
+            if (page == Page.Closed && main && rankingButton && rankingButton.gameObject.activeSelf != main.isActiveAndEnabled)
+                rankingButton.gameObject.SetActive(main.isActiveAndEnabled);
+            if (page == Page.Ranking && !rankLoading && Time.unscaledTime >= nextRankRead)
+                LoadRankPage(rankOffset);
             if (session) session.Coins.ShowBalance(page == Page.Closed && main && main.isActiveAndEnabled && session.HasAccount);
         }
 
@@ -382,9 +549,11 @@ namespace RubbingBalls.Accounts
             if (session)
             {
                 session.Changed -= OnSessionChanged;
+                if (session.Profile) session.Profile.Synced -= QueueRankingRefresh;
                 if (session.Coins)
                 {
                     session.Coins.Changed -= RefreshBalance;
+                    session.Coins.Changed -= QueueRankingRefresh;
                     session.Coins.ShowBalance(false);
                 }
             }

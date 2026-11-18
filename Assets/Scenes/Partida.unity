@@ -4331,6 +4331,9 @@ MonoBehaviour:
   fallSoundVolume: 0.65
   feedbackMixer: {fileID: 0}
   _WinnerId: -1
+  _TeamsMatch:
+    RawValue: 0
+  _WinnerTeam: 255
   returnToLobbySeconds: 8
   readySeconds: 1
   setSeconds: 1
@@ -7247,6 +7250,8 @@ MonoBehaviour:
   - {fileID: 388949907}
   - {fileID: 383934028}
   winPanel: {fileID: 1578551303}
+  victoryRewardText: {fileID: 0}
+  victoryCoinSprite: {fileID: -7048899513232692213, guid: 2b2366053e2d89f41ac9fd709ca396c2, type: 3}
   losePanel: {fileID: 53434817}
   returnTimerText: {fileID: 174598187}
   startCountdownRoot: {fileID: 1020757314}

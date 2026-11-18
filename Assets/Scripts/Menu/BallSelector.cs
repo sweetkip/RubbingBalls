@@ -1,3 +1,4 @@
+using RubbingBalls.Accounts;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -34,37 +35,26 @@ public class BallSelector : MonoBehaviour
 
     private SelectionMode mode = SelectionMode.Color;
 
-    private void Start()
-    {
-        if (!PlayerPrefs.HasKey("PlayerName"))
-        {
-            PlayerPrefs.SetString("PlayerName", PlayerLocalData.Nickname);
-        }
-        if (!PlayerPrefs.HasKey("PlayerColor"))
-        {
-            PlayerPrefs.SetInt("PlayerColor", PlayerLocalData.SelectedColor);
-        }
-        if (!PlayerPrefs.HasKey("PlayerTexture"))
-        {
-            PlayerPrefs.SetInt("PlayerTexture", PlayerLocalData.SelectedTexture);
-        }
-
-        PlayerLocalData.Nickname = PlayerPrefs.GetString("PlayerName");
-        PlayerLocalData.SelectedColor = PlayerPrefs.GetInt("PlayerColor");
-        PlayerLocalData.SelectedTexture = PlayerPrefs.GetInt("PlayerTexture");
-        if (nickInput != null)
-            nickInput.text = PlayerLocalData.Nickname;
-        RefreshPreview();
-        RefreshBtns();
-    }
+    public PlayerColorPalette Palette => palette;
+    private AccountProfile profile;
 
     private void OnEnable()
     {
-        if (nickInput != null)
-            nickInput.text = PlayerLocalData.Nickname;
-
-        RefreshPreview();
+        profile = LoginSession.Current.Profile;
+        profile.Applied += RefreshLocal;
+        RefreshLocal();
         RefreshBtns();
+    }
+
+    private void OnDisable()
+    {
+        if (profile) profile.Applied -= RefreshLocal;
+    }
+
+    private void RefreshLocal()
+    {
+        if (nickInput && !nickInput.isFocused) nickInput.SetTextWithoutNotify(PlayerLocalData.Nickname);
+        RefreshPreview();
     }
 
     public void SetColor()
@@ -89,18 +79,15 @@ public class BallSelector : MonoBehaviour
             if (palette == null || palette.CountColors == 0)
                 return;
 
-            PlayerLocalData.SelectedColor = dir > 0 ? palette.NextIndex(PlayerLocalData.SelectedColor) : palette.PreviousIndex(PlayerLocalData.SelectedColor);
+            profile.SetColor(dir > 0 ? palette.NextIndex(PlayerLocalData.SelectedColor) : palette.PreviousIndex(PlayerLocalData.SelectedColor));
         }
         else
         {
             if (palette == null || palette.CountSprites == 0)
                 return;
 
-            PlayerLocalData.SelectedTexture = dir > 0 ? palette.NextSpriteIndex(PlayerLocalData.SelectedTexture) : palette.PreviousSpriteIndex(PlayerLocalData.SelectedTexture);
+            profile.SetSkin(dir > 0 ? palette.NextSpriteIndex(PlayerLocalData.SelectedTexture) : palette.PreviousSpriteIndex(PlayerLocalData.SelectedTexture));
         }
-
-        PlayerPrefs.SetInt("PlayerColor", PlayerLocalData.SelectedColor);
-        PlayerPrefs.SetInt("PlayerTexture", PlayerLocalData.SelectedTexture);
 
         RefreshPreview();
     }
@@ -111,7 +98,8 @@ public class BallSelector : MonoBehaviour
             colorPreview.color = palette.GetColor(PlayerLocalData.SelectedColor);
 
         if (texturePreview != null && palette != null && palette.CountSprites > 0)
-            texturePreview.sprite = textures[PlayerLocalData.SelectedTexture];
+            texturePreview.sprite = textures != null && PlayerLocalData.SelectedTexture < textures.Length
+                ? textures[PlayerLocalData.SelectedTexture] : palette.GetSprite(PlayerLocalData.SelectedTexture);
     }
 
     private void RefreshBtns()
@@ -136,7 +124,7 @@ public class BallSelector : MonoBehaviour
 
     public void ChangeName()
     {
-        PlayerLocalData.Nickname = nickInput.text;
-        PlayerPrefs.SetString("PlayerName", PlayerLocalData.Nickname);
+        profile.SetName(nickInput.text);
+        nickInput.SetTextWithoutNotify(PlayerLocalData.Nickname);
     }
 }
