@@ -9,6 +9,11 @@ public class PlayersChat : NetworkBehaviour
     [SerializeField] private TMP_InputField input;
     [SerializeField] private Button chatButton;
     [SerializeField] private NetworkObject chatManager;
+
+    private const int MaxMessageLength = 100;
+    private const float MinSecondsBetweenMessages = 0.5f;
+    private float lastMessageTime = -10f;
+
     private string chatName;
     public NetworkObject MigrationChatPrefab => chatManager;
 
@@ -23,7 +28,7 @@ public class PlayersChat : NetworkBehaviour
         chatButton.onClick.AddListener(SendMessaje);
         input.onEndEdit.AddListener(OnInputEndEdit);
 
-        if(PlayerPrefs.HasKey("PlayerName"))
+        if (PlayerPrefs.HasKey("PlayerName"))
         {
             chatName = PlayerPrefs.GetString("PlayerName");
         }
@@ -46,7 +51,7 @@ public class PlayersChat : NetworkBehaviour
         if (!HasInputAuthority) return;
         if (string.IsNullOrEmpty(input.text)) return;
 
-        RPC_SendMessage(input.text, chatName);
+        RPC_SendMessage(input.text);   
         input.text = "";
     }
     private void OnInputEndEdit(string text)
@@ -57,9 +62,25 @@ public class PlayersChat : NetworkBehaviour
         }
     }
 
+    
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    private void RPC_SendMessage(string message, string name, RpcInfo info = default)
+    private void RPC_SendMessage(string message, RpcInfo info = default)
     {
+        
+        if (string.IsNullOrWhiteSpace(message)) return;
+
+       
+        if (Time.time - lastMessageTime < MinSecondsBetweenMessages) return;
+        lastMessageTime = Time.time;
+
+        
+        if (message.Length > MaxMessageLength)
+            message = message.Substring(0, MaxMessageLength);
+
+       
+        LobbyPlayer lobbyPlayer = GetComponent<LobbyPlayer>();
+        string name = lobbyPlayer != null ? lobbyPlayer.Nickname.ToString() : "Player";
+
         ChatManager.Instance.AddMessage(name + ": " + message);
     }
 
