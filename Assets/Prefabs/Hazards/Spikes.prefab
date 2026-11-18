@@ -17,12 +17,24 @@ PrefabInstance:
       value: Spikes
       objectReference: {fileID: 0}
     - target: {fileID: 5501252217536803161, guid: fa5a0f1d32808424782677f0d6b927ff, type: 3}
+      propertyPath: m_Size.x
+      value: 2.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501252217536803161, guid: fa5a0f1d32808424782677f0d6b927ff, type: 3}
+      propertyPath: m_Size.y
+      value: 2.34
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501252217536803161, guid: fa5a0f1d32808424782677f0d6b927ff, type: 3}
+      propertyPath: m_Offset.y
+      value: -0.13
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501252217536803161, guid: fa5a0f1d32808424782677f0d6b927ff, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.x
-      value: 4.47
+      value: 2.54
       objectReference: {fileID: 0}
     - target: {fileID: 5501252217536803161, guid: fa5a0f1d32808424782677f0d6b927ff, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.y
-      value: 3.97
+      value: 2.5701187
       objectReference: {fileID: 0}
     - target: {fileID: 6175270286102966773, guid: fa5a0f1d32808424782677f0d6b927ff, type: 3}
       propertyPath: m_LocalScale.x
