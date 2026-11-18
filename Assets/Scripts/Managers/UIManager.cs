@@ -219,6 +219,14 @@ public class UIManager : NetworkBehaviour
             slot.SetDisconnected();
     }
 
+    public void SetPlayerSpeaking(int id, bool speaking)
+    {
+        PlayerHudSlot slot = GetSlot(id);
+
+        if (slot != null)
+            slot.SetSpeaking(speaking);
+    }
+
     public void GameIsOver(bool won)
     {
         winPanel.SetActive(won);

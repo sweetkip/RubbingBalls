@@ -108,6 +108,7 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (IsMigrating || migrationClosing || isInSession || !ValidateMigrationSetup()) return;
         ResetMigrationSession(true);
+        VoiceSettings.ResetMute();
         if (string.IsNullOrWhiteSpace(sessionName))
         {
             SetStatus("Insert a name for the room", true);
@@ -161,6 +162,7 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (IsMigrating || migrationClosing || isInSession || !ValidateMigrationSetup()) return;
         ResetMigrationSession(false);
+        VoiceSettings.ResetMute();
         if (string.IsNullOrWhiteSpace(sessionName))
         {
             SetStatus("Insert a name for the room", true);

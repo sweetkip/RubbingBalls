@@ -314,6 +314,7 @@ GameObject:
   - component: {fileID: 3364371015584382175}
   - component: {fileID: -774008284748766507}
   - component: {fileID: 6631588862940123669}
+  - component: {fileID: 2022554412723209839}
   m_Layer: 0
   m_Name: Ball
   m_TagString: Untagged
@@ -716,6 +717,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6376dd7fc23b3764483a7349b58502e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: PhotonVoice.Fusion::Photon.Voice.Fusion.VoiceNetworkObject
+--- !u!114 &2022554412723209839
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7954781137594083428}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4e4b51bbc6906949938f9f9a9492bbc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerVoice
+  pushToTalkKey: 32
+  talkHoldSeconds: 0.25
 --- !u!1 &8578397537785521570
 GameObject:
   m_ObjectHideFlags: 0
@@ -762,8 +777,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91175dcc15224463780e01a8a98b1b60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: PhotonVoice::Photon.Voice.Unity.Recorder
-  voiceDetection: 0
-  voiceDetectionThreshold: 0.01
+  voiceDetection: 1
+  voiceDetectionThreshold: 0.03
   voiceDetectionDelayMs: 500
   interestGroup: 0
   useTargetPlayers: 0
@@ -771,7 +786,7 @@ MonoBehaviour:
   debugEchoMode: 0
   reliableMode: 0
   encrypt: 0
-  transmitEnabled: 1
+  transmitEnabled: 0
   samplingRate: 48000
   frameDuration: 40000
   bitrate: 30000

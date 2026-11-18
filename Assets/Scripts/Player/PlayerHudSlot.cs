@@ -20,12 +20,47 @@ public class PlayerHudSlot : MonoBehaviour
     [SerializeField] private TMP_Text percentShadowText;
     [SerializeField] private float percentPerDamageUnit = 100f;
 
+    [Header("Voice")]
+    [Tooltip("The SpeakerIcon child. If left empty, the first child whose name starts with SpeakerIcon is used.")]
+    [SerializeField] private GameObject speakerIcon;
+
     [Header("Out of the match")]
     [SerializeField] private string lostLabel = "OUT";
     [SerializeField] private string disconnectedLabel = "LEFT";
     [SerializeField] private Color outSpriteColor = new Color(0.4f, 0.4f, 0.4f, 1f);
 
     private SlotState state = SlotState.Playing;
+
+    private void Awake()
+    {
+        if (speakerIcon == null)
+        {
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                Transform child = transform.GetChild(i);
+
+                if (child.name.StartsWith("SpeakerIcon"))
+                {
+                    speakerIcon = child.gameObject;
+                    break;
+                }
+            }
+        }
+
+        SetSpeaking(false);
+    }
+
+    public void SetSpeaking(bool speaking)
+    {
+        if (speakerIcon == null)
+            return;
+
+        if (state != SlotState.Playing)
+            speaking = false;
+
+        if (speakerIcon.activeSelf != speaking)
+            speakerIcon.SetActive(speaking);
+    }
 
     public void Show()
     {
@@ -78,6 +113,7 @@ public class PlayerHudSlot : MonoBehaviour
             return;
 
         state = newState;
+        SetSpeaking(false);
         SetLives(0);
         if (nameText != null)
             nameText.text = label;

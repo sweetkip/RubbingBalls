@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad2e92977c415f34f835dd5124b21f51, type: 3}
+  m_Name: VoiceIcons
+  m_EditorClassIdentifier: Assembly-CSharp::VoiceIcons
+  mutedIcon: {fileID: -1312846331552616684, guid: ec04fed6c7a3ce0428a574b2d6e0153a, type: 3}
+  unmutedIcon: {fileID: -4389860580247350747, guid: 6141c482926e5634cb66b20010fe6a35, type: 3}
+  continuousIcon: {fileID: -488658536467212750, guid: 93f4e228ea96558478602b55add73ac5, type: 3}
+  pushToTalkIcon: {fileID: -5140064950647669258, guid: 0809ac0fd36b1fb4ca3d522fdc4a68c2, type: 3}

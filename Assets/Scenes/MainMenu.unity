@@ -899,6 +899,7 @@ GameObject:
   - component: {fileID: 119232026}
   - component: {fileID: 119232028}
   - component: {fileID: 119232027}
+  - component: {fileID: 119232029}
   m_Layer: 5
   m_Name: Txt_Status
   m_TagString: Untagged
@@ -972,8 +973,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 50
-  m_fontSizeBase: 50
+  m_fontSize: 45
+  m_fontSizeBase: 45
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1025,6 +1026,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 119232025}
   m_CullTransparentMesh: 1
+--- !u!114 &119232029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 119232025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01df4340d72020247bb3e3e5ec09c7e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedEllipsis
+  stepSeconds: 0.4
 --- !u!1 &135262989
 GameObject:
   m_ObjectHideFlags: 0
