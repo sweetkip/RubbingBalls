@@ -561,6 +561,21 @@ public class Ball : NetworkBehaviour
         feedback.PlayRespawn();
     }
 
+    public void PlayTrampolineBounce(Vector2 trampolinePosition)
+    {
+        if (Object == null || !Object.IsValid || !Object.HasStateAuthority)
+            return;
+
+        RPC_PlayTrampolineBounce(trampolinePosition);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, Channel = RpcChannel.Unreliable)]
+    private void RPC_PlayTrampolineBounce(Vector2 trampolinePosition)
+    {
+        TrampolineHazard.PlayNear(trampolinePosition);
+    }
+
+
     private void CancelAim()
     {
         wasPressed = false;

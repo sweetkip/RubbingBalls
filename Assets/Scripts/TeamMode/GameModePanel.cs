@@ -42,29 +42,29 @@ public class GameModePanel : MonoBehaviour
         TeamSelectController teams = TeamSelectController.Instance;
         bool busy = (vote != null && vote.IsActive) || (teams != null && teams.IsActive);
 
+        // El panel de modo y el botón Ready se ocultan mientras hay votación de mapa o selección de equipos
+        panelRoot.SetActive(!busy);
+
         if (readyButtonRoot != null)
             readyButtonRoot.SetActive(!busy);
 
         GameModeController controller = GameModeController.Instance;
 
-        // Labels are updated for everybody, because the label on the middle button
-        // may still be visible to clients.
-        if (controller != null)
-        {
-            int current = (int)controller.Mode;
-            int other = (current + 1) % modeNames.Length;
+        // Las flechas son solo del host. Hasta que el controller exista no sabemos quién es el host,
+        // así que quedan ocultas y no parpadean en el cliente.
+        bool isHost = controller != null && controller.IsHost;
+        previousButton.gameObject.SetActive(isHost);
+        nextButton.gameObject.SetActive(isHost);
 
-            selectedLabel.text = modeNames[current];
-            otherLabel.text = modeNames[other];
-        }
-
-        // Only the host sees the panel. Until the controller exists nobody knows who the host is,
-        // so the panel stays hidden (no flash on the clients).
-        bool showPanel = controller != null && controller.IsHost && !busy;
-        panelRoot.SetActive(showPanel);
-
-        if (!showPanel)
+        if (controller == null)
             return;
+
+        // Los textos se actualizan para todos, así el cliente ve qué modo está elegido
+        int current = (int)controller.Mode;
+        int other = (current + 1) % modeNames.Length;
+
+        selectedLabel.text = modeNames[current];
+        otherLabel.text = modeNames[other];
 
         previousButton.interactable = controller.CanChangeMode;
         nextButton.interactable = controller.CanChangeMode;
