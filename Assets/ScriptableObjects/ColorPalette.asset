@@ -13,14 +13,16 @@ MonoBehaviour:
   m_Name: ColorPalette
   m_EditorClassIdentifier: Assembly-CSharp::PlayerColorPalette
   colors:
-  - {r: 1, g: 0, b: 0, a: 1}
-  - {r: 0, g: 1, b: 0, a: 1}
-  - {r: 0, g: 0, b: 1, a: 1}
-  - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  - {r: 0, g: 1, b: 1, a: 1}
-  - {r: 1, g: 0, b: 1, a: 1}
-  - {r: 1, g: 0.5490196, b: 0, a: 1}
+  - {r: 0.8666667, g: 0.019607844, b: 0, a: 1}
+  - {r: 0.31764707, g: 0.8666667, b: 0, a: 1}
+  - {r: 0, g: 0.1254902, b: 0.8666667, a: 1}
+  - {r: 0.8666667, g: 0.8039216, b: 0, a: 1}
+  - {r: 0, g: 0.5647059, b: 0.8784314, a: 1}
+  - {r: 0.8666667, g: 0, b: 0.7647059, a: 1}
+  - {r: 0.8666667, g: 0.47058824, b: 0, a: 1}
+  - {r: 0.52156866, g: 0, b: 0.85882354, a: 1}
   - {r: 1, g: 1, b: 1, a: 1}
+  - {r: 0.30980393, g: 0.30980393, b: 0.30980393, a: 1}
   sprites:
   - {fileID: -4824871906443745265, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
   - {fileID: -4120015347156684875, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
@@ -31,5 +33,5 @@ MonoBehaviour:
   - {fileID: -7048620242059489554, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
   - {fileID: 2948586714716120069, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
   defaultSprite: {fileID: -4824871906443745265, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-  teamRedColor: {r: 1, g: 0, b: 0, a: 1}
-  teamBlueColor: {r: 0, g: 0, b: 1, a: 1}
+  teamRedColor: {r: 0.8666667, g: 0.019607844, b: 0, a: 1}
+  teamBlueColor: {r: 0, g: 0.5647059, b: 0.8784314, a: 1}
