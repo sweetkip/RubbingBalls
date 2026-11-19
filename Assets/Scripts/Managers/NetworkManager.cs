@@ -555,7 +555,7 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             else if (team == LobbyPlayer.TeamBlue)
                 blue++;
             else
-                return false;   // alguien sin equipo: no es una partida por equipos válida
+                return false;
         }
 
         return red > 0 && blue > 0;

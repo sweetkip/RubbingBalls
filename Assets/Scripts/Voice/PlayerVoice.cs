@@ -3,14 +3,9 @@ using Photon.Voice.Fusion;
 using Photon.Voice.Unity;
 using UnityEngine;
 
-// Goes on the root of LobbyPlayer.prefab and Ball.prefab (next to NetworkObject and VoiceNetworkObject).
-// It does two things:
-//  1) If this object is MINE (input authority): decides whether the Recorder transmits.
-//  2) For EVERY player: exposes IsTalking (is this player making sound now?) to draw the icon.
 public class PlayerVoice : MonoBehaviour
 {
     [SerializeField] private KeyCode pushToTalkKey = KeyCode.Space;
-    [Tooltip("How long the icon stays on after the last sound, so it does not flicker")]
     [SerializeField] private float talkHoldSeconds = 0.25f;
 
     private NetworkObject networkObject;
@@ -30,7 +25,6 @@ public class PlayerVoice : MonoBehaviour
         recorder = GetComponentInChildren<Recorder>(true);
         ball = GetComponent<Ball>();
 
-        // Nobody transmits by default until ApplyTransmitRule says so.
         if (recorder != null)
             recorder.TransmitEnabled = false;
     }
@@ -51,8 +45,6 @@ public class PlayerVoice : MonoBehaviour
         ClearHud();
     }
 
-    // One rule: muted always wins.
-    //   transmit = NOT muted  AND  (continuous mode  OR  space held while not typing)
     private void ApplyTransmitRule()
     {
         if (recorder == null)
@@ -82,13 +74,11 @@ public class PlayerVoice : MonoBehaviour
 
         if (voice != null)
         {
-            // Remote player: their Speaker is playing audio that arrived from the network.
             Speaker speaker = voice.SpeakerInUse;
 
             if (speaker != null && speaker.IsPlaying)
                 soundNow = true;
 
-            // Local player: my Recorder is really sending.
             Recorder activeRecorder = voice.RecorderInUse;
 
             if (activeRecorder != null && activeRecorder.IsCurrentlyTransmitting)
@@ -107,7 +97,6 @@ public class PlayerVoice : MonoBehaviour
             return;
         }
 
-        // The ball id arrives over the network: if it changes, move the icon to the right slot.
         if (ball != null && ball.id != hudId)
             PushToHud(IsTalking);
     }

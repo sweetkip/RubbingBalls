@@ -2,9 +2,6 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-// One per scene (Lobby, Partida, map2, map3, map4), next to the two buttons.
-// It never touches the microphone: it only changes VoiceSettings and draws the icons.
-// PlayerVoice is the one that applies the result to the Recorder.
 public class VoiceControlsUI : MonoBehaviour
 {
     [SerializeField] private VoiceIcons icons;
@@ -58,7 +55,6 @@ public class VoiceControlsUI : MonoBehaviour
         ReleaseSelection();
     }
 
-    // After a click the button stays "selected", and the Enter key would press it again.
     private static void ReleaseSelection()
     {
         if (EventSystem.current != null)

@@ -2,8 +2,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-// Answers one question: "is the player typing in a text box right now?".
-// Hotkeys (M, Space) must be ignored while the answer is yes.
 public static class TextInputFocus
 {
     public static bool IsTyping()

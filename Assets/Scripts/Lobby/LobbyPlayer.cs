@@ -11,7 +11,6 @@ public class LobbyPlayer : NetworkBehaviour
     [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public NetworkBool IsReady { get; private set; }
     [Networked, OnChangedRender(nameof(OnLobbyStateChanged))] public NetworkString<_32> Nickname { get; private set; }
 
-    // Arriba de todo, junto a las otras propiedades [Networked]:
     public const byte NoVote = 255;
     public const byte NoTeam = 255;
     public const byte TeamRed = 0;

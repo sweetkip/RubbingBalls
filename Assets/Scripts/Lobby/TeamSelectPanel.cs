@@ -11,7 +11,7 @@ public class TeamSelectPanel : MonoBehaviour
     [SerializeField] private TMP_Text blueNamesText;
     [SerializeField] private TMP_Text messageText;
     [SerializeField] private Button cancelButton;
-    [SerializeField] private GameObject cancelRoot;   // el marco del botón Cancel (Cancel_Frame)
+    [SerializeField] private GameObject cancelRoot;
 
     private TeamPhase lastPhase = TeamPhase.Idle;
 
@@ -50,7 +50,6 @@ public class TeamSelectPanel : MonoBehaviour
         redButton.interactable = local != null && myTeam != LobbyPlayer.TeamRed;
         blueButton.interactable = local != null && myTeam != LobbyPlayer.TeamBlue;
 
-        // Se oculta el marco entero (si está asignado); si no, solo el botón como antes
         GameObject cancelTarget = cancelRoot != null ? cancelRoot : cancelButton.gameObject;
         cancelTarget.SetActive(controller.IsHost);
     }

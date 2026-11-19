@@ -19,7 +19,6 @@ public class PauseMenu : MonoBehaviour
         if (settingsPanel != null)
             settingsPanel.Closed -= ShowMainPanel;
 
-        // Si cambia la escena con el menú abierto, no dejar el input bloqueado
         if (isOpen && NetworkManager.Instance != null)
             NetworkManager.Instance.SetInputEnabled(true);
     }

@@ -2,7 +2,6 @@ using UnityEngine;
 
 public abstract class Hazard : MonoBehaviour
 {
-    // Los hazards que siguen actuando mientras la bola está encima lo ponen en true
     protected virtual bool ActsWhileInside => false;
 
     private void OnTriggerEnter2D(Collider2D other)

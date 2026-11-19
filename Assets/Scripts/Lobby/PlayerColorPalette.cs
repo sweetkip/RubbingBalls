@@ -43,7 +43,6 @@ public class PlayerColorPalette : ScriptableObject
         return color;
     }
 
-    // Si el jugador tiene equipo usa el color del equipo; si no, el que eligió él
     public Color GetPlayerColor(int colorIndex, byte team)
     {
         if (team == LobbyPlayer.TeamRed || team == LobbyPlayer.TeamBlue)

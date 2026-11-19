@@ -138,7 +138,6 @@ public class MapVotePanel : MonoBehaviour
         }
     }
 
-    // Salta de a un mapa empatado por vez, según cuánto pasó desde que empezó la ruleta
     private int GetRouletteMap(MapVoteController controller)
     {
         int candidateCount = 0;
