@@ -3,11 +3,11 @@ using UnityEngine;
 
 public enum VotePhase : byte
 {
-    Idle = 0,       // todavía no empezó la votación
-    Voting = 1,     // los jugadores votan
-    Roulette = 2,   // hubo empate: se sortea entre los empatados
-    Countdown = 3,  // ya hay mapa ganador, cuenta regresiva
-    Loading = 4     // se está cargando la escena
+    Idle = 0,
+    Voting = 1,
+    Roulette = 2,
+    Countdown = 3,
+    Loading = 4
 }
 
 public class MapVoteController : NetworkBehaviour
@@ -57,7 +57,6 @@ public class MapVoteController : NetworkBehaviour
             Instance = null;
     }
 
-    // Lo llama el NetworkManager cuando todos están Ready (solo en el host)
     public void BeginVoting()
     {
         if (!Object.HasStateAuthority || IsActive)
@@ -140,7 +139,6 @@ public class MapVoteController : NetworkBehaviour
                 maxVotes = votes[i];
         }
 
-        // Candidatos: los mapas con más votos. Si nadie votó, son todos.
         int mask = 0;
         int candidateCount = 0;
 
@@ -153,7 +151,6 @@ public class MapVoteController : NetworkBehaviour
             }
         }
 
-        // El ganador se sortea ACÁ, antes de cualquier animación
         int pick = UnityEngine.Random.Range(0, candidateCount);
         int winner = 0;
 
@@ -231,7 +228,6 @@ public class MapVoteController : NetworkBehaviour
         return count;
     }
 
-    // Cuenta los votos de cada mapa. Lo usan el host y el panel.
     public static int[] CountVotes(NetworkRunner runner, int mapCount)
     {
         int[] votes = new int[mapCount];

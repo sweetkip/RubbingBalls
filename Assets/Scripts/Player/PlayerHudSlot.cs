@@ -20,7 +20,6 @@ public class PlayerHudSlot : MonoBehaviour
     [SerializeField] private float percentPerDamageUnit = 100f;
 
     [Header("Voice")]
-    [Tooltip("The SpeakerIcon child. If left empty, the first child whose name starts with SpeakerIcon is used.")]
     [SerializeField] private GameObject speakerIcon;
 
     [Header("Out of the match")]

@@ -656,7 +656,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &174598186
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2667,8 +2667,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4293830144
+  m_fontColor: {r: 0, g: 0.6509804, b: 0.93333334, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -3671,7 +3671,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 909508467805956307, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -1090
       objectReference: {fileID: 0}
     - target: {fileID: 909508467805956307, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -3693,6 +3693,10 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: Cancel
       objectReference: {fileID: 0}
+    - target: {fileID: 2395356558580059699, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
+      propertyPath: hiddenPos.y
+      value: -1090
+      objectReference: {fileID: 0}
     - target: {fileID: 2857504260823837761, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -3701,13 +3705,25 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: Confirm
       objectReference: {fileID: 0}
+    - target: {fileID: 3115132782716556429, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1311903260}
+    - target: {fileID: 3115132782716556429, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Cancel
+      objectReference: {fileID: 0}
+    - target: {fileID: 3115132782716556429, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: DoYouReallyWantToCloseRubbingBalls, Assembly-CSharp
+      objectReference: {fileID: 0}
     - target: {fileID: 5224399767456760094, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
       propertyPath: m_Name
       value: Panel_Exit
       objectReference: {fileID: 0}
     - target: {fileID: 5224399767456760094, guid: 3fd02525d0859f9479744fcc585f4713, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3872,6 +3888,18 @@ MonoBehaviour:
   setSeconds: 1
   goSeconds: 0.75
   allowPlayDuringGo: 1
+  _Rules:
+    version: 0
+    dashes: 0
+    gravity: 0
+    aim_gravity_ratio: 0
+    bounce: 0
+    max_force: 0
+    drag_distance: 0
+    spawn_immunity: 0
+    damage_scale: 0
+    push_scale: 0
+    trampoline_scale: 0
 --- !u!4 &616907679
 Transform:
   m_ObjectHideFlags: 0
@@ -4101,8 +4129,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4293830144
+  m_fontColor: {r: 0, g: 0.6509804, b: 0.93333334, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -5858,8 +5886,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4293830144
+  m_fontColor: {r: 0, g: 0.6509804, b: 0.93333334, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -7295,7 +7323,6 @@ RectTransform:
   m_Children:
   - {fileID: 1126851401}
   - {fileID: 1837897382}
-  - {fileID: 603593243}
   - {fileID: 1218431121}
   - {fileID: 53434818}
   - {fileID: 1578551304}
@@ -7312,6 +7339,7 @@ RectTransform:
   - {fileID: 959936389}
   - {fileID: 521590986}
   - {fileID: 1020757315}
+  - {fileID: 603593243}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -9891,8 +9919,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4293830144
+  m_fontColor: {r: 0, g: 0.6509804, b: 0.93333334, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

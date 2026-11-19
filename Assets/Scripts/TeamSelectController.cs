@@ -3,9 +3,9 @@ using UnityEngine;
 
 public enum TeamPhase : byte
 {
-    Idle = 0,       // no hay selección de equipos en curso
-    Selecting = 1,  // los jugadores eligen equipo
-    Countdown = 2   // formación válida: cuenta regresiva antes de votar el mapa
+    Idle = 0,
+    Selecting = 1,
+    Countdown = 2
 }
 
 public class TeamSelectController : NetworkBehaviour
@@ -46,7 +46,6 @@ public class TeamSelectController : NetworkBehaviour
             Instance = null;
     }
 
-    // Lo llama el NetworkManager cuando todos están Ready y el modo es Teams (solo en el host)
     public void BeginSelecting()
     {
         if (!Object.HasStateAuthority || IsActive)
@@ -55,7 +54,6 @@ public class TeamSelectController : NetworkBehaviour
         SetPhase(TeamPhase.Selecting, 0f);
     }
 
-    // Lo llama LobbyPlayer cuando alguien cambia de equipo
     public void OnTeamChanged()
     {
         if (!Object.HasStateAuthority)
@@ -65,7 +63,6 @@ public class TeamSelectController : NetworkBehaviour
             SetPhase(TeamPhase.Selecting, 0f);
     }
 
-    // Botón Cancel del host (y cancelación automática si queda un solo jugador)
     public void Cancel()
     {
         if (!Object.HasStateAuthority || !IsActive)
@@ -82,7 +79,6 @@ public class TeamSelectController : NetworkBehaviour
         if (!Object.HasStateAuthority)
             return;
 
-        // La cuenta regresiva no se restaura: si la formación es válida, arranca de nuevo sola
         Phase = phase == (byte)TeamPhase.Idle ? (byte)TeamPhase.Idle : (byte)TeamPhase.Selecting;
         PhaseTimer = TickTimer.None;
     }
@@ -132,7 +128,6 @@ public class TeamSelectController : NetworkBehaviour
         NetworkManager.Instance?.BeginMapVote();
     }
 
-    // Devuelve true si la formación es válida. En "message" deja el motivo si no lo es.
     public bool Validate(out string message)
     {
         int players = CountPlayers();
@@ -180,7 +175,6 @@ public class TeamSelectController : NetworkBehaviour
         return count;
     }
 
-    // Los nombres de un equipo, uno por línea
     public string NamesOfTeam(byte team)
     {
         string names = "";

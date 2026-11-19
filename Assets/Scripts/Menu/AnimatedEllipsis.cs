@@ -2,10 +2,6 @@ using System;
 using TMPro;
 using UnityEngine;
 
-// Add to any TMP text. If the text ends in "..." the 3 dots are animated:
-//   .   ..   ...   (nothing)   .   ..   ...   (nothing) ...
-// It never changes the text: it only hides the last characters with maxVisibleCharacters,
-// so it does not fight the scripts that write that text, and centered text does not shift.
 [RequireComponent(typeof(TMP_Text))]
 public class AnimatedEllipsis : MonoBehaviour
 {
@@ -54,13 +50,11 @@ public class AnimatedEllipsis : MonoBehaviour
         lastText = current;
         lastDots = dots;
 
-        // Measure with everything visible, then hide the extra dots.
         label.maxVisibleCharacters = ShowEverything;
         label.ForceMeshUpdate();
         label.maxVisibleCharacters = label.textInfo.characterCount - (Dots.Length - dots);
     }
 
-    // 1, 2, 3, 0, 1, 2, 3, 0...
     public static int DotsNow(float stepSeconds)
     {
         float step = Mathf.Max(0.05f, stepSeconds);
@@ -68,8 +62,6 @@ public class AnimatedEllipsis : MonoBehaviour
         return (phase + 1) % 4;
     }
 
-    // For text that is NOT TMP (for example the host migration GUI.Box).
-    // Pads with spaces so the width barely changes.
     public static string Animate(string text, float stepSeconds = 0.4f)
     {
         if (string.IsNullOrEmpty(text) || !text.EndsWith(Dots, StringComparison.Ordinal))

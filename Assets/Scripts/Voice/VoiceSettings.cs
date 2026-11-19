@@ -7,9 +7,6 @@ public enum VoiceMode
     PushToTalk = 1
 }
 
-// What the player chose about their microphone. It is static on purpose:
-// it has to survive scene changes (Lobby -> match -> Lobby), where the LobbyPlayer
-// and the Ball (each with its own Recorder) are destroyed and created again.
 public static class VoiceSettings
 {
     private const string ModeKey = "VoiceMode";
@@ -62,7 +59,6 @@ public static class VoiceSettings
         SetMuted(!muted);
     }
 
-    // Called when creating or joining a room from the main menu.
     public static void ResetMute()
     {
         SetMuted(true);

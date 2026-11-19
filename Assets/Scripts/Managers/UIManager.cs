@@ -8,7 +8,6 @@ public class UIManager : NetworkBehaviour
     public static UIManager Instance;
     [SerializeField] private PlayerHudSlot[] playerSlots;
     [SerializeField] private GameObject winPanel;
-    [Tooltip("Opcional. Si se deja vacío, el importe se agrega al título de victoria del mapa.")]
     [SerializeField] private TMP_Text victoryRewardText;
     private TMP_Text[] victoryTitles;
     private string[] originalTitles;
@@ -35,7 +34,6 @@ public class UIManager : NetworkBehaviour
         if (victoryRewardText) victoryRewardText.text = "";
         else if (winPanel)
         {
-            // Algunos mapas dibujan el título con varias capas (color, sombra y contorno).
             var title = winPanel.transform.Find("Victory") ?? winPanel.transform.Find("Txt_Victory");
             if (title)
             {
