@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Skin_05
   m_EditorClassIdentifier: Assembly-CSharp::BallSkin
   id: 5
-  displayName: Pattern 5
+  displayName: Bowling
   image: {fileID: 3044542361627363376, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-  price: 150
+  price: 300

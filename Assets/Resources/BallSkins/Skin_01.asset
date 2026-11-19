@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Skin_01
   m_EditorClassIdentifier: Assembly-CSharp::BallSkin
   id: 1
-  displayName: Pattern 1
+  displayName: Messi
   image: {fileID: -4120015347156684875, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-  price: 50
+  price: 100

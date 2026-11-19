@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Skin_07
   m_EditorClassIdentifier: Assembly-CSharp::BallSkin
   id: 7
-  displayName: Pattern 7
+  displayName: MegaBall
   image: {fileID: 2948586714716120069, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-  price: 200
+  price: 670

@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Skin_03
   m_EditorClassIdentifier: Assembly-CSharp::BallSkin
   id: 3
-  displayName: Pattern 3
+  displayName: Cool dude
   image: {fileID: -1393925385471631048, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-  price: 100
+  price: 200

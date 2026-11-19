@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Skin_04
   m_EditorClassIdentifier: Assembly-CSharp::BallSkin
   id: 4
-  displayName: Pattern 4
+  displayName: Stars
   image: {fileID: -4686444210690678318, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-  price: 125
+  price: 250

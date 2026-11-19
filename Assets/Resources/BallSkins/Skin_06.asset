@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Skin_06
   m_EditorClassIdentifier: Assembly-CSharp::BallSkin
   id: 6
-  displayName: Pattern 6
+  displayName: Stripes
   image: {fileID: -7048620242059489554, guid: 34162cd9e67faed49aafe8588eb64ba0, type: 3}
-  price: 175
+  price: 350
