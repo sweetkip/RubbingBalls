@@ -353,13 +353,16 @@ public class Ball : NetworkBehaviour
             AimOffset = feedbackOffset;
         feedback.SetAim(true, feedbackOffset, feedbackOffset.magnitude / Mathf.Max(0.01f, maxDistance));
 
-        if (lr != null)
+        if (Object.HasInputAuthority)
         {
-            lr.SetPosition(0, transform.position);
-            lr.SetPosition(1, clampedPosition);
-        }
+            if (lr != null)
+            {
+                lr.SetPosition(0, transform.position);
+                lr.SetPosition(1, clampedPosition);
+            }
 
-        ShowTrajectory();
+            ShowTrajectory();
+        }
     }
 
     private void Throw()
