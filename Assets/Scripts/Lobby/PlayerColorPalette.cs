@@ -21,15 +21,7 @@ public class PlayerColorPalette : ScriptableObject
         }
     }
 
-    public int CountSprites
-    {
-        get
-        {
-            if (sprites == null)
-                return 0;
-            return sprites.Length;
-        }
-    }
+    public int CountSprites => BallSkin.Items.Length == 0 ? 0 : BallSkin.Items[BallSkin.Items.Length - 1].Id + 1;
 
     public Color GetColor(int index)
     {
@@ -62,10 +54,8 @@ public class PlayerColorPalette : ScriptableObject
 
     public Sprite GetSprite(int index)
     {
-        if(sprites == null || sprites.Length == 0)
-            return defaultSprite;
-        index = Mathf.Clamp(index, 0, sprites.Length - 1);
-        return sprites[index];
+        var skin = BallSkin.Find(index);
+        return skin ? skin.image : defaultSprite;
     }
 
     public int NextIndex(int current)
@@ -77,14 +67,7 @@ public class PlayerColorPalette : ScriptableObject
         return next >= CountColors ? 0 : next;
     }
 
-    public int NextSpriteIndex(int current)
-    {
-        if (CountSprites == 0)
-            return 0;
-
-        int next = current + 1;
-        return next >= CountSprites ? 0 : next;
-    }
+    public int NextSpriteIndex(int current) => BallSkin.Step(current, 1);
 
     public int PreviousIndex(int current)
     {
@@ -95,12 +78,5 @@ public class PlayerColorPalette : ScriptableObject
         return prev < 0 ? CountColors - 1 : prev;
     }
 
-    public int PreviousSpriteIndex(int current)
-    {
-        if (CountSprites == 0)
-            return 0;
-
-        int prev = current - 1;
-        return prev < 0 ? CountSprites - 1 : prev;
-    }
+    public int PreviousSpriteIndex(int current) => BallSkin.Step(current, -1);
 }

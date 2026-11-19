@@ -120,6 +120,7 @@ public class LobbyPlayer : NetworkBehaviour
         if (!Object.HasInputAuthority)
             return;
 
+        if (!profile.CanWear(spriteIndex)) return;
         profile.SetSkin(spriteIndex);
 
         RPC_SelectSprite(spriteIndex);

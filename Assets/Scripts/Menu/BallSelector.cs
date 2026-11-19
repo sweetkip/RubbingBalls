@@ -24,9 +24,6 @@ public class BallSelector : MonoBehaviour
     [Header("Color Palette")]
     [SerializeField] private PlayerColorPalette palette;
 
-    [Header("Textures")]
-    [SerializeField] private Sprite[] textures;
-
     [Header("Btns")]
     [SerializeField] private Button colorBtn;
     [SerializeField] private Button textureBtn;
@@ -98,8 +95,7 @@ public class BallSelector : MonoBehaviour
             colorPreview.color = palette.GetColor(PlayerLocalData.SelectedColor);
 
         if (texturePreview != null && palette != null && palette.CountSprites > 0)
-            texturePreview.sprite = textures != null && PlayerLocalData.SelectedTexture < textures.Length
-                ? textures[PlayerLocalData.SelectedTexture] : palette.GetSprite(PlayerLocalData.SelectedTexture);
+            texturePreview.sprite = palette.GetSprite(PlayerLocalData.SelectedTexture);
     }
 
     private void RefreshBtns()

@@ -150,6 +150,14 @@ namespace RubbingBalls.Accounts
             }
         }
 
+        internal void ApplyShopBalance(long amount)
+        {
+            balanceVersion++;
+            balance = amount;
+            nextRead = 0;
+            Changed?.Invoke();
+        }
+
         internal void ShowBalance(bool visible)
         {
             if (visible && !wanted) nextRead = 0;
