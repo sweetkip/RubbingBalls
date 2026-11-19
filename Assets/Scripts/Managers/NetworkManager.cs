@@ -141,7 +141,7 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         if (!result.Ok)
         {
-            Debug.LogWarning("Couldn't create room: " + result.ShutdownReason);
+            Debug.LogWarning("Couldn't create room: " + result.ShutdownReason + " | Photon: " + result.ErrorMessage);
             OnJoinFailed?.Invoke();
             GoToMenu(ReasonToText(result.ShutdownReason), true);
             return;
@@ -187,7 +187,7 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         if (!result.Ok)
         {
-            Debug.LogWarning($"Couldn't join '{sessionName}': " + result.ShutdownReason);
+            Debug.LogWarning($"Couldn't join '{sessionName}': " + result.ShutdownReason + " | Photon: " + result.ErrorMessage);
             OnJoinFailed?.Invoke();
             GoToMenu(ReasonToText(result.ShutdownReason), true);
 
@@ -217,7 +217,7 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         if (!result.Ok)
         {
-            Debug.LogError("Couldn't join the lobby: " + result.ShutdownReason);
+            Debug.LogError("Couldn't join the lobby: " + result.ShutdownReason + " | Photon: " + result.ErrorMessage);
             GoToMenu(ReasonToText(result.ShutdownReason), true);
             return;
         }
@@ -247,7 +247,7 @@ public partial class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
             if (!lobbyResult.Ok)
             {
-                Debug.LogError("Couldn't join the lobby - " + lobbyResult.ShutdownReason);
+                Debug.LogError("Couldn't join the lobby - " + lobbyResult.ShutdownReason + " | Photon: " + lobbyResult.ErrorMessage);
                 quickSessionTcs = null;
                 OnJoinFailed?.Invoke();
                 GoToMenu(ReasonToText(lobbyResult.ShutdownReason), true);

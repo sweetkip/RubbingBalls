@@ -46,7 +46,26 @@ public class Ball : NetworkBehaviour
     private Rigidbody2D rb;
 
     private float originalGS;
-    private float slowGS;
+    private RoundRules rules;
+    private PhysicsMaterial2D prefabMaterial, liveMaterial;
+    private int DashLimit => rules.version == 1 ? rules.dashes : maxShoots;
+    private float LaunchForce => rules.version == 1 ? rules.max_force : maxForce;
+    private float DragDistance => rules.version == 1 ? rules.drag_distance : maxDistance;
+    private float SpawnImmunity => rules.version == 1 ? rules.spawn_immunity : respawnPushImmunity;
+    private float Gravity => rules.version == 1 ? rules.gravity : originalGS;
+    private float AimGravity => Gravity * (rules.version == 1 ? rules.aim_gravity_ratio : 0.1f);
+
+    private void ApplyRules()
+    {
+        if (rules.version == 1) return;
+        rules = GameManager.CurrentRules;
+        if (rules.version != 1) return;
+        rb.gravityScale = Gravity;
+        if (!liveMaterial)
+            liveMaterial = prefabMaterial ? Instantiate(prefabMaterial) : new PhysicsMaterial2D("Round ball");
+        liveMaterial.bounciness = rules.bounce;
+        rb.sharedMaterial = liveMaterial;
+    }
 
     private Vector2 clampedPosition;
 
@@ -92,7 +111,7 @@ public class Ball : NetworkBehaviour
         PhysicsColliders = GetComponents<Collider2D>();
         originalGS = rb.gravityScale;
 
-        slowGS = originalGS / 10f;
+        prefabMaterial = rb.sharedMaterial;
     }
 
     private void Start()
@@ -103,13 +122,17 @@ public class Ball : NetworkBehaviour
 
     public override void Spawned()
     {
+        rules = default;
+        rb.sharedMaterial = prefabMaterial;
+        rb.gravityScale = Gravity;
+        ApplyRules();
         if (Object.HasStateAuthority && (NetworkManager.Instance == null || !NetworkManager.Instance.IsMigrating))
         {
             spawnPosition = transform.position;
             spawnRotation = transform.rotation;
             TeamId = LobbyPlayer.NoTeam;
             id = GameManager.Instance.IJoined(Object.InputAuthority);
-            ShootsLeft = maxShoots;
+            ShootsLeft = DashLimit;
         }
 
         BallCollisionProtection.Register(this);
@@ -126,6 +149,7 @@ public class Ball : NetworkBehaviour
 
     public override void Render()
     {
+        ApplyRules();
         if (hudDirty)
         {
             hudDirty = false;
@@ -134,7 +158,7 @@ public class Ball : NetworkBehaviour
                 health.RefreshHud();
         }
         if (!Object.HasInputAuthority)
-            feedback.SetAim(IsAiming, AimOffset, AimOffset.magnitude / Mathf.Max(0.01f, maxDistance));
+            feedback.SetAim(IsAiming, AimOffset, AimOffset.magnitude / Mathf.Max(0.01f, DragDistance));
 
         RefreshCollisionRules();
     }
@@ -259,6 +283,7 @@ public class Ball : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        ApplyRules();
         if (NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating) return;
         if (Object.HasStateAuthority && previousProtection != IsPushImmune)
         {
@@ -280,7 +305,7 @@ public class Ball : NetworkBehaviour
             {
                 wasPressed = false;
                 canShoot = false;
-                if (Object.HasStateAuthority) { rb.gravityScale = originalGS; IsAiming = false; }
+                if (Object.HasStateAuthority) { rb.gravityScale = Gravity; IsAiming = false; }
                 HideAimFeedback();
                 return;
             }
@@ -305,7 +330,7 @@ public class Ball : NetworkBehaviour
                 wasPressed = false;
                 if (Object.HasStateAuthority)
                 {
-                    rb.gravityScale = originalGS;
+                    rb.gravityScale = Gravity;
                     IsAiming = false;
                     AimOffset = Vector2.zero;
                 }
@@ -326,7 +351,7 @@ public class Ball : NetworkBehaviour
             canShoot = true;
 
             if (Object.HasStateAuthority)
-                rb.gravityScale = slowGS;
+                rb.gravityScale = AimGravity;
         }
         else
             canShoot = false;
@@ -345,13 +370,13 @@ public class Ball : NetworkBehaviour
 
         Vector2 actualPos = transform.position;
 
-        if (dragDistance > maxDistance)
-            clampedPosition = actualPos + (dragPosition - actualPos).normalized * maxDistance;
+        if (dragDistance > DragDistance)
+            clampedPosition = actualPos + (dragPosition - actualPos).normalized * DragDistance;
 
         Vector2 feedbackOffset = actualPos - clampedPosition;
         if (Object.HasStateAuthority)
             AimOffset = feedbackOffset;
-        feedback.SetAim(true, feedbackOffset, feedbackOffset.magnitude / Mathf.Max(0.01f, maxDistance));
+        feedback.SetAim(true, feedbackOffset, feedbackOffset.magnitude / Mathf.Max(0.01f, DragDistance));
 
         if (Object.HasInputAuthority)
         {
@@ -384,17 +409,17 @@ public class Ball : NetworkBehaviour
 
         IsAiming = false;
         AimOffset = Vector2.zero;
-        rb.gravityScale = originalGS;
+        rb.gravityScale = Gravity;
         rb.linearVelocity = Vector2.zero;
 
         Vector2 actualPos = transform.position;
         Vector2 throwVector = actualPos - clampedPosition;
         float distance = Vector2.Distance(actualPos, clampedPosition);
 
-        force = Mathf.Clamp(distance / maxDistance, 0f, 1f) * maxForce;
+        force = Mathf.Clamp(distance / DragDistance, 0f, 1f) * LaunchForce;
         rb.AddForce(throwVector * force);
         ShootsLeft = Mathf.Max(0, ShootsLeft - 1);
-        RPC_PlayLaunchFeedback(throwVector, Mathf.Clamp01(distance / Mathf.Max(0.01f, maxDistance)));
+        RPC_PlayLaunchFeedback(throwVector, Mathf.Clamp01(distance / Mathf.Max(0.01f, DragDistance)));
 
         UpdateBallColor();
     }
@@ -406,7 +431,7 @@ public class Ball : NetworkBehaviour
 
         if (collision.gameObject.layer == WallLayer)
         {
-            ShootsLeft = maxShoots;
+            ShootsLeft = DashLimit;
             UpdateBallColor();
         }
     }
@@ -418,9 +443,9 @@ public class Ball : NetworkBehaviour
 
         if (collision.gameObject.layer == WallLayer)
         {
-            if (ShootsLeft != maxShoots)
+            if (ShootsLeft != DashLimit)
             {
-                ShootsLeft = maxShoots;
+                ShootsLeft = DashLimit;
                 UpdateBallColor();
             }
         }
@@ -443,7 +468,7 @@ public class Ball : NetworkBehaviour
 
         float distance = Vector2.Distance(actualPos, clampedPosition);
 
-        force = Mathf.Clamp(distance / maxDistance, 0f, 1f) * maxForce;
+        force = Mathf.Clamp(distance / DragDistance, 0f, 1f) * LaunchForce;
 
         Vector2 velocity = (throwVector * force) / 50f;
         Vector2 startPos = transform.position;
@@ -451,7 +476,7 @@ public class Ball : NetworkBehaviour
         for (int i = 0; i < trajectoryResolution; i++)
         {
             float t = i * Time.fixedDeltaTime;
-            Vector2 pos = startPos + velocity * t + 0.5f * Physics2D.gravity * t * t;
+            Vector2 pos = startPos + velocity * t + 0.5f * Physics2D.gravity * Gravity * t * t;
             points[i] = pos;
         }
 
@@ -467,7 +492,7 @@ public class Ball : NetworkBehaviour
             return;
 
         Color baseColor = palette.GetPlayerColor(ColorIndex, TeamId);
-        int usedShoots = Mathf.Clamp(maxShoots - ShootsLeft, 0, maxShoots);
+        int usedShoots = Mathf.Clamp(DashLimit - ShootsLeft, 0, DashLimit);
         float darkness = Mathf.Pow(0.75f, usedShoots);
 
         feedback.SetBaseColor(new Color(baseColor.r * darkness, baseColor.g * darkness, baseColor.b * darkness, baseColor.a));
@@ -496,14 +521,14 @@ public class Ball : NetworkBehaviour
         health.Lives -= 1;
         rb.simulated = false;
         rb.linearVelocity = Vector2.zero;
-        rb.gravityScale = originalGS;
+        rb.gravityScale = Gravity;
         rb.position = spawnPosition;
         rb.angularVelocity = 0f;
         netTransform.Teleport(spawnPosition, spawnRotation);
-        ShootsLeft = maxShoots;
+        ShootsLeft = DashLimit;
         health.ResetHealth();
         rb.simulated = true;
-        PushProtection = TickTimer.CreateFromSeconds(Runner, respawnPushImmunity);
+        PushProtection = TickTimer.CreateFromSeconds(Runner, SpawnImmunity);
         previousProtection = IsPushImmune;
         BallCollisionProtection.Refresh(this);
         UpdateBallColor();
@@ -517,6 +542,7 @@ public class Ball : NetworkBehaviour
 
     private void OnDestroy()
     {
+        if (liveMaterial) Destroy(liveMaterial);
         BallCollisionProtection.Unregister(this);
     }
 
@@ -585,7 +611,7 @@ public class Ball : NetworkBehaviour
 
         if (Object.HasStateAuthority)
         {
-            rb.gravityScale = originalGS;
+            rb.gravityScale = Gravity;
             IsAiming = false;
         }
 
@@ -666,7 +692,8 @@ public class Ball : NetworkBehaviour
 
     public void ResumeMigrationPhysics()
     {
-        rb.gravityScale = originalGS;
+        ApplyRules();
+        rb.gravityScale = Gravity;
         wasPressed = false;
         canShoot = false;
         HideAimFeedback();
@@ -677,7 +704,8 @@ public class Ball : NetworkBehaviour
 
     public void FinishMigration(MigrationPlayerState state)
     {
-        rb.gravityScale = originalGS;
+        ApplyRules();
+        rb.gravityScale = Gravity;
         wasPressed = false;
         canShoot = false;
         HideAimFeedback();

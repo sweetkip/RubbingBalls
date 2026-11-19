@@ -43,6 +43,16 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private bool allowPlayDuringGo = true;
     [Networked] public TickTimer StartTimer { get; private set; }
 
+    [Networked] public RoundRules Rules { get; private set; }
+    public static RoundRules CurrentRules
+    {
+        get
+        {
+            var game = Instance;
+            return game && game.Object && game.Object.IsValid ? game.Rules : default;
+        }
+    }
+
     private string coinRound;
     public string LocalAwardRound { get; private set; }
     private readonly Dictionary<PlayerRef, int> coinSeats = new Dictionary<PlayerRef, int>();
@@ -59,6 +69,8 @@ public class GameManager : NetworkBehaviour
         if (!HasStateAuthority)
             return;
 
+        Rules = NetworkManager.Instance != null && NetworkManager.Instance.IsMigrating
+            ? default : RubbingBalls.Accounts.LoginSession.Current.Ops.LatestRules;
         coinRound = System.Guid.NewGuid().ToString("D");
         totalPlayers = 0;
         alivePlayers = 0;
@@ -341,6 +353,7 @@ public class GameManager : NetworkBehaviour
     {
         return new MigrationGameState
         {
+            Rules = this.Rules,
             CoinRound = coinRound,
             TotalPlayers = totalPlayers,
             WinnerId = WinnerId,
@@ -357,6 +370,7 @@ public class GameManager : NetworkBehaviour
     public void RestoreMigration(MigrationGameState state, MigrationPlayerState[] players, Dictionary<string, PlayerRef> rejoined)
     {
         if (!HasStateAuthority || state == null) return;
+        Rules = state.Rules;
         coinRound = state.CoinRound;
         coinSeats.Clear();
         coinTeams.Clear();

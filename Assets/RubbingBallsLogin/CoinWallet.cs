@@ -128,7 +128,7 @@ namespace RubbingBalls.Accounts
                 award.sending = false;
                 if (request.result != UnityWebRequest.Result.Success ||
                     !int.TryParse(request.downloadHandler.text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out int amount) ||
-                    amount < 30 || amount > 50)
+                    amount < 30 || amount > 100 || (amount > 50 && (amount < 60 || amount % 2 != 0)))
                 {
                     if (award.delay == 0) Debug.LogWarning("Monedas: cobro pendiente (HTTP " + request.responseCode + ").");
                     award.delay = Mathf.Clamp(award.delay * 2, 1, 60);

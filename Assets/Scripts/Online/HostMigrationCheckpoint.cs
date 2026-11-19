@@ -58,6 +58,7 @@ public sealed class MigrationPlayerState
 [Serializable]
 public sealed class MigrationGameState
 {
+    public RoundRules Rules;
     public string CoinRound;
     public string[] CoinAccounts;
     public int TotalPlayers;

@@ -42,7 +42,8 @@ public class TrampolineHazard : Hazard
         if (!ball.TryGetComponent(out Rigidbody2D rb))
             return;
 
-        rb.linearVelocity = transform.up * launchSpeed;
+        var rules = GameManager.CurrentRules;
+        rb.linearVelocity = transform.up * (launchSpeed * (rules.version == 1 ? rules.trampoline_scale : 1f));
 
         // Avisa a todos los clientes para que reproduzcan la animación
         ball.PlayTrampolineBounce(transform.position);

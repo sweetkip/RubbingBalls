@@ -22,19 +22,19 @@ namespace RubbingBalls.Accounts
             ShopMessage = "";
         }
 
-        internal void Buy(BallSkin skin)
+        internal void Buy(BallSkin skin, int shownPrice)
         {
-            if (Buying || !InventoryReady || !skin || CanWear(skin.Id)) return;
+            if (shownPrice < 0 || Buying || !InventoryReady || !skin || CanWear(skin.Id)) return;
             if (!session.TryGetAccessToken(out string token)) { ShopMessage = "Please sign in again."; ShopChanged?.Invoke(); return; }
-            StartCoroutine(Purchase(skin, generation, token));
+            StartCoroutine(Purchase(skin, shownPrice, generation, token));
         }
 
-        private IEnumerator Purchase(BallSkin skin, int owner, string token)
+        private IEnumerator Purchase(BallSkin skin, int shownPrice, int owner, string token)
         {
             Buying = true;
             ShopMessage = "Purchasing…";
             ShopChanged?.Invoke();
-            var body = new BuyRequest { skin_id = skin.Id, expected_price = skin.price };
+            var body = new BuyRequest { skin_id = skin.Id, expected_price = shownPrice };
             using (var request = session.Rpc("rb_buy_skin", JsonUtility.ToJson(body), token))
             {
                 yield return request.SendWebRequest();
@@ -62,7 +62,10 @@ namespace RubbingBalls.Accounts
                         ShopMessage = skin.displayName + " unlocked.";
                         break;
                     case "insufficient": ShopMessage = "Not enough coins."; break;
-                    default: ShopMessage = "This offer is unavailable. Check for a game update."; break;
+                    default:
+                        session.Ops.RefreshSoon();
+                        ShopMessage = "Offer changed. Check the updated price before buying.";
+                        break;
                 }
                 ShopChanged?.Invoke();
             }

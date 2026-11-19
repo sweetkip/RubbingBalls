@@ -35,7 +35,11 @@ namespace RubbingBalls.Accounts
         [SerializeField] private GameObject shopRoot;
         [SerializeField] private Image shopPreview;
         [SerializeField] private TMP_Text shopName, shopPrice, shopBalance, shopStatus, buyLabel;
-        private int shopIndex;
+        private int shopIndex, displayedPrice = -1;
+        [Header("Live events")]
+        [SerializeField] private TMP_Text doubleCoinsBanner;
+        [SerializeField] private Button rankPeriodButton;
+        private bool weeklyRanking;
         private const int RowsPerPage = 6;
         [Serializable] private class RankEntry
         {
@@ -69,6 +73,7 @@ namespace RubbingBalls.Accounts
         {
             if (shopRoot) shopRoot.SetActive(false);
             if (shopButton) shopButton.gameObject.SetActive(false);
+            if (doubleCoinsBanner) doubleCoinsBanner.gameObject.SetActive(false);
             if (overlay) overlay.SetActive(false);
             if (rankingRoot) rankingRoot.SetActive(false);
             if (rankingButton) rankingButton.gameObject.SetActive(false);
@@ -129,12 +134,13 @@ namespace RubbingBalls.Accounts
                 Undo.RegisterCreatedObjectUndo(menu.gameObject, "Create account UI");
                 EditorSceneManager.MarkSceneDirty(scene);
             }
-            if (!menu.rememberToggle || !menu.coinLabel || !menu.rankingRoot || !menu.rankingButton || !menu.shopRoot)
+            if (!menu.rememberToggle || !menu.coinLabel || !menu.rankingRoot || !menu.rankingButton || !menu.shopRoot || !menu.doubleCoinsBanner || !menu.rankPeriodButton)
             {
                 Undo.RegisterFullObjectHierarchyUndo(menu.gameObject, "Update account UI");
                 menu.EnsureControls();
                 menu.EnsureRanking();
                 menu.EnsureShop();
+                menu.EnsureLiveControls();
                 EditorUtility.SetDirty(menu);
                 EditorSceneManager.MarkSceneDirty(scene);
             }
@@ -161,6 +167,7 @@ namespace RubbingBalls.Accounts
             menu.BuildLayout();
             menu.EnsureRanking();
             menu.EnsureShop();
+                menu.EnsureLiveControls();
             return menu;
         }
 
@@ -241,6 +248,40 @@ namespace RubbingBalls.Accounts
             }
         }
 
+        private void EnsureLiveControls()
+        {
+            if (!doubleCoinsBanner)
+            {
+                doubleCoinsBanner = Label(transform, "Double Coins · Earn 2× coins for every win!", 0, 0, 460, 38, 21);
+                doubleCoinsBanner.name = "Double Coins announcement";
+                var rect = doubleCoinsBanner.rectTransform;
+                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0f);
+                rect.anchoredPosition = new Vector2(0f, 27f);
+                doubleCoinsBanner.gameObject.SetActive(false);
+            }
+            if (!rankPeriodButton)
+                rankPeriodButton = MakeButton(closeRanking.transform.parent, "Weekly", 180, 195, 112, false, 36);
+        }
+
+        private void UpdatePeriodButton()
+        {
+            var label = rankPeriodButton.GetComponentInChildren<TMP_Text>(true);
+            if (label) label.text = weeklyRanking ? "All time" : "Weekly";
+        }
+
+        private void LiveChanged()
+        {
+            UpdateBanner();
+            RefreshShop();
+        }
+
+        private void UpdateBanner()
+        {
+            if (!doubleCoinsBanner || !session) return;
+            bool visible = page == Page.Closed && main && main.isActiveAndEnabled && session.Ops.Doubled;
+            if (doubleCoinsBanner.gameObject.activeSelf != visible) doubleCoinsBanner.gameObject.SetActive(visible);
+        }
+
         private void EnsureShop()
         {
             if (shopRoot) return;
@@ -286,12 +327,13 @@ namespace RubbingBalls.Accounts
             shopPreview.sprite = skin ? skin.image : null;
             shopPreview.color = rankingPalette ? rankingPalette.GetColor(PlayerLocalData.SelectedColor) : Color.white;
             shopName.text = skin ? skin.displayName : "No skins available";
-            shopPrice.text = skin ? skin.price + " coins" : "";
+            displayedPrice = skin ? session.Ops.Price(skin.Id) : -1;
+            shopPrice.text = displayedPrice >= 0 ? displayedPrice + " coins" : "Price unavailable";
             shopBalance.text = session.HasAccount ? "Balance: " + (session.Coins.BalanceText == "" ? "…" : session.Coins.BalanceText) : "";
             shopStatus.text = !session.HasAccount ? "Sign in to buy skins." : profile.ShopMessage;
             if (session.HasAccount && !profile.InventoryReady && shopStatus.text == "") shopStatus.text = "Loading inventory…";
             buyLabel.text = owned ? "Owned" : "Buy";
-            buySkin.interactable = skin && !owned && session.HasAccount && profile.InventoryReady && !profile.Buying;
+            buySkin.interactable = displayedPrice >= 0 && skin && !owned && session.HasAccount && profile.InventoryReady && !profile.Buying;
             prevSkin.interactable = nextSkin.interactable = items.Length > 1 && !profile.Buying;
         }
 
@@ -375,7 +417,7 @@ namespace RubbingBalls.Accounts
             {
                 var query = new RankQuery { start_at = offset, page_size = RowsPerPage + 1 };
                 session.TryGetAccessToken(out string token);
-                using (var req = session.Rpc("rb_wins_leaderboard", JsonUtility.ToJson(query), token))
+                using (var req = session.Rpc(weeklyRanking ? "rb_weekly_leaderboard" : "rb_wins_leaderboard", JsonUtility.ToJson(query), token))
                 {
                     yield return req.SendWebRequest();
                     if (version != rankVersion || page != Page.Ranking) yield break;
@@ -407,7 +449,9 @@ namespace RubbingBalls.Accounts
                     row.ball.color = rankingPalette ? rankingPalette.GetColor(entry.color_index) : Color.white;
                     row.ball.enabled = row.ball.sprite != null;
                 }
-                rankingStatus.text = visible == 0 ? "No wins yet." : "";
+                rankingStatus.text = weeklyRanking
+                    ? (visible == 0 ? "No wins this week." : "Weekly wins") + " · Resets Monday, 00:00 Argentina"
+                    : (visible == 0 ? "No wins yet." : "All-time wins");
             }
             previousPage.interactable = offset > 0;
             nextPage.interactable = rankHasMore;
@@ -420,11 +464,20 @@ namespace RubbingBalls.Accounts
             wasAccount = session.HasAccount;
             EnsureRanking();
             EnsureShop();
+            EnsureLiveControls();
+            session.Ops.Changed += LiveChanged;
+            rankPeriodButton.onClick.AddListener(() =>
+            {
+                weeklyRanking = !weeklyRanking;
+                UpdatePeriodButton();
+                LoadRankPage(0, true);
+            });
+            UpdatePeriodButton();
             shopButton.onClick.AddListener(() => Show(Page.Shop));
             closeShop.onClick.AddListener(() => Show(Page.Closed));
             prevSkin.onClick.AddListener(() => BrowseSkin(-1));
             nextSkin.onClick.AddListener(() => BrowseSkin(1));
-            buySkin.onClick.AddListener(() => session.Profile.Buy(BallSkin.Items[shopIndex]));
+            buySkin.onClick.AddListener(() => session.Profile.Buy(BallSkin.Items[shopIndex], displayedPrice));
             rankingButton.onClick.AddListener(() => Show(Page.Ranking));
             previousPage.onClick.AddListener(() => LoadRankPage(rankOffset - RowsPerPage));
             nextPage.onClick.AddListener(() => LoadRankPage(rankOffset + RowsPerPage));
@@ -564,6 +617,7 @@ namespace RubbingBalls.Accounts
             shopRoot.SetActive(page == Page.Shop);
             if (page == Page.Shop)
             {
+                session.Ops.RefreshSoon();
                 session.Profile.RefreshInventory();
                 RefreshShop();
             }
@@ -607,6 +661,7 @@ namespace RubbingBalls.Accounts
 
         private void LateUpdate()
         {
+            UpdateBanner();
             if (page == Page.Closed && main && badge && badge.gameObject.activeSelf != main.isActiveAndEnabled)
                 badge.gameObject.SetActive(main.isActiveAndEnabled);
             if (page == Page.Closed && main && rankingButton && rankingButton.gameObject.activeSelf != main.isActiveAndEnabled)
@@ -630,6 +685,7 @@ namespace RubbingBalls.Accounts
         {
             if (session)
             {
+                session.Ops.Changed -= LiveChanged;
                 session.Changed -= OnSessionChanged;
                 if (session.Profile)
                 {

@@ -51,6 +51,7 @@ namespace RubbingBalls.Accounts
             }
         }
 
+        public LiveOps Ops { get; private set; }
         public CoinWallet Coins { get; private set; }
 
         public AccountProfile Profile { get; private set; }
@@ -60,6 +61,8 @@ namespace RubbingBalls.Accounts
         {
             Coins = gameObject.AddComponent<CoinWallet>();
             ConfigureConnection();
+            Ops = gameObject.AddComponent<LiveOps>();
+            Ops.Initialize(this);
             Profile = gameObject.AddComponent<AccountProfile>();
             Profile.Initialize(this, projectRoot ?? "local");
         }

@@ -66,14 +66,16 @@ public class BallCollition : NetworkBehaviour
         Vector2 mySpeed = speed;
         Vector2 otherSpeed = other.speed;
         ball.ReportImpact(normal, collision.relativeVelocity.magnitude, other.ball);
+        var rules = GameManager.CurrentRules;
+        float multiplier = rules.version == 1 ? rules.damage_scale : 1f;
         if (mySpeed.magnitude > minimumDamageSpeed)
         {
-            other.myHealth.TakeDamage(damage * mySpeed.magnitude);
+            other.myHealth.TakeDamage(multiplier * damage * mySpeed.magnitude);
             other.EnemyPush(-normal);
         }
         if (otherSpeed.magnitude > other.minimumDamageSpeed)
         {
-            myHealth.TakeDamage(other.damage * otherSpeed.magnitude);
+            myHealth.TakeDamage(multiplier * other.damage * otherSpeed.magnitude);
             EnemyPush(normal);
         }
     }
@@ -82,6 +84,8 @@ public class BallCollition : NetworkBehaviour
     {
         if (Object == null || !Object.IsValid || !Object.HasStateAuthority || ball.IsPushImmune)
             return;
-        rb.AddForce(dir.normalized * dir.magnitude * myHealth.Health, ForceMode2D.Impulse);
+        var rules = GameManager.CurrentRules;
+        float multiplier = rules.version == 1 ? rules.push_scale : 1f;
+        rb.AddForce(multiplier * dir.normalized * dir.magnitude * myHealth.Health, ForceMode2D.Impulse);
     }
 }
