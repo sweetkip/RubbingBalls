@@ -17,7 +17,6 @@ public class PlayerHudSlot : MonoBehaviour
 
     [Header("Damage")]
     [SerializeField] private TMP_Text percentText;
-    [SerializeField] private TMP_Text percentShadowText;
     [SerializeField] private float percentPerDamageUnit = 100f;
 
     [Header("Voice")]
@@ -143,8 +142,5 @@ public class PlayerHudSlot : MonoBehaviour
     {
         if (percentText != null)
             percentText.text = text;
-
-        if (percentShadowText != null)
-            percentShadowText.text = text;
     }
 }

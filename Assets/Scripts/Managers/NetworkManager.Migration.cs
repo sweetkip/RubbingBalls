@@ -66,13 +66,13 @@ public partial class NetworkManager
             return true;
         if (runner == null || runner.gameObject == gameObject || !runner.transform.IsChildOf(transform))
         {
-            SetStatus("Host migration: el Runner inicial debe estar en un objeto hijo del NetworkManager.", true);
+            SetStatus("Host migration: the initial Runner must be on a child object of the NetworkManager.", true);
             OnJoinFailed?.Invoke();
             return false;
         }
         if (migrationRunnerPrefab != null && migrationRunnerPrefab.GetComponent<NetworkSceneManagerDefault>() != null && migrationRunnerPrefab.GetComponentInChildren<NetworkManager>(true) == null)
             return true;
-        SetStatus("Host migration: asigna un prefab con NetworkRunner y NetworkSceneManagerDefault, sin NetworkManager.", true);
+        SetStatus("Host migration: assign a prefab with NetworkRunner and NetworkSceneManagerDefault, without NetworkManager.", true);
         OnJoinFailed?.Invoke();
         return false;
     }
@@ -224,7 +224,7 @@ public partial class NetworkManager
         migrationNextCheckpointAt = 0f;
         if (migrationEverHadTwo && CountConnectedMigrationMembers() <= 1)
         {
-            _ = CloseMigrationSessionAsync("La sala se cerro porque solo queda un jugador conectado.", true);
+            _ = CloseMigrationSessionAsync("The room was closed because only one player is still connected.", true);
             return true;
         }
         return false;
@@ -339,7 +339,7 @@ public partial class NetworkManager
     {
         byte[] bytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(checkpoint));
         if (bytes.Length > MaximumMigrationBytes)
-            throw new InvalidOperationException("El checkpoint supera el limite de migracion.");
+            throw new InvalidOperationException("The checkpoint exceeds the migration limit.");
         foreach (PlayerRef player in runner.ActivePlayers)
         {
             if (player == runner.LocalPlayer)
@@ -370,7 +370,7 @@ public partial class NetworkManager
         }
         if (kind == MigrationClose)
         {
-            _ = CloseMigrationSessionAsync("La sala se cerro porque solo queda un jugador conectado.", false);
+            _ = CloseMigrationSessionAsync("The room was closed because only one player is still connected.", false);
             return;
         }
         if (kind != MigrationSnapshot && kind != MigrationDepart && kind != MigrationResume)
@@ -384,7 +384,7 @@ public partial class NetworkManager
         }
         catch (Exception exception)
         {
-            Debug.LogWarning("Checkpoint de migracion invalido: " + exception.Message);
+            Debug.LogWarning("Invalid migration checkpoint: " + exception.Message);
             return;
         }
         if (!ValidMigrationCheckpoint(checkpoint))
@@ -455,20 +455,20 @@ public partial class NetworkManager
         migrationReadyCheckpoint = null;
         migrationStartupComplete = false;
         migrationBlockMouseUntilRelease = true;
-        migrationStatus = "Cambiando de host...";
+        migrationStatus = "Switching host...";
         try
         {
             HostMigrationCheckpoint checkpoint = migrationCheckpoint;
             if (checkpoint == null || Time.unscaledTime - migrationCheckpointReceivedAt > migrationMaximumCheckpointAge)
-                throw new InvalidOperationException("No hay un checkpoint reciente para recuperar la sala.");
+                throw new InvalidOperationException("There is no recent checkpoint to recover the room.");
             MigrationPlayerState[] remaining = HostMigrationOrder.Remaining(checkpoint.Players, checkpoint.HostIdentity);
             if (remaining.Length <= 1)
             {
-                await CloseMigrationSessionAsync("La sala se cerro porque solo queda un jugador conectado.", false);
+                await CloseMigrationSessionAsync("The room was closed because only one player is still connected.", false);
                 return;
             }
             if (migrationRunnerPrefab == null)
-                throw new InvalidOperationException("Falta asignar Migration Runner Prefab.");
+                throw new InvalidOperationException("Migration Runner Prefab is not assigned.");
             foreach (Ball ball in FindObjectsByType<Ball>(FindObjectsSortMode.None))
                 ball.SetMigrationPaused(true);
             Scene holding = SceneManager.CreateScene("HostMigrationHolding_" + checkpoint.RoomId + "_" + (checkpoint.Epoch + 1));
@@ -519,7 +519,7 @@ public partial class NetworkManager
             migrationPendingAcks.Clear();
             migrationPendingSince.Clear();
             bool becomeHost = remaining[0].Identity == migrationIdentity;
-            migrationStatus = becomeHost ? "Asumiendo el host..." : "Conectando con " + remaining[0].Name + "...";
+            migrationStatus = becomeHost ? "Taking over as host..." : "Connecting to " + remaining[0].Name + "...";
             CreateMigrationRunner();
             var photonSettings = PhotonAppSettings.Global.AppSettings.GetCopy();
             photonSettings.FixedRegion = checkpoint.Region;
@@ -563,7 +563,7 @@ public partial class NetworkManager
             }
             if (migrationClosing || this == null) return;
             if (!result.Ok)
-                throw new InvalidOperationException("No se pudo cambiar de host: " + ReasonToText(result.ShutdownReason));
+                throw new InvalidOperationException("Could not switch host: " + ReasonToText(result.ShutdownReason));
             migrationStartupComplete = true;
             isInSession = true;
             migrationRestoreDeadline = Time.unscaledTime + Mathf.Max(2f, migrationReconnectSeconds);
@@ -573,7 +573,7 @@ public partial class NetworkManager
             while (IsMigrating && !migrationClosing && this != null)
             {
                 if (Time.unscaledTime > migrationRestoreDeadline + migrationTimeoutSeconds)
-                    throw new TimeoutException("Se agoto el tiempo para recuperar los jugadores.");
+                    throw new TimeoutException("Timed out recovering the players.");
                 await Task.Yield();
             }
         }
@@ -600,7 +600,7 @@ public partial class NetworkManager
         catch (Exception exception)
         {
             Debug.LogException(exception);
-            _ = CloseMigrationSessionAsync("No se pudo restaurar la escena: " + exception.Message, true);
+            _ = CloseMigrationSessionAsync("Could not restore the scene: " + exception.Message, true);
         }
     }
 
@@ -632,7 +632,7 @@ public partial class NetworkManager
             return;
         if (migrationRejoined.Count <= 1)
         {
-            _ = CloseMigrationSessionAsync("La sala se cerro: no se reconectaron al menos dos jugadores.", true);
+            _ = CloseMigrationSessionAsync("The room was closed: fewer than two players reconnected.", true);
             return;
         }
         try
@@ -653,7 +653,7 @@ public partial class NetworkManager
             else
             {
                 if (GameManager.Instance == null)
-                    throw new InvalidOperationException("No hay GameManager en el mapa restaurado.");
+                    throw new InvalidOperationException("There is no GameManager in the restored map.");
                 GameManager.Instance.RestoreMigration(migrationCheckpoint.Game, migrationCheckpoint.Players, migrationRejoined);
                 foreach (KeyValuePair<string, PlayerRef> pair in migrationRejoined)
                 {
@@ -678,7 +678,7 @@ public partial class NetworkManager
             migrationNextCheckpointAt = Time.unscaledTime + migrationCheckpointSeconds;
             HostMigrationCheckpoint resumed = CaptureMigrationCheckpoint();
             if (resumed == null)
-                throw new InvalidOperationException("La escena restaurada no esta lista.");
+                throw new InvalidOperationException("The restored scene is not ready.");
             migrationSendResume = true;
             BroadcastMigration(resumed, MigrationResume, true);
             if (!resumed.IsLobby) GameManager.Instance.RefreshMigrationHud(resumed.Players);
@@ -692,7 +692,7 @@ public partial class NetworkManager
         catch (Exception exception)
         {
             Debug.LogException(exception);
-            _ = CloseMigrationSessionAsync("Error al reanudar: " + exception.Message, true);
+            _ = CloseMigrationSessionAsync("Error resuming: " + exception.Message, true);
         }
     }
 
@@ -701,7 +701,7 @@ public partial class NetworkManager
         MigrationPlayerState local = FindMigrationPlayer(migrationReadyCheckpoint, migrationIdentity);
         if (local == null || !local.Connected)
         {
-            _ = CloseMigrationSessionAsync("El nuevo host no pudo recuperar tu conexion.", false);
+            _ = CloseMigrationSessionAsync("The new host could not recover your connection.", false);
             return;
         }
         if ((migrationReadyCheckpoint.IsLobby || local.HasBall) && !runner.TryGetPlayerObject(runner.LocalPlayer, out _))
@@ -808,7 +808,7 @@ public partial class NetworkManager
     {
         migrationPreparing = true;
         inputEnabled = false;
-        migrationStatus = "Preparando relevo de host...";
+        migrationStatus = "Preparing host handover...";
         try
         {
             HostMigrationCheckpoint checkpoint = CaptureMigrationCheckpoint();
@@ -830,9 +830,9 @@ public partial class NetworkManager
         }
         catch (Exception exception)
         {
-            Debug.LogWarning("No se pudo preparar el relevo: " + exception.Message);
+            Debug.LogWarning("Could not prepare the handover: " + exception.Message);
         }
-        await CloseMigrationSessionAsync("Saliste de la partida.", false);
+        await CloseMigrationSessionAsync("You left the match.", false);
     }
 
     private async Task CloseMigrationSessionAsync(string message, bool notify)
@@ -867,7 +867,7 @@ public partial class NetworkManager
         }
         catch (Exception exception)
         {
-            Debug.LogWarning("Cierre de sala: " + exception.Message);
+            Debug.LogWarning("Room closed: " + exception.Message);
         }
         migrationInProgress = false;
         migrationPreparing = false;
@@ -889,7 +889,7 @@ public partial class NetworkManager
         if (await Task.WhenAny(task, Task.Delay(Mathf.CeilToInt(seconds * 1000f))) != task)
         {
             _ = task.ContinueWith(completed => { var observed = completed.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
-            throw new TimeoutException("Se agoto el tiempo de la operacion de red.");
+            throw new TimeoutException("The network operation timed out.");
         }
         await task;
     }

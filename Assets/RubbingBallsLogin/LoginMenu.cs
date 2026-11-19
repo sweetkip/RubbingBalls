@@ -24,7 +24,7 @@ namespace RubbingBalls.Accounts
         [SerializeField] private GameObject overlay, loginForm, guestForm, accountForm;
         [SerializeField] private TMP_InputField email, password;
         [SerializeField] private TMP_Text status, address;
-        [SerializeField, InspectorName("Botón Cuenta (Badge)")] private Button badge;
+        [SerializeField, InspectorName("Account Button (Badge)")] private Button badge;
         [SerializeField] private Button login, register, cancelLogin, logout, rememberButton;
         [SerializeField] private TMP_Text rememberLabel;
         [SerializeField] private Button guest, acceptGuest, backToLogin, backToGame;
@@ -46,7 +46,7 @@ namespace RubbingBalls.Accounts
             public Image ball;
         }
 
-        [Header("Ranking de victorias")]
+        [Header("Wins Ranking")]
         [SerializeField] private Button rankingButton, previousPage, nextPage, reloadRanking, closeRanking;
         [SerializeField] private GameObject rankingRoot;
         [SerializeField] private TMP_Text rankingStatus;
@@ -90,40 +90,40 @@ namespace RubbingBalls.Accounts
         }
 
 #if UNITY_EDITOR
-        [MenuItem("Tools/Rubbing Balls/Cerrar sesión en Play")]
+        [MenuItem("Tools/Rubbing Balls/Sign out in Play")]
         private static void SignOutInEditor()
         {
             var active = UnityEngine.Object.FindAnyObjectByType<LoginSession>();
             if (!active || !active.HasAccount || active.IsBusy)
             {
-                Debug.Log(active && active.IsBusy ? "Cuenta: esperá a que termine la solicitud y volvé a elegir Cerrar sesión." : "Cuenta: no hay una sesión autenticada en esta instancia.");
+                Debug.Log(active && active.IsBusy ? "Account: wait for the request to finish and choose Sign out again." : "Account: there is no signed-in session in this instance.");
                 return;
             }
             active.SignOut();
         }
 
-        [MenuItem("Tools/Rubbing Balls/Cerrar sesión en Play", true)]
+        [MenuItem("Tools/Rubbing Balls/Sign out in Play", true)]
         private static bool CanSignOutInEditor() => EditorApplication.isPlaying;
         
-        [MenuItem("Tools/Rubbing Balls/Crear o seleccionar interfaz de cuenta")]
+        [MenuItem("Tools/Rubbing Balls/Create or select account UI")]
         private static void EditInScene()
         {
             var scene = SceneManager.GetActiveScene();
             if (!scene.IsValid() || !scene.isLoaded || !System.Array.Exists(scene.GetRootGameObjects(), go => go.GetComponentInChildren<MainPanels>(true) != null))
             {
-                EditorUtility.DisplayDialog("Interfaz de cuenta", "Abrí MainMenu y volvé a elegir esta opción.", "Aceptar");
+                EditorUtility.DisplayDialog("Account UI", "Open MainMenu and choose this option again.", "OK");
                 return;
             }
             var menu = FindInScene(scene);
             if (!menu)
             {
                 menu = CreateLayout(scene);
-                Undo.RegisterCreatedObjectUndo(menu.gameObject, "Crear interfaz de cuenta");
+                Undo.RegisterCreatedObjectUndo(menu.gameObject, "Create account UI");
                 EditorSceneManager.MarkSceneDirty(scene);
             }
             if (!menu.rememberToggle || !menu.coinLabel || !menu.rankingRoot || !menu.rankingButton)
             {
-                Undo.RegisterFullObjectHierarchyUndo(menu.gameObject, "Actualizar interfaz de cuenta");
+                Undo.RegisterFullObjectHierarchyUndo(menu.gameObject, "Update account UI");
                 menu.EnsureControls();
                 menu.EnsureRanking();
                 EditorUtility.SetDirty(menu);
@@ -133,7 +133,7 @@ namespace RubbingBalls.Accounts
             EditorGUIUtility.PingObject(Selection.activeGameObject);
         }
 
-        [MenuItem("Tools/Rubbing Balls/Crear o seleccionar interfaz de cuenta", true)]
+        [MenuItem("Tools/Rubbing Balls/Create or select account UI", true)]
         private static bool CanEdit() => !EditorApplication.isPlayingOrWillChangePlaymode && PrefabStageUtility.GetCurrentPrefabStage() == null;
 #endif
 
@@ -156,42 +156,42 @@ namespace RubbingBalls.Accounts
 
         private void BuildLayout()
         {
-            badge = MakeButton(transform, "Cuenta", 0, 0, 124);
+            badge = MakeButton(transform, "Account", 0, 0, 124);
             var corner = badge.GetComponent<RectTransform>();
             corner.anchorMin = corner.anchorMax = corner.pivot = new Vector2(0, 1);
             corner.anchoredPosition = new Vector2(16, -16);
 
-            overlay = Box(transform, "Pantallas", new Color32(14, 18, 34, 225), 0, 0, 0, 0).gameObject;
+            overlay = Box(transform, "Screens", new Color32(14, 18, 34, 225), 0, 0, 0, 0).gameObject;
             Stretch((RectTransform)overlay.transform);
             var card = Box(overlay.transform, "Panel", Panel, 0, 0, 452, 440);
-            loginForm = Group(card, "Acceso");
-            guestForm = Group(card, "Confirmar invitado");
-            accountForm = Group(card, "Mi cuenta");
+            loginForm = Group(card, "Login");
+            guestForm = Group(card, "Confirm guest");
+            accountForm = Group(card, "My account");
             formGroup = loginForm.AddComponent<CanvasGroup>();
             var form = loginForm.transform;
-            Label(form, "Cuenta de Rubbing Balls", 0, 185, 405, 43, 29);
-            Label(form, "Correo", 0, 142, 376, 26, 17, true);
-            email = Field(form, "Campo de correo", 111, false);
-            Label(form, "Contraseña", 0, 73, 376, 26, 17, true);
-            password = Field(form, "Campo de contraseña", 43, true);
-            var rememberRow = Rect(form, "Recordarme en esta PC", 0, 1, 378, 30);
-            rememberLabel = Label(rememberRow, "Recordarme en esta PC", 0, 0, 370, 30, 18);
+            Label(form, "Rubbing Balls Account", 0, 185, 405, 43, 29);
+            Label(form, "Email", 0, 142, 376, 26, 17, true);
+            email = Field(form, "Email field", 111, false);
+            Label(form, "Password", 0, 73, 376, 26, 17, true);
+            password = Field(form, "Password field", 43, true);
+            var rememberRow = Rect(form, "Remember me on this PC", 0, 1, 378, 30);
+            rememberLabel = Label(rememberRow, "Remember me on this PC", 0, 0, 370, 30, 18);
             EnsureControls();
-            login = MakeButton(form, "Iniciar sesión", -97, -44, 182, true);
-            register = MakeButton(form, "Crear cuenta", 97, -44, 182);
+            login = MakeButton(form, "Sign in", -97, -44, 182, true);
+            register = MakeButton(form, "Create account", 97, -44, 182);
             status = Label(form, "", 0, -94, 378, 63, 16);
-            guest = MakeButton(form, "Jugar como invitado", 0, -151, 378);
-            cancelLogin = MakeButton(form, "Volver", 0, -192, 128, false, 30);
+            guest = MakeButton(form, "Play as guest", 0, -151, 378);
+            cancelLogin = MakeButton(form, "Back", 0, -192, 128, false, 30);
 
-            Label(guestForm.transform, "Jugar como invitado", 0, 99, 396, 44, 29);
-            Label(guestForm.transform, "Podés jugar como invitado, pero no vas a participar en el leaderboard.", 0, 15, 354, 92, 22);
-            acceptGuest = MakeButton(guestForm.transform, "Continuar como invitado", 0, -74, 352, true);
-            backToLogin = MakeButton(guestForm.transform, "Volver al login", 0, -129, 352);
+            Label(guestForm.transform, "Play as guest", 0, 99, 396, 44, 29);
+            Label(guestForm.transform, "You can play as a guest, but you won't appear on the leaderboard.", 0, 15, 354, 92, 22);
+            acceptGuest = MakeButton(guestForm.transform, "Continue as guest", 0, -74, 352, true);
+            backToLogin = MakeButton(guestForm.transform, "Back to login", 0, -129, 352);
 
-            Label(accountForm.transform, "Mi cuenta", 0, 104, 398, 48, 29);
+            Label(accountForm.transform, "My account", 0, 104, 398, 48, 29);
             address = Label(accountForm.transform, "", 0, 39, 382, 72, 20);
-            logout = MakeButton(accountForm.transform, "Cerrar sesión", 0, -52, 352);
-            backToGame = MakeButton(accountForm.transform, "Volver al juego", 0, -111, 352, true);
+            logout = MakeButton(accountForm.transform, "Sign out", 0, -52, 352);
+            backToGame = MakeButton(accountForm.transform, "Back to game", 0, -111, 352, true);
 
             badge.gameObject.SetActive(false);
             cancelLogin.gameObject.SetActive(false);
@@ -209,11 +209,11 @@ namespace RubbingBalls.Accounts
                     rememberButton.enabled = false;
                     if (rememberButton.targetGraphic) rememberButton.targetGraphic.enabled = false;
                 }
-                var hit = Box(row, "Casilla", Color.clear, 0, 0, 0, 0);
+                var hit = Box(row, "Checkbox", Color.clear, 0, 0, 0, 0);
                 Stretch(hit);
-                var frame = Box(hit, "Borde", Color.white, -116, 0, 19, 19);
-                var center = Box(frame, "Fondo", Panel, 0, 0, 15, 15);
-                var mark = Box(center, "Marca", Color.white, 0, 0, 9, 9).GetComponent<Image>();
+                var frame = Box(hit, "Border", Color.white, -116, 0, 19, 19);
+                var center = Box(frame, "Background", Panel, 0, 0, 15, 15);
+                var mark = Box(center, "Mark", Color.white, 0, 0, 9, 9).GetComponent<Image>();
                 rememberToggle = hit.gameObject.AddComponent<Toggle>();
                 rememberToggle.targetGraphic = frame.GetComponent<Image>();
                 rememberToggle.graphic = mark;
@@ -223,7 +223,7 @@ namespace RubbingBalls.Accounts
             if (!coinLabel && badge)
             {
                 coinLabel = Label(badge.transform, "", 0, 0, 230, 30, 18, true);
-                coinLabel.name = "Saldo de monedas";
+                coinLabel.name = "Coin balance";
                 var rect = coinLabel.rectTransform;
                 rect.anchorMin = rect.anchorMax = new Vector2(0, 0);
                 rect.pivot = new Vector2(0, 1);
@@ -250,19 +250,19 @@ namespace RubbingBalls.Accounts
                 rankingButton.gameObject.SetActive(false);
             }
             if (rankingRoot) return;
-            var shade = Box(transform, "Ranking de victorias", new Color32(14, 18, 34, 225), 0, 0, 0, 0);
+            var shade = Box(transform, "Wins ranking", new Color32(14, 18, 34, 225), 0, 0, 0, 0);
             Stretch(shade);
             rankingRoot = shade.gameObject;
             var card = Box(shade, "Panel", Panel, 0, 0, 520, 470);
-            Label(card, "Ranking de victorias", 0, 195, 478, 43, 29);
-            Label(card, "Puesto", -196, 147, 84, 28, 16);
-            Label(card, "Jugador", -12, 147, 205, 28, 16, true);
-            Label(card, "Victorias", 180, 147, 111, 28, 16);
+            Label(card, "Wins Ranking", 0, 195, 478, 43, 29);
+            Label(card, "Rank", -196, 147, 84, 28, 16);
+            Label(card, "Player", -12, 147, 205, 28, 16, true);
+            Label(card, "Wins", 180, 147, 111, 28, 16);
             rankRows = new RankRow[RowsPerPage];
             for (int i = 0; i < rankRows.Length; i++)
             {
-                var line = Rect(card, "Fila " + (i + 1), 0, 107 - 39 * i, 482, 37);
-                var ball = Box(line, "Pelota", Color.white, -143, 0, 34, 34).GetComponent<Image>();
+                var line = Rect(card, "Row " + (i + 1), 0, 107 - 39 * i, 482, 37);
+                var ball = Box(line, "Ball", Color.white, -143, 0, 34, 34).GetComponent<Image>();
                 ball.preserveAspect = true;
                 ball.raycastTarget = false;
                 var name = Label(line, "", -12, 0, 205, 34, 20, true);
@@ -275,10 +275,10 @@ namespace RubbingBalls.Accounts
                 line.gameObject.SetActive(false);
             }
             rankingStatus = Label(card, "", 0, -128, 486, 33, 16);
-            previousPage = MakeButton(card, "Anterior", -177, -181, 108);
-            nextPage = MakeButton(card, "Siguiente", -59, -181, 108);
-            reloadRanking = MakeButton(card, "Actualizar", 59, -181, 108);
-            closeRanking = MakeButton(card, "Volver", 177, -181, 108, true);
+            previousPage = MakeButton(card, "Previous", -177, -181, 108);
+            nextPage = MakeButton(card, "Next", -59, -181, 108);
+            reloadRanking = MakeButton(card, "Refresh", 59, -181, 108);
+            closeRanking = MakeButton(card, "Back", 177, -181, 108, true);
             rankingRoot.SetActive(false);
         }
 
@@ -299,7 +299,7 @@ namespace RubbingBalls.Accounts
             int version = ++rankVersion;
             rankLoading = true;
             nextRankRead = Time.unscaledTime + 30;
-            rankingStatus.text = "Cargando…";
+            rankingStatus.text = "Loading…";
             previousPage.interactable = nextPage.interactable = reloadRanking.interactable = false;
             StartCoroutine(ReadRanking(version, offset));
         }
@@ -324,7 +324,7 @@ namespace RubbingBalls.Accounts
             }
             rankLoading = false;
             if (entries == null)
-                rankingStatus.text = "No se pudo cargar el ranking. Tocá Actualizar para reintentar.";
+                rankingStatus.text = "Could not load the ranking. Tap Refresh to try again.";
             else
             {
                 if (entries.Length == 0 && offset > 0) { LoadRankPage(0); yield break; }
@@ -343,7 +343,7 @@ namespace RubbingBalls.Accounts
                     row.ball.color = rankingPalette ? rankingPalette.GetColor(entry.color_index) : Color.white;
                     row.ball.enabled = row.ball.sprite != null;
                 }
-                rankingStatus.text = visible == 0 ? "Todavía no hay victorias." : "";
+                rankingStatus.text = visible == 0 ? "No wins yet." : "";
             }
             previousPage.interactable = offset > 0;
             nextPage.interactable = rankHasMore;
@@ -373,7 +373,7 @@ namespace RubbingBalls.Accounts
                 badge.interactable = true;
                 badge.onClick.AddListener(OpenAccount);
             }
-            else Debug.LogWarning("LoginMenu: asigná el botón visible de Cuenta en Botón Cuenta (Badge).", this);
+            else Debug.LogWarning("LoginMenu: assign the visible Account button to Account Button (Badge).", this);
             login.onClick.AddListener(() => Submit(false));
             register.onClick.AddListener(() => Submit(true));
             guest.onClick.AddListener(() => Show(Page.Guest));
@@ -390,34 +390,34 @@ namespace RubbingBalls.Accounts
         {
             if (!session)
             {
-                Debug.LogWarning("Cuenta recibió el clic, pero este LoginMenu no está conectado. Revisá que el botón apunte al Account UI que usa MainPanels.", this);
+                Debug.LogWarning("The Account button was clicked, but this LoginMenu is not connected. Check that the button points to the Account UI that MainPanels uses.", this);
                 return;
             }
             var destination = session.HasAccount ? Page.Account : Page.Login;
             var form = session.HasAccount ? accountForm : loginForm;
             if (!form || !overlay)
             {
-                Debug.LogError("Cuenta: falta la referencia al panel de destino o a Pantallas en LoginMenu.", this);
+                Debug.LogError("Account: missing reference to the target panel or to Screens in LoginMenu.", this);
                 return;
             }
             Show(destination);
 #if UNITY_EDITOR
-            Debug.Log("Cuenta recibió el clic y abrió " + form.name + ". Activo en la jerarquía: " + form.activeInHierarchy, form);
+            Debug.Log("The Account button was clicked and opened " + form.name + ". Active in hierarchy: " + form.activeInHierarchy, form);
 #endif
         }
 
 #if UNITY_EDITOR
-        [ContextMenu("Diagnosticar clic en Cuenta (Play)")]
+        [ContextMenu("Diagnose Account click (Play)")]
         private void DiagnoseAccountClick()
         {
             if (!Application.isPlaying || !session || !badge || !badge.isActiveAndEnabled || !EventSystem.current)
             {
-                Debug.LogWarning("Abrí el menú en Play con Cuenta visible. Revisá el campo Botón Cuenta (Badge), su componente Button y el EventSystem.", this);
+                Debug.LogWarning("Open the menu in Play with the Account button visible. Check the Account Button (Badge) field, its Button component and the EventSystem.", this);
                 return;
             }
             if (!badge.IsInteractable())
             {
-                Debug.LogWarning("Cuenta no admite clics. Revisá Interactable en el Button y en sus CanvasGroup padres.", badge);
+                Debug.LogWarning("The Account button does not accept clicks. Check Interactable on the Button and on its parent CanvasGroups.", badge);
                 return;
             }
             var rect = (RectTransform)badge.transform;
@@ -428,10 +428,10 @@ namespace RubbingBalls.Accounts
             var hits = new System.Collections.Generic.List<RaycastResult>();
             EventSystem.current.RaycastAll(pointer, hits);
             if (hits.Count == 0)
-                Debug.LogWarning("El centro de Cuenta no recibe raycasts. Revisá GraphicRaycaster, Raycast Target y Blocks Raycasts.", badge);
+                Debug.LogWarning("The center of the Account button does not receive raycasts. Check GraphicRaycaster, Raycast Target and Blocks Raycasts.", badge);
             else if (ExecuteEvents.GetEventHandler<IPointerClickHandler>(hits[0].gameObject) != badge.gameObject)
-                Debug.LogWarning("Este objeto recibe el clic encima de Cuenta: " + hits[0].gameObject.name, hits[0].gameObject);
-            else Debug.Log("El clic en el centro llega al botón Cuenta asignado.", badge);
+                Debug.LogWarning("This object receives the click on top of the Account button: " + hits[0].gameObject.name, hits[0].gameObject);
+            else Debug.Log("The click on the center reaches the assigned Account button.", badge);
         }
 #endif
 
@@ -509,7 +509,7 @@ namespace RubbingBalls.Accounts
             formGroup.interactable = !session.IsBusy;
             email.interactable = password.interactable = login.interactable = register.interactable = session.Configured && !session.IsBusy;
             cancelLogin.gameObject.SetActive(session.IsGuest);
-            status.text = session.Configured ? session.Message : "El acceso con cuenta todavía no está configurado.";
+            status.text = session.Configured ? session.Message : "Account sign-in is not configured yet.";
             rememberToggle.interactable = session.Configured && !session.IsBusy;
             RefreshBalance();
             address.text = string.IsNullOrEmpty(session.StorageNotice) ? session.Email ?? "" : session.Email + "\n" + session.StorageNotice;
@@ -593,7 +593,7 @@ namespace RubbingBalls.Accounts
 
         private static TMP_Text Label(Transform parent, string text, float x, float y, float w, float h, float size, bool left = false)
         {
-            var label = Rect(parent, string.IsNullOrEmpty(text) ? "Texto dinámico" : text, x, y, w, h).gameObject.AddComponent<TextMeshProUGUI>();
+            var label = Rect(parent, string.IsNullOrEmpty(text) ? "Dynamic text" : text, x, y, w, h).gameObject.AddComponent<TextMeshProUGUI>();
             label.fontSize = size;
             label.richText = false;
             label.text = text;
@@ -616,7 +616,7 @@ namespace RubbingBalls.Accounts
         {
             var box = Box(parent, name, new Color32(15, 22, 39, 255), 0, y, 378, 39);
             box.gameObject.SetActive(false);
-            var viewport = Rect(box, "Área de texto", 0, 0, 354, 35);
+            var viewport = Rect(box, "Text area", 0, 0, 354, 35);
             viewport.gameObject.AddComponent<RectMask2D>();
             var text = Label(viewport, "", 0, 0, 354, 35, 19, true);
             var input = box.gameObject.AddComponent<TMP_InputField>();

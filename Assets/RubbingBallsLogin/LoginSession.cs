@@ -118,10 +118,10 @@ namespace RubbingBalls.Accounts
         public void Authenticate(string email, string password, bool register, bool rememberOnPc)
         {
             if (IsBusy || HasAccount) return;
-            if (!Configured) { Notify("El acceso con cuenta todavía no está configurado."); return; }
+            if (!Configured) { Notify("Account sign-in is not configured yet."); return; }
             email = (email ?? "").Trim();
             if (email.Length == 0 || !email.Contains("@") || string.IsNullOrEmpty(password))
-            { Notify("Ingresá tu correo y tu contraseña."); return; }
+            { Notify("Enter your email and password."); return; }
             remember = rememberOnPc && CanRemember;
             StorageNotice = "";
             Begin(register ? Operation.Register : Operation.SignIn, register ? "signup" : "token?grant_type=password",
@@ -145,7 +145,7 @@ namespace RubbingBalls.Accounts
         {
             IsBusy = true;
             if (op == Operation.Renew) Changed?.Invoke();
-            else Notify("Conectando…");
+            else Notify("Connecting…");
             StartCoroutine(Send(op, path, body));
         }
 
@@ -175,12 +175,12 @@ namespace RubbingBalls.Accounts
                 {
                     bool removed = store.DeleteOwned();
                     Clear();
-                    if (!removed) { Notify("Cerraste sesión. Borrá la entrada RubbingBalls/Supabase del Administrador de credenciales de Windows."); yield break; }
-                    Notify(ok ? "Cerraste sesión." : "Cerraste la sesión en este juego. El servidor no confirmó el cierre remoto.");
+                    if (!removed) { Notify("You signed out. Delete the RubbingBalls/Supabase entry from Windows Credential Manager."); yield break; }
+                    Notify(ok ? "You signed out." : "You signed out of this game. The server did not confirm the remote sign-out.");
                 }
                 else if (ok && reply?.user != null && Guid.TryParse(reply.user.id, out _) && !string.IsNullOrEmpty(reply.access_token) && !string.IsNullOrEmpty(reply.refresh_token) && reply.expires_in > 0)
                 {
-                    if (op == Operation.Renew && reply.user.id != AccountId) { store.DeleteOwned(); Clear(); Notify("Volvé a iniciar sesión."); yield break; }
+                    if (op == Operation.Renew && reply.user.id != AccountId) { store.DeleteOwned(); Clear(); Notify("Please sign in again."); yield break; }
                     AccountId = reply.user.id;
                     Email = reply.user.email;
                     access = reply.access_token;
@@ -193,7 +193,7 @@ namespace RubbingBalls.Accounts
                     {
                         remember = false;
                         store.DeleteOwned();
-                        StorageNotice = "La sesión está abierta solo en esta ejecución. Windows no pudo recordarla.";
+                        StorageNotice = "Your session is only open for this run. Windows could not save it.";
                     }
                     else if (!remember) store.DeleteOwned();
                     Notify("");
@@ -201,13 +201,13 @@ namespace RubbingBalls.Accounts
                 else if (op == Operation.Renew || op == Operation.Restore)
                 {
                     if (request.responseCode == 401 || request.responseCode == 403 || (request.responseCode == 400 && reply?.error_code != "request_timeout"))
-                    { store.DeleteOwned(); Clear(); Notify("La sesión venció. Volvé a iniciar sesión o jugá como invitado."); }
+                    { store.DeleteOwned(); Clear(); Notify("Your session expired. Sign in again or play as a guest."); }
                     else if (op == Operation.Restore)
-                        Notify("No se pudo recuperar la sesión guardada. Iniciá sesión o jugá como invitado.");
-                    else { nextRefresh = Time.realtimeSinceStartupAsDouble + 20.0; Notify("No se pudo renovar la sesión. Reintentando…"); }
+                        Notify("Could not recover the saved session. Sign in or play as a guest.");
+                    else { nextRefresh = Time.realtimeSinceStartupAsDouble + 20.0; Notify("Could not renew the session. Retrying…"); }
                 }
                 else if (ok && op == Operation.Register && Guid.TryParse(reply?.id, out _))
-                    Notify("Revisá tu correo para confirmar la cuenta y después iniciá sesión.");
+                    Notify("Check your email to confirm your account, then sign in.");
                 else Notify(Error(request.responseCode, reply?.error_code));
             }
         }
@@ -216,17 +216,17 @@ namespace RubbingBalls.Accounts
         {
             switch (code)
             {
-                case "email_not_confirmed": return "Confirmá tu correo antes de iniciar sesión.";
-                case "invalid_credentials": return "El correo o la contraseña son incorrectos.";
-                case "user_already_exists": case "email_exists": return "Probá iniciar sesión con ese correo.";
-                case "weak_password": return "La contraseña no cumple los requisitos del proyecto.";
-                case "email_address_invalid": case "validation_failed": return "Revisá el correo y la contraseña.";
-                case "email_address_not_authorized": return "El servicio de correo todavía no admite esa dirección.";
-                case "signup_disabled": return "El registro de cuentas está desactivado.";
+                case "email_not_confirmed": return "Confirm your email before signing in.";
+                case "invalid_credentials": return "The email or password is incorrect.";
+                case "user_already_exists": case "email_exists": return "Try signing in with that email.";
+                case "weak_password": return "The password does not meet the requirements.";
+                case "email_address_invalid": case "validation_failed": return "Check your email and password.";
+                case "email_address_not_authorized": return "The email service does not accept that address yet.";
+                case "signup_disabled": return "Account sign-up is disabled.";
             }
-            if (status == 429) return "Demasiados intentos. Esperá un momento y volvé a probar.";
-            if (status == 0 || status >= 500) return "No se pudo conectar. Podés reintentar o jugar como invitado.";
-            return "No se pudo completar la solicitud (HTTP " + status + ").";
+            if (status == 429) return "Too many attempts. Wait a moment and try again.";
+            if (status == 0 || status >= 500) return "Could not connect. You can retry or play as a guest.";
+            return "The request could not be completed (HTTP " + status + ").";
         }
 
         private void Clear()

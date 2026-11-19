@@ -973,8 +973,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 45
-  m_fontSizeBase: 45
+  m_fontSize: 40
+  m_fontSizeBase: 40
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2564,6 +2564,7 @@ GameObject:
   - component: {fileID: 472075891}
   - component: {fileID: 472075892}
   - component: {fileID: 472075893}
+  - component: {fileID: 472075894}
   m_Layer: 0
   m_Name: "Texto din\xE1mico"
   m_TagString: Untagged
@@ -2690,6 +2691,19 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &472075894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 472075890}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01df4340d72020247bb3e3e5ec09c7e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedEllipsis
+  stepSeconds: 0.4
 --- !u!1 &476583811
 GameObject:
   m_ObjectHideFlags: 0
@@ -3567,6 +3581,7 @@ GameObject:
   - component: {fileID: 716338316}
   - component: {fileID: 716338318}
   - component: {fileID: 716338317}
+  - component: {fileID: 716338319}
   m_Layer: 0
   m_Name: "Texto din\xE1mico"
   m_TagString: Untagged
@@ -3693,6 +3708,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 716338315}
   m_CullTransparentMesh: 1
+--- !u!114 &716338319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 716338315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01df4340d72020247bb3e3e5ec09c7e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedEllipsis
+  stepSeconds: 0.4
 --- !u!1 &772303417
 GameObject:
   m_ObjectHideFlags: 0
@@ -9391,6 +9419,7 @@ GameObject:
   - component: {fileID: 1439294479}
   - component: {fileID: 1439294480}
   - component: {fileID: 1439294481}
+  - component: {fileID: 1439294482}
   m_Layer: 0
   m_Name: "Texto din\xE1mico"
   m_TagString: Untagged
@@ -9517,6 +9546,19 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &1439294482
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1439294478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01df4340d72020247bb3e3e5ec09c7e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedEllipsis
+  stepSeconds: 0.4
 --- !u!1 &1452368890
 GameObject:
   m_ObjectHideFlags: 0
@@ -10667,6 +10709,7 @@ GameObject:
   - component: {fileID: 1797821309}
   - component: {fileID: 1797821311}
   - component: {fileID: 1797821310}
+  - component: {fileID: 1797821312}
   m_Layer: 0
   m_Name: "Texto din\xE1mico"
   m_TagString: Untagged
@@ -10793,6 +10836,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1797821308}
   m_CullTransparentMesh: 1
+--- !u!114 &1797821312
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1797821308}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01df4340d72020247bb3e3e5ec09c7e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedEllipsis
+  stepSeconds: 0.4
 --- !u!1 &1861154465
 GameObject:
   m_ObjectHideFlags: 0

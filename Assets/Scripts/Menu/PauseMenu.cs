@@ -24,18 +24,18 @@ public class PauseMenu : MonoBehaviour
             NetworkManager.Instance.SetInputEnabled(true);
     }
 
-    private void Update()
+    /*private void Update()
     {
         if (!Input.GetKeyDown(KeyCode.Escape))
             return;
-
+        
         if (!isOpen)
             Open();
         else if (settingsPanel.gameObject.activeSelf)
             settingsPanel.Back();
         else
             Close();
-    }
+    }*/
 
     public void Open()
     {
